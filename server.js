@@ -30,6 +30,21 @@ const userSchema = new mongooseUser.Schema({
 
 const User = mongooseUser.model("User", userSchema);
 
+const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+const multer = require("multer");
+
+// Configuración de R2
+const s3 = new S3Client({
+  region: "auto",
+  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  credentials: {
+    accessKeyId: process.env.R2_ACCESS_KEY_ID,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+  },
+});
+
+const upload = multer({ storage: multer.memoryStorage() });
+
 // =========================
 // 🧱 MIDDLEWARES
 // =========================
@@ -917,7 +932,7 @@ app.post("/business", auth, async (req, res) => {
 
     res.json({
       message: "Negocio creado",
-      url: `http://localhost:3000/${slug}`, // Ajusta según tu dominio
+      url: `https://ai-sales-chat.onrender.com/${slug}`, // Ajusta según tu dominio
       business
     });
 
@@ -954,7 +969,7 @@ app.post("/clone-template/:id", auth, async (req, res) => {
     res.json({
       message: "Template clonado",
       business: newBusiness,
-      url: `http://localhost:3000/${newBusiness.slug}`
+      url: `https://ai-sales-chat.onrender.com/${newBusiness.slug}`
     });
 
   } catch (error) {
@@ -1381,6 +1396,29 @@ app.post("/ai-closer", auth, async (req, res) => {
 
   } catch (error) {
     res.status(500).json({ error: "Error en closer engine" });
+  }
+});
+
+// Endpoint para subir testimonio
+app.post("/upload-testimonial", upload.single("file"), async (req, res) => {
+  try {
+    const file = req.file;
+    const fileName = `${Date.now()}-${file.originalname}`;
+    
+    await s3.send(new PutObjectCommand({
+      Bucket: process.env.R2_BUCKET_NAME,
+      Key: fileName,
+      Body: file.buffer,
+      ContentType: file.mimetype,
+    }));
+
+    // La URL pública que da Cloudflare (debes configurar tu dominio o el dev domain de R2)
+    const publicUrl = `${process.env.R2_PUBLIC_URL}/${fileName}`;
+
+    res.json({ url: publicUrl });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al subir a R2" });
   }
 });
 
