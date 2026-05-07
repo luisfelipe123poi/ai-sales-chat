@@ -1,4 +1,10 @@
 require("dotenv").config();
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "https://prestigecloser.com");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+  next();
+});
 
 const express = require("express");
 const mongoose = require("mongoose");
@@ -48,7 +54,17 @@ const upload = multer({ storage: multer.memoryStorage() });
 // =========================
 // 🧱 MIDDLEWARES
 // =========================
-app.use(cors());
+app.use(cors({
+  origin: [
+    "https://prestigecloser.com",
+    "https://www.prestigecloser.com"
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true
+}));
+
+app.options("*", cors());
 
 // 🔥 FIX 413 ERROR
 app.use(express.json({ limit: "10mb" }));
