@@ -46,24 +46,14 @@ const s3 = new S3Client({
 
 const upload = multer({ storage: multer.memoryStorage() });
 
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "https://prestigecloser.com");
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
-  next();
-});
-
 // =========================
 // 🧱 MIDDLEWARES
 // =========================
 app.use(cors({
-  origin: [
-    "https://prestigecloser.com",
-    "https://www.prestigecloser.com"
-  ],
+  origin: ["https://prestigecloser.com", "https://www.prestigecloser.com"],
+  credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
 app.options("*", cors());
@@ -81,6 +71,12 @@ mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB conectado"))
   .catch(err => console.log("❌ Error MongoDB:", err));
 
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "https://prestigecloser.com");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+  next();
+});
 // =========================
 // 🔐 AUTH MIDDLEWARE
 // =========================
