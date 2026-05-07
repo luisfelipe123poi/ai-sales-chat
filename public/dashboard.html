@@ -1,0 +1,1738 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard</title>
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Inter", sans-serif;
+}
+
+body {
+  background: linear-gradient(135deg, #0f172a, #020617);
+  color: white;
+}
+
+/* HEADER */
+header {
+  padding: 20px 40px;
+  background: #020617;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #1e293b;
+}
+
+header div {
+  font-weight: bold;
+  font-size: 18px;
+}
+
+/* BOTÓN PRO */
+.logout-btn {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  border: none;
+  padding: 10px 16px;
+  color: white;
+  border-radius: 8px;
+  font-weight: bold;
+  transition: 0.2s;
+}
+
+.logout-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 10px rgba(239,68,68,0.5);
+}
+
+/* CONTAINER */
+.container {
+  padding: 30px 40px;
+  max-width: 1000px;
+  margin: auto;
+}
+
+/* CARD */
+.card {
+  background: #1e293b;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+/* FORM */
+input {
+  display: block;
+  margin: 8px 0;
+  padding: 12px;
+  width: 100%;
+  max-width: 350px;
+  border: none;
+  border-radius: 6px;
+}
+
+/* COLOR */
+input[type="color"] {
+  height: 50px;
+}
+
+/* FILE */
+input[type="file"] {
+  background: #020617;
+  color: white;
+}
+
+/* PREVIEW */
+#logoPreview {
+  width: 80px;
+  height: 80px;
+  border-radius: 10px;
+  object-fit: cover;
+  margin-top: 10px;
+  display: none;
+}
+
+/* BOTONES */
+.create-btn {
+  background: #25D366;
+  padding: 12px;
+  border: none;
+  color: white;
+  margin-top: 10px;
+  border-radius: 8px;
+}
+
+.toggle-btn {
+  background: #2563eb;
+  padding: 12px;
+  border: none;
+  color: white;
+  margin-bottom: 20px;
+  border-radius: 8px;
+}
+
+/* LIST */
+.business {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.links a {
+  margin-left: 10px;
+  color: #25D366;
+  text-decoration: none;
+}
+
+.links button {
+  margin-left: 10px;
+  padding: 6px 10px;
+  border: none;
+  background: #334155;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.links button:hover {
+  background: #475569;
+}
+
+/* STATES */
+.empty {
+  opacity: 0.6;
+  text-align: center;
+  padding: 20px;
+}
+
+.loading {
+  opacity: 0.7;
+}
+
+/* HIDE FORM */
+#formContainer {
+  display: none;
+}
+
+/* TAG TEMPLATE */
+.template-tag {
+  background: #9333ea;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 11px;
+  margin-left: 5px;
+}
+
+/* 🔥 ANALYTICS PANEL */
+#analyticsPanel {
+  display: none;
+}
+
+/* PREVIEW EDIT */
+#edit_logoPreview {
+  width: 80px;
+  height: 80px;
+  border-radius: 10px;
+  object-fit: cover;
+  margin-top: 10px;
+  display: none;
+}
+
+/* ERROR INPUT */
+.input-error {
+  border: 2px solid #ef4444 !important;
+}
+
+.error-text {
+  color: #ef4444;
+  font-size: 13px;
+  margin-top: 5px;
+}
+
+textarea {
+  display: block;
+  margin: 8px 0;
+  padding: 12px;
+  width: 100%;
+  max-width: 350px;
+  border: none;
+  border-radius: 6px;
+  min-height: 120px;
+  resize: vertical;
+  font-family: "Inter", sans-serif;
+}
+
+/* 🔥 MODAL OVERLAY */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(6px);
+
+  display: none;
+  justify-content: center;
+  align-items: center;
+
+  z-index: 999;
+}
+
+.modal-overlay.active {
+  display: flex;
+}
+
+/* CAJA */
+.modal-box {
+  background: #1e293b;
+  padding: 25px;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 400px;
+
+  box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+  animation: modalFade 0.25s ease;
+}
+
+/* HEADER */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+/* BOTÓN CERRAR */
+.modal-close {
+  background: #334155;
+  border: none;
+  color: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.modal-close:hover {
+  background: #475569;
+}
+
+/* BODY */
+.modal-body p {
+  margin: 6px 0;
+}
+
+/* ANIMACIÓN */
+@keyframes modalFade {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.market-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.market-card {
+  background: #1e293b;
+  border-radius: 14px;
+  overflow: hidden;
+  transition: 0.25s;
+  cursor: pointer;
+  position: relative;
+}
+
+.market-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.market-preview {
+  height: 150px;
+  background-size: cover;
+  background-position: center;
+}
+
+.market-content {
+  padding: 15px;
+}
+
+.market-title {
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.market-desc {
+  font-size: 13px;
+  opacity: 0.7;
+  margin: 5px 0 10px;
+}
+
+.market-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.market-price {
+  color: #25D366;
+  font-weight: bold;
+}
+
+.market-btn {
+  background: #25D366;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.preview-msg {
+  max-width: 75%;
+  padding: 10px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.preview-user {
+  background: #2563eb;
+  align-self: flex-end;
+}
+
+.preview-bot {
+  background: #1e293b;
+  align-self: flex-start;
+}
+
+/* =========================
+   🔥 RESPONSIVE MOBILE
+========================= */
+@media (max-width: 768px) {
+
+  header {
+    flex-direction: column;
+    gap: 10px;
+    padding: 15px;
+    text-align: center;
+  }
+
+  header div {
+    font-size: 16px;
+  }
+
+  .container {
+    padding: 15px;
+  }
+
+  .card {
+    padding: 15px;
+  }
+
+  input, textarea {
+    max-width: 100%;
+  }
+
+  .create-btn,
+  .toggle-btn {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .business {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .links a,
+  .links button {
+    margin-left: 0;
+  }
+
+  .market-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-box {
+    width: 95%;
+    padding: 15px;
+  }
+}
+
+@media (max-width: 420px) {
+
+  header div {
+    font-size: 14px;
+  }
+
+  .logout-btn {
+    width: 100%;
+  }
+
+  .market-preview {
+    height: 120px;
+  }
+}
+#createModal.active {
+  display: flex;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div>🚀 Dashboard</div>
+  <button class="logout-btn" onclick="logout()">Salir</button>
+</header>
+
+<div class="container">
+
+<!-- =========================
+🔘 ACCIONES PRINCIPALES (AHORA LIMPIAS)
+========================= -->
+
+<button class="toggle-btn" onclick="toggleCreateModal()">
+➕ Crear nuevo negocio
+</button>
+
+<button class="toggle-btn" onclick="toggleMarketplace()">
+🛍️ Marketplace de plantillas
+</button>
+
+<!-- =========================
+🛍️ MARKETPLACE MODAL (YA NO INLINE)
+========================= -->
+
+<!-- =========================
+🛍️ MARKETPLACE MODAL PRO
+========================= -->
+<div id="marketModal" class="modal-overlay">
+
+  <div class="modal-box" style="max-width:900px; width:95%; height:85vh; display:flex; flex-direction:column;">
+
+    <!-- HEADER -->
+    <div class="modal-header">
+      <h3>🛍️ Marketplace de plantillas</h3>
+
+      <button class="modal-close" onclick="toggleMarketplace()">
+        ✖
+      </button>
+    </div>
+
+    <!-- BODY SCROLL -->
+    <div id="marketplace"
+      style="
+        overflow-y:auto;
+        flex:1;
+        padding-right:10px;
+      ">
+    </div>
+
+  </div>
+
+</div>
+
+<!-- =========================
+📊 LISTA PRINCIPAL
+========================= -->
+
+<h2>Mis negocios</h2>
+
+<div id="list" class="loading">Cargando...</div>
+
+<!-- =========================
+📊 MODAL ANALYTICS
+========================= -->
+
+<div id="analyticsModal" class="modal-overlay">
+
+  <div class="modal-box">
+
+    <div class="modal-header">
+      <h3>📊 Analytics</h3>
+
+      <button onclick="closeAnalytics()" class="modal-close">
+        ✖
+      </button>
+    </div>
+
+    <div class="modal-body">
+
+      <p>Total Leads: <b id="a_leads">0</b></p>
+      <p>Mensajes: <b id="a_msgs">0</b></p>
+
+      <h4 style="margin-top:15px;">Embudo</h4>
+
+      <p>👀 Atención: <span id="a_attention">0</span></p>
+      <p>🤔 Interés: <span id="a_interest">0</span></p>
+      <p>🔥 Deseo: <span id="a_desire">0</span></p>
+      <p>💰 Acción: <span id="a_action">0</span></p>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- =========================
+🤖 PREVIEW TEMPLATE MODAL
+========================= -->
+
+<div id="previewModal" class="modal-overlay">
+
+  <div class="modal-box" style="max-width:500px; padding:0; overflow:hidden;">
+
+    <div style="background:#020617; padding:12px; display:flex; justify-content:space-between;">
+      <span>🤖 Demo conversación</span>
+      <button onclick="closePreview()" class="modal-close">✖</button>
+    </div>
+
+    <div id="previewChat"
+      style="height:400px; overflow-y:auto; padding:15px; display:flex; flex-direction:column; gap:10px; background:#0f172a;">
+    </div>
+
+  </div>
+
+</div>
+
+<div style="padding:10px; text-align:center;">
+  <button class="create-btn" onclick="useTemplateFromPreview()">
+    🚀 Usar esta plantilla
+  </button>
+</div>
+
+<!-- =========================
+➕ MODAL CREAR NEGOCIO (NUEVO UX PRO)
+========================= -->
+
+<div id="createModal" class="modal-overlay">
+
+  <div class="modal-box">
+
+    <div class="modal-header">
+      <h3>➕ Crear nuevo negocio</h3>
+      <button class="modal-close" onclick="closeCreateModal()">✖</button>
+    </div>
+
+    <div class="modal-body">
+
+      <input id="name" placeholder="Nombre negocio" />
+      <input id="slug" placeholder="slug (ej: juanfitness)" />
+
+      <input type="file" id="logoFile" accept="image/*" onchange="previewLogo()" />
+      <img id="logoPreview"/>
+
+      <input type="color" id="color" value="#25D366" />
+
+      <input id="welcome" placeholder="Mensaje bienvenida" />
+      <textarea id="info" placeholder="Info producto"></textarea>
+      <input id="link" placeholder="Link de pago" />
+
+      <!-- 🔥 NUEVO: SELECTOR DE PAÍS -->
+      <select id="countryCode">
+
+        <option value="57">🇨🇴 Colombia (+57)</option>
+        <option value="58">🇻🇪 Venezuela (+58)</option>
+        <option value="51">🇵🇪 Perú (+51)</option>
+        <option value="52">🇲🇽 México (+52)</option>
+        <option value="54">🇦🇷 Argentina (+54)</option>
+        <option value="56">🇨🇱 Chile (+56)</option>
+        <option value="593">🇪🇨 Ecuador (+593)</option>
+        <option value="591">🇧🇴 Bolivia (+591)</option>
+        <option value="595">🇵🇾 Paraguay (+595)</option>
+        <option value="598">🇺🇾 Uruguay (+598)</option>
+
+        <option value="1">🇺🇸 Estados Unidos (+1)</option>
+        <option value="34">🇪🇸 España (+34)</option>
+        <option value="55">🇧🇷 Brasil (+55)</option>
+
+      </select>
+
+      <input id="wa" placeholder="WhatsApp (3001234567)" />
+      <textarea id="waMessage" placeholder="Mensaje automático de WhatsApp"></textarea>
+
+      <!-- 🔥 NUEVO: TESTIMONIOS (SISTEMA R2) -->
+      <div style="border: 1px dashed #ccc; padding: 10px; border-radius: 8px; margin-top: 10px;">
+        <label style="font-size: 12px; font-weight: bold; display: block; margin-bottom: 5px;">Añadir Testimonios (Imágenes/Videos)</label>
+        <input type="file" id="testimonialFile" accept="image/*,video/*" multiple onchange="uploadToR2()" />
+        <div id="testimonialsList" style="display: flex; gap: 5px; flex-wrap: wrap; margin-top: 10px;"></div>
+        <!-- Mantenemos el campo oculto para no romper tu lógica de guardado actual -->
+        <input type="hidden" id="testimonials" />
+      </div>
+
+      <button class="create-btn" onclick="createBusiness()">
+        Crear negocio
+      </button>
+
+      <p id="createMsg"></p>
+
+    </div>
+
+  </div>
+
+</div>
+
+<div id="editModal" class="modal-overlay">
+
+  <div class="modal-box">
+
+    <div class="modal-header">
+      <h3>✏️ Editar negocio</h3>
+      <button class="modal-close" onclick="cancelEdit()">✖</button>
+    </div>
+
+    <div class="modal-body">
+
+      <input id="edit_name" placeholder="Nombre negocio" />
+      <input id="edit_slug" placeholder="slug" />
+
+      <input type="file" id="edit_logoFile" accept="image/*" onchange="previewEditLogo()" />
+      <img id="edit_logoPreview"/>
+
+      <input type="color" id="edit_color" />
+
+      <input id="edit_welcome" placeholder="Mensaje bienvenida" />
+      <textarea id="edit_info" placeholder="Info producto"></textarea>
+      <input id="edit_link" placeholder="Link de pago" />
+
+      <select id="edit_countryCode">
+
+        <option value="57">🇨🇴 Colombia (+57)</option>
+        <option value="58">🇻🇪 Venezuela (+58)</option>
+        <option value="51">🇵🇪 Perú (+51)</option>
+        <option value="52">🇲🇽 México (+52)</option>
+        <option value="54">🇦🇷 Argentina (+54)</option>
+        <option value="56">🇨🇱 Chile (+56)</option>
+        <option value="593">🇪🇨 Ecuador (+593)</option>
+        <option value="591">🇧🇴 Bolivia (+591)</option>
+        <option value="595">🇵🇾 Paraguay (+595)</option>
+        <option value="598">🇺🇾 Uruguay (+598)</option>
+
+        <option value="1">🇺🇸 Estados Unidos (+1)</option>
+        <option value="34">🇪🇸 España (+34)</option>
+        <option value="55">🇧🇷 Brasil (+55)</option>
+
+      </select>
+
+      <input id="edit_wa" placeholder="WhatsApp (3001234567)" />
+
+      <textarea id="edit_waMessage" placeholder="Mensaje automático de WhatsApp"></textarea>
+
+      <div style="border: 1px dashed #475569; padding: 10px; border-radius: 8px; margin-top: 10px; background: #1e293b;">
+        <label style="font-size: 12px; font-weight: bold; display: block; margin-bottom: 5px; color: #94a3b8;">Añadir Testimonios (Imágenes/Videos a R2)</label>
+        <input type="file" id="edit_testimonialFile" accept="image/*,video/*" multiple onchange="uploadEditToR2()" />
+        <div id="edit_testimonialsList" style="display: flex; gap: 5px; flex-wrap: wrap; margin-top: 10px;"></div>
+        <input type="hidden" id="edit_testimonials" />
+      </div>
+
+      <div style="display:flex; gap:10px; margin-top:15px;">
+
+        <button class="create-btn" onclick="updateBusiness()" style="flex:1;">
+          💾 Guardar cambios
+        </button>
+
+        <button onclick="cancelEdit()"
+          style="flex:1; background:#334155; border:none; color:white; border-radius:8px; cursor:pointer;">
+          ❌ Cancelar
+        </button>
+
+      </div>
+
+      <p id="editMsg" style="margin-top:10px;"></p>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+
+<p id="editMsg" style="margin-top:10px;"></p>
+
+</div>
+
+</div>
+
+<script>
+const API = "https://api.prestigecloser.com";
+const token = localStorage.getItem("token");
+
+if (!token) {
+  window.location.href = "/";
+}
+
+const templates = [
+
+  // =========================
+  // 💄 ESTÉTICA (CLOSER PRO)
+  // =========================
+  {
+    id: 1,
+    name: "Clínica Estética Premium",
+    desc: "Closer de ventas para estética y belleza",
+    price: "$29",
+    preview: "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5",
+
+    data: {
+      name: "Estética Pro",
+      welcomeMessage: "Hola 💖 ¿qué te gustaría mejorar en tu piel o rostro?",
+      productInfo: "Tratamientos faciales avanzados con resultados visibles desde la primera sesión.",
+      productLink: "https://pago.com/estetica"
+    },
+
+    demo: [
+      { role: "user", text: "Hola, estaba mirando información" },
+      { role: "bot", text: "Hola 💖 bienvenida\n\n¿qué te gustaría mejorar exactamente en tu piel?" },
+
+      { role: "user", text: "tengo manchas en la cara" },
+      { role: "bot", text: "Entiendo 👀\n\n¿desde hace cuánto las tienes?" },
+
+      { role: "user", text: "hace bastante" },
+      { role: "bot", text: "Ok 💖 te explico rápido\n\neso tiene solución con tratamiento progresivo según tu tipo de piel.\n\nte hago una pregunta importante: ¿has intentado algo antes?" },
+
+      { role: "user", text: "sí pero nada me funcionó" },
+      { role: "bot", text: "Eso es muy común 👀\n\nporque no todos los tratamientos son personalizados.\n\nnosotros primero hacemos valoración para ver tu caso exacto.\n\n¿te gustaría agendarla?" },
+
+      { role: "user", text: "no sé, cuánto cuesta?" },
+      { role: "bot", text: "La valoración es accesible 💖 y muchas veces te la descontamos si inicias tratamiento.\n\npero dime algo honesto… ¿te gustaría realmente mejorar tu piel o solo estabas mirando?" },
+
+      { role: "user", text: "sí me interesa pero está caro" },
+      { role: "bot", text: "Te entiendo totalmente 👀\n\npero mira, esto no es gasto, es solución permanente.\n\nmuchas clientas empezaron pensando igual y hoy ya resolvieron su problema.\n\nsi quieres, puedo adaptarte un plan según tu presupuesto." },
+
+      { role: "user", text: "ok dime opciones" },
+      { role: "bot", text: "Perfecto 💖\n\ntenemos 3 niveles según presupuesto y necesidad.\n\n¿quieres que te recomiende el ideal para ti o prefieres agendar valoración primero?" },
+
+      { role: "user", text: "agenda valoración" },
+      { role: "bot", text: "Perfecto 🙌\n\nte dejo aquí acceso directo:\n👉 https://pago.com/estetica\n\nte atendemos personalmente y te damos diagnóstico completo 💖" }
+    ]
+  },
+
+  // =========================
+  // 💪 FITNESS (CLOSER)
+  // =========================
+  {
+    id: 2,
+    name: "Fitness Coach Pro",
+    desc: "Cierra planes de entrenamiento",
+    price: "$19",
+    preview: "https://images.unsplash.com/photo-1554284126-aa88f22d8b74",
+
+    data: {
+      name: "Coach Fitness",
+      welcomeMessage: "💪 ¿qué objetivo físico tienes?",
+      productInfo: "Planes personalizados de transformación corporal.",
+      productLink: "https://pago.com/fitness"
+    },
+
+    demo: [
+      { role: "user", text: "quiero bajar de peso pero no tengo disciplina" },
+      { role: "bot", text: "Perfecto 👀 eso es más común de lo que crees\n\n¿cuántos kilos quieres bajar?" },
+
+      { role: "user", text: "10 kilos" },
+      { role: "bot", text: "Ok 💪\n\nte hago una pregunta real:\n¿has pagado entrenadores antes o intentaste solo?" },
+
+      { role: "user", text: "intenté solo" },
+      { role: "bot", text: "Ahí está el problema 👀\n\nno es motivación, es estructura.\n\neste sistema te guía día a día sin que tengas que pensar tanto.\n\n¿quieres verlo?" },
+
+      { role: "user", text: "cuánto cuesta?" },
+      { role: "bot", text: "te soy honesto 💪\n\nhay planes desde básicos hasta completos.\n\npero antes de darte precio dime algo:\n¿qué te frena más, el tiempo o el dinero?" },
+
+      { role: "user", text: "dinero está justo" },
+      { role: "bot", text: "te entiendo 👀\n\npero mira esto así:\nes inversión en tu salud, no gasto.\n\nmuchos empiezan así y ven cambios en semanas.\n\npuedo ajustarte un plan básico para empezar." },
+
+      { role: "user", text: "ok el básico" },
+      { role: "bot", text: "perfecto 💪\n\nempiezas aquí:\n👉 https://pago.com/fitness\n\ny te acompaño paso a paso 🔥" }
+    ]
+  },
+
+  // =========================
+  // 🛒 ECOMMERCE (CLOSER)
+  // =========================
+  {
+    id: 3,
+    name: "Tienda Automatizada",
+    desc: "Convierte dudas en ventas",
+    price: "$25",
+    preview: "https://images.unsplash.com/photo-1515168833906-d2a3b82b302a",
+
+    data: {
+      name: "Tienda Pro",
+      welcomeMessage: "🛍️ Hola! ¿qué producto viste?",
+      productInfo: "Productos en tendencia con entrega rápida.",
+      productLink: "https://pago.com/store"
+    },
+
+    demo: [
+      { role: "user", text: "solo estaba mirando precios" },
+      { role: "bot", text: "Perfecto 👀\n\n¿qué producto te interesó?" },
+
+      { role: "user", text: "el smartwatch" },
+      { role: "bot", text: "Sí 🔥 ese es uno de los más vendidos\n\n¿lo viste por redes o alguien te lo recomendó?" },
+
+      { role: "user", text: "lo vi en anuncio" },
+      { role: "bot", text: "Tiene sentido 👀\n\nestá en tendencia porque mide salud, sueño y notificaciones.\n\n¿quieres saber precio real o solo estabas comparando?" },
+
+      { role: "user", text: "precio pero está caro" },
+      { role: "bot", text: "Te entiendo 👀\n\npero este modelo no es genérico, es versión premium con garantía.\n\nmuchos lo ven caro hasta que lo usan.\n\n¿quieres opción más económica o ver beneficios reales?" },
+
+      { role: "user", text: "más barato" },
+      { role: "bot", text: "Claro 💰\n\ntenemos versión básica más accesible.\n\npero te pregunto algo honesto:\n¿lo quieres por necesidad o curiosidad?" },
+
+      { role: "user", text: "necesidad" },
+      { role: "bot", text: "Perfecto 🙌\n\nentonces te recomiendo este:\n👉 https://pago.com/store\n\nte lo enviamos hoy mismo 🚚" }
+    ]
+  },
+
+  // =========================
+  // 🧠 MENTORÍA (CLOSER FUERTE)
+  // =========================
+  {
+    id: 4,
+    name: "Mentor Digital",
+    desc: "Cierre de ventas high ticket",
+    price: "$39",
+    preview: "https://images.unsplash.com/photo-1552664730-d307ca884978",
+
+    data: {
+      name: "Mentoría Pro",
+      welcomeMessage: "🚀 ¿quieres generar ingresos online?",
+      productInfo: "Sistema paso a paso para monetización digital.",
+      productLink: "https://pago.com/mentoria"
+    },
+
+    demo: [
+      { role: "user", text: "quiero ganar dinero online pero no sé nada" },
+      { role: "bot", text: "Perfecto 👀\n\nentonces estás en el punto correcto.\n\n¿qué te interesa más, vender o crear contenido?" },
+
+      { role: "user", text: "ganar dinero rápido" },
+      { role: "bot", text: "Te soy honesto 👀\n\nrápido no existe, pero sí estratégico.\n\neste sistema te guía paso a paso para generar ingresos reales.\n\n¿has invertido en algo antes?" },
+
+      { role: "user", text: "no tengo dinero ahora" },
+      { role: "bot", text: "Te entiendo 💡\n\npero te hago una pregunta real:\n¿quieres seguir en el mismo punto dentro de 6 meses o cambiarlo?" },
+
+      { role: "user", text: "quiero cambiarlo" },
+      { role: "bot", text: "Entonces esto es para ti 🔥\n\npuedes empezar aquí:\n👉 https://pago.com/mentoria\n\nyo te guío en todo el proceso paso a paso" }
+    ]
+  },
+
+  // =========================
+  // 🏠 INMOBILIARIA (CLOSER)
+  // =========================
+  {
+    id: 5,
+    name: "Bienes Raíces Pro",
+    desc: "Cierra ventas de propiedades",
+    price: "$35",
+    preview: "https://images.unsplash.com/photo-1560518883-ce09059eeffa",
+
+    data: {
+      name: "Inmobiliaria Pro",
+      welcomeMessage: "🏡 ¿qué tipo de propiedad buscas?",
+      productInfo: "Casas y apartamentos con asesoría personalizada.",
+      productLink: "https://pago.com/inmuebles"
+    },
+
+    demo: [
+      { role: "user", text: "estaba mirando apartamentos" },
+      { role: "bot", text: "Perfecto 🏡\n\n¿en qué zona te gustaría vivir?" },
+
+      { role: "user", text: "zona norte pero no sé si me alcance" },
+      { role: "bot", text: "Te entiendo 👀\n\nmuchos empiezan pensando eso.\n\npero tenemos opciones desde inversión básica hasta premium.\n\n¿buscas vivir o invertir?" },
+
+      { role: "user", text: "vivir pero está caro todo" },
+      { role: "bot", text: "Claro 💡\n\npero mira esto diferente:\nno es precio, es calidad de vida.\n\npuedo mostrarte opciones que sí se ajustan a tu presupuesto.\n\n¿quieres verlas?" },
+
+      { role: "user", text: "ok muéstrame" },
+      { role: "bot", text: "Perfecto 🏡\n\nte dejo opciones aquí:\n👉 https://pago.com/inmuebles\n\nsi quieres, te agendo visita sin compromiso" }
+    ]
+  }
+
+];
+
+let uploadedTestimonials = [];
+let editUploadedTestimonials = [];
+
+function toggleMarketplace() {
+  const modal = document.getElementById("marketModal");
+
+  modal.classList.toggle("active");
+
+  if (modal.classList.contains("active")) {
+    renderMarketplace();
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const modal = document.getElementById("marketModal");
+
+  if (!modal) return;
+
+  modal.addEventListener("click", function(e) {
+    if (e.target === this) {
+      this.style.display = "none";
+    }
+  });
+});
+
+function renderMarketplace() {
+  const container = document.getElementById("marketplace");
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  container.innerHTML = `
+    <h2>🛍️ Marketplace</h2>
+    <div class="market-grid">
+      ${templates.map(t => `
+        <div class="market-card" onclick="openPreview(${t.id})">
+
+          <div class="market-preview"
+            style="background-image:url('${t.preview}')">
+          </div>
+
+          <div class="market-content">
+            <div class="market-title">${t.name}</div>
+            <div class="market-desc">${t.desc}</div>
+
+            <div class="market-footer">
+              <span class="market-price">${t.price}</span>
+              <button class="market-btn"
+                onclick="event.stopPropagation(); useTemplate(${t.id})">
+                Usar
+              </button>
+            </div>
+          </div>
+
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
+function openPreview(id) {
+  const t = templates.find(x => x.id === id);
+  if (!t) return;
+
+  const modal = document.getElementById("previewModal");
+  const chat = document.getElementById("previewChat");
+
+  modal.style.display = "flex";
+  chat.innerHTML = "";
+
+  let i = 0;
+
+  function nextMessage() {
+    if (i >= t.demo.length) return;
+
+    const msg = t.demo[i];
+
+    const div = document.createElement("div");
+    div.className = "preview-msg " + (msg.role === "user" ? "preview-user" : "preview-bot");
+    div.innerText = msg.text;
+
+    chat.appendChild(div);
+
+    chat.scrollTop = chat.scrollHeight;
+
+    i++;
+
+    setTimeout(nextMessage, 800);
+  }
+
+  nextMessage();
+}
+
+function closePreview() {
+  document.getElementById("previewModal").style.display = "none";
+}
+
+
+
+function useTemplate(id) {
+  const t = templates.find(x => x.id === id);
+  if (!t) return;
+
+  // abrir modal correcto
+  const modal = document.getElementById("createModal");
+  modal.classList.add("active");
+  modal.style.display = "flex";
+
+  // autocompletar campos
+  document.getElementById("name").value = t.data?.name || "";
+  document.getElementById("welcome").value = t.data?.welcomeMessage || "";
+  document.getElementById("info").value = t.data?.productInfo || "";
+  document.getElementById("link").value = t.data?.productLink || "";
+
+  // cerrar marketplace opcional
+  document.getElementById("marketModal").classList.remove("active");
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function toggleForm() {
+  const form = document.getElementById("formContainer");
+  form.style.display = form.style.display === "none" ? "block" : "none";
+}
+
+function previewLogo() {
+  const file = document.getElementById("logoFile").files[0];
+  const preview = document.getElementById("logoPreview");
+
+  if (file) {
+    preview.src = URL.createObjectURL(file);
+    preview.style.display = "block";
+  }
+}
+
+async function loadBusinesses() {
+  const list = document.getElementById("list");
+  list.innerHTML = "Cargando...";
+
+  try {
+    const res = await fetch(`${API}/my-businesses`, {
+      headers: { Authorization: "Bearer " + token } // 🔥 FIX REAL AQUÍ
+    });
+
+    const data = await res.json();
+
+    if (!Array.isArray(data) || data.length === 0) {
+      list.innerHTML = `<div class="empty">Aún no tienes negocios</div>`;
+      return;
+    }
+
+    list.innerHTML = "";
+
+    data.forEach(b => {
+
+      const chatLink = `${window.location.origin}/${b.slug}`;
+
+      const div = document.createElement("div");
+      div.className = "card business";
+
+      div.innerHTML = `
+        <div>
+          <b>${b.name}</b>
+          ${b.isTemplate ? '<span class="template-tag">TEMPLATE</span>' : ''}
+          <br/>
+          <small>${chatLink}</small>
+        </div>
+
+        <div class="links">
+          <a href="${chatLink}">💬 Chat</a>
+          <a href="/crm/${b.slug}">📊 CRM</a>
+          <button onclick="copyLink('${chatLink}')">📋 Copiar</button>
+          <button onclick="viewAnalytics('${b._id}')">📊 Stats</button>
+          <button onclick='openEdit(${JSON.stringify(b)})'>✏️ Editar</button>
+          <button onclick="deleteBusiness('${b._id}')">🗑️ Eliminar</button>
+          ${b.isTemplate ? '' : `<button onclick="cloneTemplate('${b._id}')">🧬 Clonar</button>`}
+        </div>
+      `;
+
+      list.appendChild(div);
+    });
+
+  } catch {
+    list.innerHTML = "❌ Error de red";
+  }
+}
+
+async function createBusiness() { 
+  const msg = document.getElementById("createMsg");
+  const file = document.getElementById("logoFile").files[0];
+
+  let logoBase64 = "";
+
+  if (file) {
+    logoBase64 = await toBase64(file);
+  }
+
+  const slugInput = document.getElementById("slug");
+  slugInput.classList.remove("input-error");
+
+  // 🔥 NUEVO: selector de país
+  const countryCode = document.getElementById("countryCode").value;
+  const waNumber = document.getElementById("wa").value;
+
+  const fullNumber = countryCode + waNumber;
+
+  // 🔥 NUEVO: mensaje WhatsApp del cliente
+  const waMessage = document.getElementById("waMessage").value;
+
+  // 🔥 ACTUALIZADO: TESTIMONIOS (USANDO EL ARRAY DE R2 SI EXISTE, O EL INPUT)
+  // Esta parte prioriza los archivos subidos a R2 que guardamos en la variable global
+  let testimonials = [];
+  
+  if (typeof uploadedTestimonials !== 'undefined' && uploadedTestimonials.length > 0) {
+    // Si usaste el nuevo sistema de archivos R2
+    testimonials = uploadedTestimonials;
+  } else {
+    // Fallback: Si por alguna razón usaste el campo de texto (compatibilidad)
+    const testimonialsRaw = document
+      .getElementById("testimonials")
+      .value
+      .split("\n")
+      .filter(t => t.trim() !== "");
+
+    testimonials = testimonialsRaw.map(t => {
+      const link = t.trim();
+      // Detectar si es imagen (incluye detección de R2 por extensión)
+      if (link.match(/\.(jpeg|jpg|gif|png|webp)$/i) || link.startsWith("data:image") || link.includes("googleusercontent.com")) {
+        return { type: "image", content: link };
+      }
+      // Detectar si es video
+      if (link.includes("youtube.com") || link.includes("youtu.be") || link.match(/\.(mp4|webm|ogg)$/i)) {
+        return { type: "video", content: link };
+      }
+      // Por defecto es texto
+      return { type: "text", content: link };
+    });
+  }
+
+  const data = {
+    name: document.getElementById("name").value,
+    slug: slugInput.value,
+    logo: logoBase64,
+    primaryColor: document.getElementById("color").value,
+    welcomeMessage: document.getElementById("welcome").value,
+    productInfo: document.getElementById("info").value,
+    productLink: document.getElementById("link").value,
+    whatsappNumber: fullNumber,
+    waMessage: waMessage,
+
+    // 🔥 NUEVO
+    testimonials: testimonials
+  };
+
+  msg.innerText = "Creando...";
+
+  try {
+    const res = await fetch(`${API}/business`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + token // 🔥 FIX REAL AQUÍ
+      },
+      body: JSON.stringify(data)
+    });
+
+    const text = await res.text();
+
+    let result;
+    try {
+      result = JSON.parse(text);
+    } catch (e) {
+      console.error("RESPUESTA NO JSON:", text);
+      msg.innerText = "❌ Error de red";
+      return;
+    }
+
+    if (result.business) {
+      msg.innerHTML = `✅ Negocio creado<br/><br/>
+      💬 <a href="${result.url}" target="_blank">${result.url}</a>`;
+
+      document.getElementById("name").value = "";
+      document.getElementById("slug").value = "";
+      document.getElementById("welcome").value = "";
+      document.getElementById("info").value = "";
+      document.getElementById("link").value = "";
+      document.getElementById("wa").value = "";
+      document.getElementById("waMessage").value = "";
+      document.getElementById("testimonials").value = ""; // 🔥 LIMPIAR
+      document.getElementById("logoFile").value = "";
+      
+      // Limpiar lista de R2 si existe
+      if (document.getElementById("testimonialsList")) {
+          document.getElementById("testimonialsList").innerHTML = "";
+          uploadedTestimonials = []; 
+      }
+
+      document.getElementById("countryCode").value = "57";
+
+      const preview = document.getElementById("logoPreview");
+      preview.src = "";
+      preview.style.display = "none";
+
+      const form = document.getElementById("formContainer");
+      if (form) form.style.display = "none";
+
+      loadBusinesses();
+    }
+    else {
+      if (result.error === "Slug ya existe") {
+        slugInput.classList.add("input-error");
+
+        const base = slugInput.value.replace(/[^a-z0-9]/gi, "").toLowerCase();
+        const sugerido = base + Math.floor(Math.random() * 999);
+
+        msg.innerHTML = `
+          <span class="error-text">
+            ❌ Ese slug ya está en uso<br/>
+            👉 Prueba este: <b>${sugerido}</b>
+            <br/><br/>
+            <button onclick="usarSlug('${sugerido}')" 
+              style="margin-top:5px; padding:6px 10px; border:none; border-radius:6px; background:#25D366; color:white; cursor:pointer;">
+              Usar este
+            </button>
+          </span>
+        `;
+      } 
+      else {
+        msg.innerText = result.error || "Error";
+      }
+    }
+
+  } catch (err) {
+    console.error("CREATE BUSINESS ERROR:", err);
+    msg.innerText = "❌ Error de red";
+  }
+}
+
+/* 🔥 NUEVO ANALYTICS PRO */
+async function viewAnalytics(id) {
+  const modal = document.getElementById("analyticsModal");
+  modal.style.display = "flex";
+
+  const res = await fetch(`${API}/analytics/${id}`, {
+    headers: { Authorization: "Bearer " + token }
+  });
+
+  const data = await res.json();
+
+  document.getElementById("a_leads").innerText = data.totalLeads;
+  document.getElementById("a_msgs").innerText = data.totalMessages;
+  document.getElementById("a_attention").innerText = data.stages.attention;
+  document.getElementById("a_interest").innerText = data.stages.interest;
+  document.getElementById("a_desire").innerText = data.stages.desire;
+  document.getElementById("a_action").innerText = data.stages.action;
+}
+
+/* 🔥 NUEVO ANALYTICS PRO */
+async function viewAnalytics(id) {
+  const modal = document.getElementById("analyticsModal");
+  modal.style.display = "flex";
+
+  const res = await fetch(`${API}/analytics/${id}`, {
+    headers: { Authorization: "Bearer " + token }
+  });
+
+  const data = await res.json();
+
+  document.getElementById("a_leads").innerText = data.totalLeads;
+  document.getElementById("a_msgs").innerText = data.totalMessages;
+  document.getElementById("a_attention").innerText = data.stages.attention;
+  document.getElementById("a_interest").innerText = data.stages.interest;
+  document.getElementById("a_desire").innerText = data.stages.desire;
+  document.getElementById("a_action").innerText = data.stages.action;
+}
+
+async function cloneTemplate(id) {
+  const res = await fetch(`${API}/clone-template/${id}`, {
+    method: "POST",
+    headers: { Authorization: "Bearer " + token }
+  });
+
+  const data = await res.json();
+
+  if (data.business) {
+    alert("🚀 Clonado correctamente");
+    loadBusinesses();
+  } else {
+    alert("❌ Error al clonar");
+  }
+}
+
+async function editBusiness(id) {
+  const name = prompt("Nuevo nombre:");
+  if (!name) return;
+
+  const res = await fetch(`${API}/business/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + token
+    },
+    body: JSON.stringify({ name })
+  });
+
+  const data = await res.json();
+
+  if (data.business) {
+    alert("✅ Actualizado");
+    loadBusinesses();
+  } else {
+    alert("❌ Error");
+  }
+}
+
+
+
+async function deleteBusiness(id) {
+  const confirmDelete = confirm("¿Eliminar este negocio?");
+  if (!confirmDelete) return;
+
+  const res = await fetch(`${API}/business/${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: "Bearer " + token
+    }
+  });
+
+  const data = await res.json();
+
+  if (data.message) {
+    alert("🗑️ Eliminado");
+    loadBusinesses();
+  } else {
+    alert("❌ Error eliminando");
+  }
+}
+
+// =========================
+// ✏️ NUEVO SISTEMA EDIT REAL
+// =========================
+let editingId = null;
+
+function openEdit(business) {
+  editingId = business._id;
+
+  // 🔥 abrir modal en vez de bloque en página
+  const modal = document.getElementById("editModal");
+  modal.style.display = "flex";
+
+  // llenar datos
+  document.getElementById("edit_name").value = business.name || "";
+  document.getElementById("edit_slug").value = business.slug || "";
+  document.getElementById("edit_color").value = business.primaryColor || "#25D366";
+  document.getElementById("edit_welcome").value = business.welcomeMessage || "";
+  document.getElementById("edit_info").value = business.productInfo || "";
+  document.getElementById("edit_link").value = business.productLink || "";
+  document.getElementById("edit_wa").value = business.whatsappNumber || "";
+
+  // logo preview
+  const preview = document.getElementById("edit_logoPreview");
+
+  if (business.logo) {
+    preview.src = business.logo;
+    preview.style.display = "block";
+  } else {
+    preview.src = "";
+    preview.style.display = "none";
+  }
+}
+
+// =========================
+// 🔥 PREVIEW EDIT LOGO
+// =========================
+function previewEditLogo() {
+  const file = document.getElementById("edit_logoFile").files[0];
+  const preview = document.getElementById("edit_logoPreview");
+
+  if (file) {
+    preview.src = URL.createObjectURL(file);
+    preview.style.display = "block";
+  }
+}
+
+async function updateBusiness() {
+  const msg = document.getElementById("editMsg");
+
+  const file = document.getElementById("edit_logoFile").files[0];
+  let logoBase64 = "";
+
+  if (file) {
+    logoBase64 = await toBase64(file);
+  }
+
+  const slugInput = document.getElementById("edit_slug");
+  slugInput.classList.remove("input-error");
+
+  // 🔥 NUEVO: selector de país
+  const countryCode = document.getElementById("edit_countryCode").value;
+  const waNumber = document.getElementById("edit_wa").value;
+
+  const fullNumber = countryCode + waNumber;
+
+  // 🔥 NUEVO: mensaje automático WhatsApp
+  const waMessage = document.getElementById("edit_waMessage").value;
+
+  // 🔥 SOLUCIÓN CRÍTICA: PROCESADOR DE TESTIMONIOS EN EDICIÓN (INTEGRADO CON R2)
+  let testimonials = [];
+  
+  // 1. Capturamos lo que haya en el campo de texto (links manuales o existentes)
+  const testimonialsRaw = document
+    .getElementById("edit_testimonials")
+    .value
+    .split("\n")
+    .filter(t => t.trim() !== "");
+
+  const manualTestimonials = testimonialsRaw.map(t => {
+    const link = t.trim();
+    // Detectar Imagen (Incluye links de R2 y Google User Content)
+    if (link.match(/\.(jpeg|jpg|gif|png|webp)$/i) || link.startsWith("data:image") || link.includes("googleusercontent.com")) {
+      return { type: "image", content: link };
+    }
+    // Detectar Video
+    if (link.includes("youtube.com") || link.includes("youtu.be") || link.match(/\.(mp4|webm|ogg)$/i)) {
+      return { type: "video", content: link };
+    }
+    return { type: "text", content: link };
+  });
+
+  // 2. Combinamos con los nuevos archivos recién subidos a R2 durante esta edición
+  if (typeof editUploadedTestimonials !== 'undefined' && editUploadedTestimonials.length > 0) {
+    testimonials = [...manualTestimonials, ...editUploadedTestimonials];
+  } else {
+    testimonials = manualTestimonials;
+  }
+
+  const data = {
+    name: document.getElementById("edit_name").value,
+    slug: slugInput.value,
+    primaryColor: document.getElementById("edit_color").value,
+    welcomeMessage: document.getElementById("edit_welcome").value,
+    productInfo: document.getElementById("edit_info").value,
+    productLink: document.getElementById("edit_link").value,
+
+    whatsappNumber: fullNumber,
+    waMessage: waMessage,
+
+    // 🔥 AHORA SÍ LLEGA COMO OBJETO
+    testimonials: testimonials
+  };
+
+  if (file) {
+    data.logo = logoBase64;
+  }
+
+  msg.innerText = "Guardando...";
+
+  try {
+    const res = await fetch(`${API}/business/${editingId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + token 
+      },
+      body: JSON.stringify(data)
+    });
+
+    const result = await res.json();
+
+    if (result.business) {
+      msg.innerText = "✅ Actualizado correctamente";
+      
+      // Limpiar estados de edición
+      if (document.getElementById("edit_testimonialsList")) {
+          document.getElementById("edit_testimonialsList").innerHTML = "";
+          editUploadedTestimonials = [];
+      }
+      
+      document.getElementById("editModal").style.display = "none";
+      loadBusinesses();
+    } else {
+      if (result.error === "Slug ya existe") {
+        slugInput.classList.add("input-error");
+
+        const base = slugInput.value.replace(/[^a-z0-9]/gi, "").toLowerCase();
+        const sugerido = base + Math.floor(Math.random() * 999);
+
+        msg.innerHTML = `
+          <span class="error-text">
+            ❌ Ese slug ya está en uso<br/>
+            👉 Prueba este: <b>${sugerido}</b>
+            <br/><br/>
+            <button onclick="usarSlugEdit('${sugerido}')" 
+              style="margin-top:5px; padding:6px 10px; border:none; border-radius:6px; background:#25D366; color:white; cursor:pointer;">
+              Usar este
+            </button>
+          </span>
+        `;
+      } 
+      else {
+        msg.innerText = result.error || "Error";
+      }
+    }
+
+  } catch {
+    msg.innerText = "❌ Error de red";
+  }
+}
+// =========================
+// ❌ CANCELAR EDICIÓN (MODAL PRO)
+// =========================
+function cancelEdit() {
+  const modal = document.getElementById("editModal");
+
+  if (modal) {
+    modal.style.display = "none";
+  }
+
+  // limpiar campos
+  const name = document.getElementById("edit_name");
+  const slug = document.getElementById("edit_slug");
+  const welcome = document.getElementById("edit_welcome");
+  const info = document.getElementById("edit_info");
+  const link = document.getElementById("edit_link");
+  const wa = document.getElementById("edit_wa");
+
+  if (name) name.value = "";
+  if (slug) slug.value = "";
+  if (welcome) welcome.value = "";
+  if (info) info.value = "";
+  if (link) link.value = "";
+  if (wa) wa.value = "";
+
+  const preview = document.getElementById("edit_logoPreview");
+  if (preview) {
+    preview.src = "";
+    preview.style.display = "none";
+  }
+}
+function usarSlug(slug) {
+  const input = document.getElementById("slug");
+  input.value = slug;
+  input.classList.remove("input-error");
+}
+
+function usarSlugEdit(slug) {
+  const input = document.getElementById("edit_slug");
+  input.value = slug;
+  input.classList.remove("input-error");
+}
+
+function toggleCreateModal() {
+  const m = document.getElementById("createModal");
+
+  if (!m) return;
+
+  m.classList.toggle("active");
+}
+
+
+
+
+function closeAnalytics() {
+  document.getElementById("analyticsModal").style.display = "none";
+}
+
+document.getElementById("analyticsModal").addEventListener("click", function(e) {
+  if (e.target === this) {
+    this.style.display = "none";
+  }
+});
+
+function toBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = error => reject(error);
+  });
+}
+
+function copyLink(link) {
+  navigator.clipboard.writeText(link);
+  alert("✅ Link copiado:\n" + link);
+}
+
+function logout() {
+  localStorage.removeItem("token");
+  window.location.href = "/";
+}
+
+loadBusinesses();
+
+function openCreateModal() {
+  const m = document.getElementById("createModal");
+  if (!m) return;
+
+  m.style.display = "flex";
+  m.classList.add("active");
+}
+
+function closeCreateModal() {
+  const m = document.getElementById("createModal");
+  if (!m) return;
+
+  m.classList.remove("active");
+  m.style.display = "none";
+
+  // 🔥 limpia cualquier bloqueo visual
+  m.style.pointerEvents = "none";
+
+  setTimeout(() => {
+    m.style.pointerEvents = "auto";
+  }, 50);
+}
+
+window.closeCreateModal = closeCreateModal;
+
+window.closeCreateModal = closeCreateModal;
+window.toggleCreateModal = toggleCreateModal;
+
+async function uploadToR2() {
+  const fileInput = document.getElementById("testimonialFile");
+  const list = document.getElementById("testimonialsList");
+  const status = document.getElementById("createMsg");
+  
+  if (!fileInput.files.length) return;
+
+  status.innerText = "Subiendo archivos a R2...";
+  
+  for (const file of fileInput.files) {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await fetch(`${API}/upload-testimonial`, {
+        method: "POST",
+        body: formData
+      });
+
+      const data = await res.json();
+
+      if (data.url) {
+        const type = file.type.startsWith("video") ? "video" : "image";
+        uploadedTestimonials.push({ type, content: data.url });
+
+        // Miniatura de previsualización
+        const thumb = document.createElement("div");
+        thumb.style.cssText = "width: 50px; height: 50px; border-radius: 5px; overflow: hidden; background: #eee; position: relative;";
+        
+        if (type === "image") {
+          thumb.innerHTML = `<img src="${data.url}" style="width: 100%; height: 100%; object-fit: cover;">`;
+        } else {
+          thumb.innerHTML = `<div style="display:flex; align-items:center; justify-content:center; height:100%; font-size:10px;">🎥</div>`;
+        }
+        
+        list.appendChild(thumb);
+      }
+    } catch (err) {
+      console.error("Error subiendo archivo:", err);
+    }
+  }
+
+  // Actualizamos el valor del input oculto para que createBusiness() lo tome
+  document.getElementById("testimonials").value = uploadedTestimonials
+    .map(t => t.content)
+    .join("\n");
+    
+  status.innerText = "✅ Archivos listos";
+}
+
+async function uploadEditToR2() {
+  const fileInput = document.getElementById("edit_testimonialFile");
+  const list = document.getElementById("edit_testimonialsList");
+  const status = document.getElementById("editMsg");
+  
+  if (!fileInput.files.length) return;
+
+  status.innerText = "Subiendo archivos a R2...";
+  status.style.color = "#fbbf24";
+  
+  for (const file of fileInput.files) {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await fetch(`${API}/upload-testimonial`, {
+        method: "POST",
+        body: formData
+      });
+
+      const data = await res.json();
+
+      if (data.url) {
+        const type = file.type.startsWith("video") ? "video" : "image";
+        editUploadedTestimonials.push({ type, content: data.url });
+
+        // Miniatura
+        const thumb = document.createElement("div");
+        thumb.style.cssText = "width: 50px; height: 50px; border-radius: 5px; overflow: hidden; background: #0f172a; border: 1px solid #334155; position: relative;";
+        
+        if (type === "image") {
+          thumb.innerHTML = `<img src="${data.url}" style="width: 100%; height: 100%; object-fit: cover;">`;
+        } else {
+          thumb.innerHTML = `<div style="display:flex; align-items:center; justify-content:center; height:100%; font-size:10px;">🎥</div>`;
+        }
+        
+        list.appendChild(thumb);
+      }
+    } catch (err) {
+      console.error("Error subiendo archivo:", err);
+    }
+  }
+
+  // Sincronizamos con el input oculto
+  document.getElementById("edit_testimonials").value = editUploadedTestimonials
+    .map(t => t.content)
+    .join("\n");
+    
+  status.innerText = "✅ Archivos cargados correctamente";
+  status.style.color = "#22c55e";
+}
+</script>
+
+</body>
+</html>
