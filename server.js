@@ -1,10 +1,5 @@
 require("dotenv").config();
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "https://prestigecloser.com");
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
-  next();
-});
+
 
 const express = require("express");
 const mongoose = require("mongoose");
@@ -50,6 +45,13 @@ const s3 = new S3Client({
 });
 
 const upload = multer({ storage: multer.memoryStorage() });
+
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "https://prestigecloser.com");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+  next();
+});
 
 // =========================
 // 🧱 MIDDLEWARES
