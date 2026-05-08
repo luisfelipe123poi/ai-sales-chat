@@ -915,9 +915,13 @@ app.post("/business", auth, async (req, res) => {
 
     console.log("🔥 TESTIMONIOS GUARDADOS:", business.testimonials);
 
+    // 🔥 NUEVO: detectar dominio automáticamente
+    const protocol = req.headers["x-forwarded-proto"] || req.protocol;
+    const host = req.get("host");
+
     res.json({
       message: "Negocio creado",
-      url: `https://ai-sales-chat.onrender.com/${slug}`, // Ajusta según tu dominio
+      url: `${protocol}://${host}/${slug}`, // 🔥 AHORA USA TU DOMINIO REAL
       business
     });
 
