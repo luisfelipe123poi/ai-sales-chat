@@ -921,7 +921,7 @@ app.post("/business", auth, async (req, res) => {
 
     res.json({
       message: "Negocio creado",
-      url: `${protocol}://${host}/${slug}`, // 🔥 AHORA USA TU DOMINIO REAL
+      url: `${protocol}://${host}/chat/${slug}`,
       business
     });
 
@@ -958,7 +958,7 @@ app.post("/clone-template/:id", auth, async (req, res) => {
     res.json({
       message: "Template clonado",
       business: newBusiness,
-      url: `https://ai-sales-chat.onrender.com/${newBusiness.slug}`
+      url: `${protocol}://${host}/chat/${newBusiness.slug}`
     });
 
   } catch (error) {
