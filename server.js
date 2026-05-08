@@ -1422,6 +1422,10 @@ app.listen(PORT, () => {
 // 🌐 PÁGINAS
 // =========================
 
+// =========================
+// 🌐 PÁGINAS
+// =========================
+
 app.use(express.static("public"));
 
 // CRM
@@ -1438,4 +1442,7 @@ app.get("/chat/:slug", (req, res) => {
 app.get("/:slug", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "chat.html"));
 });
+
+
+
 
