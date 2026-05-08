@@ -798,7 +798,6 @@ Si necesitas ayuda, también puedo guiarte 👀`;
   return "Cuéntame más 👀";
 }
 
-
 // =========================
 // 🟢 HOME
 // =========================
@@ -917,12 +916,11 @@ app.post("/business", auth, async (req, res) => {
     console.log("🔥 TESTIMONIOS GUARDADOS:", business.testimonials);
 
     // 🔥 NUEVO: detectar dominio automáticamente
-    const protocol = req.headers["x-forwarded-proto"] || req.protocol;
-    const host = req.get("host");
+    const BASE_URL = process.env.BASE_URL || "https://prestigecloser.com";
 
     res.json({
       message: "Negocio creado",
-      url: `${protocol}://${host}/chat/${slug}`,
+      url: `${BASE_URL}/chat/${slug}`,
       business
     });
 
