@@ -916,12 +916,11 @@ app.post("/business", auth, async (req, res) => {
     console.log("🔥 TESTIMONIOS GUARDADOS:", business.testimonials);
 
     // 🔥 NUEVO: detectar dominio automáticamente
-    const protocol = req.headers["x-forwarded-proto"] || req.protocol;
-    const host = req.get("host");
+    const BASE_URL = process.env.BASE_URL || "https://prestigecloser.com";
 
     res.json({
       message: "Negocio creado",
-      url: `${protocol}://${host}/chat/${slug}`,
+      url: `${BASE_URL}/chat/${slug}`,
       business
     });
 
@@ -958,7 +957,7 @@ app.post("/clone-template/:id", auth, async (req, res) => {
     res.json({
       message: "Template clonado",
       business: newBusiness,
-      url: `https://ai-sales-chat.onrender.com/${newBusiness.slug}`
+      url: `${protocol}://${host}/chat/${newBusiness.slug}`
     });
 
   } catch (error) {
