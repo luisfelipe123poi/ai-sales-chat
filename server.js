@@ -798,6 +798,13 @@ Si necesitas ayuda, también puedo guiarte 👀`;
   return "Cuéntame más 👀";
 }
 
+app.use((req, res, next) => {
+  if (req.headers.host.includes("onrender.com")) {
+    return res.redirect(301, `https://prestigecloser.com${req.url}`);
+  }
+  next();
+});
+
 // =========================
 // 🟢 HOME
 // =========================
