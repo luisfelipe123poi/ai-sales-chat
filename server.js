@@ -872,7 +872,14 @@ app.post("/business", auth, async (req, res) => {
       testimonials: testimonialsRaw // Capturamos "testimonials" del front
     } = req.body;
 
-    const exists = await Business.findOne({ slug });
+    // 🔥 FIX CRÍTICO: LIMPIAR SLUG
+    let cleanSlug = (slug || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
+
+    const exists = await Business.findOne({ slug: cleanSlug });
     if (exists) {
       return res.json({ error: "Slug ya existe" });
     }
@@ -901,7 +908,7 @@ app.post("/business", auth, async (req, res) => {
 
     const business = await Business.create({
       name,
-      slug,
+      slug: cleanSlug, // 🔥 USAMOS EL SLUG LIMPIO
       logo,
       primaryColor,
       welcomeMessage,
@@ -921,7 +928,7 @@ app.post("/business", auth, async (req, res) => {
 
     res.json({
       message: "Negocio creado",
-      url: `${protocol}://${host}/${slug}`, // 🔥 AHORA USA TU DOMINIO REAL
+      url: `${protocol}://${host}/${cleanSlug}`, // 🔥 TAMBIÉN AQUÍ
       business
     });
 
@@ -1430,7 +1437,7 @@ app.listen(PORT, () => {
 // 🌐 PÁGINAS
 // =========================
 
-app.use(express.static("public"));
+
 
 // CRM
 app.get("/crm/:slug", (req, res) => {
@@ -1442,11 +1449,10 @@ app.get("/chat/:slug", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "chat.html"));
 });
 
-// 🔥 IMPORTANTE: esto SIEMPRE de último
+// 🔥 SIEMPRE ÚLTIMO
 app.get("/:slug", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "chat.html"));
 });
-
 
 
 
