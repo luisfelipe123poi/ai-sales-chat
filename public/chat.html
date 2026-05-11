@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chat</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-slate-950 text-white">
+
+<div class="max-w-2xl mx-auto h-screen flex flex-col">
+
+  <div class="p-4 border-b border-white/10">
+    <h1 id="bizName" class="text-2xl font-bold">
+      Chat
+    </h1>
+  </div>
+
+  <div id="messages" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
+
+  <div class="p-4 border-t border-white/10 flex gap-2">
+
+    <input
+      id="input"
+      class="flex-1 bg-slate-900 p-4 rounded-xl"
+      placeholder="Escribe..."
+    >
+
+    <button
+      onclick="sendMessage()"
+      class="bg-blue-600 px-6 rounded-xl"
+    >
+      Enviar
+    </button>
+
+  </div>
+
+</div>
+
+<script>
+
+const API = "https://ai-sales-chat.onrender.com";
+
+// =====================================
+// 🔥 DETECTAR SLUG
+// =====================================
+
+const pathParts = window.location.pathname.split("/");
+
+const slug = pathParts[pathParts.length - 1];
+
+let business = null;
+let leadId = null;
+let conversationId = null;
+
+// =====================================
+// DEBUG
+// =====================================
+
+console.log("🔥 URL:", window.location.href);
+
+console.log("🔥 PATHNAME:", window.location.pathname);
+
+console.log("🔥 PARTS:", pathParts);
+
+console.log("🔥 SLUG:", slug);
+
+// =====================================
+// VALIDAR SLUG
+// =====================================
+
+if(!slug || slug === "null"){
+
+  alert("Slug no encontrado en URL");
+
+  throw new Error("Slug no encontrado");
+}
+
+// =====================================
+// LOAD BUSINESS
+// =====================================
+
+async function loadBusiness(){
+
+  try{
+
+    console.log("🔥 CARGANDO NEGOCIO...");
+
+    console.log("🔥 URL NEGOCIO:", `${API}/business/${slug}`);
+
+    const res = await fetch(`${API}/business/${slug}`);
+
+    console.log("🔥 STATUS:", res.status);
+
+    if(!res.ok){
+
+      const errorText = await res.text();
+
+      console.log("❌ ERROR RAW:", errorText);
+
+      throw new Error("Error cargando negocio");
+    }
+
+    const text = await res.text();
+
+    console.log("🔥 RAW:", text);
+
+    if(!text){
+
+      throw new Error("Respuesta vacía");
+    }
+
+    business = JSON.parse(text);
+
+    console.log("🔥 BUSINESS:", business);
+
+    if(business.error){
+
+      alert(business.error);
+
+      return;
+    }
+
+    document.getElementById("bizName").innerText =
+      business.name || "Chat";
+
+    // =====================================
+    // 🔥 INICIAR CHAT AUTOMÁTICAMENTE
+    // =====================================
+
+    await startConversation();
+
+  }catch(err){
+
+    console.error("❌ LOAD BUSINESS ERROR:", err);
+
+    addMessage(
+      "❌ Negocio no encontrado o backend caído",
+      "bot"
+    );
+  }
+}
+
+loadBusiness();
+
+// =====================================
+// 🔥 START CONVERSATION
+// =====================================
+
+async function startConversation(){
+
+  try{
+
+    console.log("🔥 INICIANDO CONVERSACIÓN...");
+
+    const payload = {
+      message:"start",
+      businessId:business._id,
+      leadId,
+      conversationId
+    };
+
+    console.log("🔥 START PAYLOAD:", payload);
+
+    const res = await fetch(`${API}/chat`,{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify(payload)
+    });
+
+    console.log("🔥 START STATUS:", res.status);
+
+    const text = await res.text();
+
+    console.log("🔥 START RAW:", text);
+
+    if(!text){
+
+      console.log("❌ RESPUESTA VACÍA");
+
+      return;
+    }
+
+    const data = JSON.parse(text);
+
+    console.log("🔥 START DATA:", data);
+
+    if(data.error){
+
+      addMessage(data.error,"bot");
+
+      return;
+    }
+
+    leadId = data.leadId;
+
+    conversationId = data.conversationId;
+
+    console.log("🔥 LEAD ID:", leadId);
+
+    console.log("🔥 CONVERSATION ID:", conversationId);
+
+    if(data.reply){
+
+      addMessage(data.reply,"bot");
+    }
+
+  }catch(err){
+
+    console.error("❌ START ERROR:", err);
+
+    addMessage(
+      "❌ Error iniciando conversación",
+      "bot"
+    );
+  }
+}
+
+// =====================================
+// SEND MESSAGE
+// =====================================
+
+async function sendMessage(){
+
+  if(!business){
+
+    return alert("Negocio no cargado todavía");
+  }
+
+  const input = document.getElementById("input");
+
+  const message = input.value.trim();
+
+  if(!message) return;
+
+  addMessage(message,"user");
+
+  input.value = "";
+
+  try{
+
+    console.log("🔥 ENVIANDO MENSAJE");
+
+    const payload = {
+      message,
+      businessId:business._id,
+      leadId,
+      conversationId
+    };
+
+    console.log("🔥 PAYLOAD:", payload);
+
+    const res = await fetch(`${API}/chat`,{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify(payload)
+    });
+
+    console.log("🔥 CHAT STATUS:", res.status);
+
+    const text = await res.text();
+
+    console.log("🔥 CHAT RAW:", text);
+
+    if(!text){
+
+      addMessage(
+        "❌ Backend devolvió vacío",
+        "bot"
+      );
+
+      return;
+    }
+
+    const data = JSON.parse(text);
+
+    console.log("🔥 CHAT DATA:", data);
+
+    if(data.error){
+
+      addMessage(data.error,"bot");
+
+      return;
+    }
+
+    if(data.reply){
+
+      addMessage(data.reply,"bot");
+    }
+
+    leadId = data.leadId;
+
+    conversationId = data.conversationId;
+
+  }catch(err){
+
+    console.error("❌ SEND ERROR:", err);
+
+    addMessage(
+      "❌ Error conectando al backend",
+      "bot"
+    );
+  }
+}
+
+// =====================================
+// ADD MESSAGE
+// =====================================
+
+function addMessage(content,role){
+
+  const messages = document.getElementById("messages");
+
+  const div = document.createElement("div");
+
+  div.className =
+    role === "user"
+    ? "bg-blue-600 ml-auto p-4 rounded-2xl max-w-[80%]"
+    : "bg-white/10 p-4 rounded-2xl max-w-[80%]";
+
+  div.innerText = content;
+
+  messages.appendChild(div);
+
+  messages.scrollTop = messages.scrollHeight;
+}
+
+// =====================================
+// ENTER
+// =====================================
+
+document.getElementById("input").addEventListener("keydown",e=>{
+
+  if(e.key === "Enter"){
+
+    sendMessage();
+  }
+});
+
+</script>
+
+</body>
+</html>
