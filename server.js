@@ -1418,7 +1418,29 @@ app.post("/upload-testimonial", upload.single("file"), async (req, res) => {
   }
 });
 
+app.get("/business/:slug", async (req,res)=>{
 
+  try{
+
+    const business = await Business.findOne({
+      slug:req.params.slug
+    });
+
+    if(!business){
+      return res.status(404).json({
+        error:"Negocio no encontrado"
+      });
+    }
+
+    res.json(business);
+
+  }catch(err){
+
+    res.status(500).json({
+      error:"Error"
+    });
+  }
+});
 
 // =========================
 // 🚀 SERVER
