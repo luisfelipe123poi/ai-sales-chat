@@ -1456,5 +1456,8 @@ app.get("/dashboard/:slug", (req, res) => {
 });
 
 
-
+app.get("/test-crm", (req, res) => {
+  console.log("🔥 HIT TEST CRM");
+  res.send("OK CRM ROUTE WORKS");
+});
 
