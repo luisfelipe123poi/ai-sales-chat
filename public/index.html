@@ -66,6 +66,11 @@
       }
     }
 
+    .sidebar-scroll {
+      max-height: calc(100vh - 200px);
+      overflow-y: auto;
+    }
+
   </style>
 </head>
 
@@ -338,7 +343,7 @@ async function renderDashboard(){
 
   <div class="flex min-h-screen">
 
-    <aside class="w-[320px] glass border-r border-white/10 p-6 overflow-y-auto">
+    <aside class="w-[320px] h-screen glass border-r border-white/10 p-6 overflow-hidden">
 
       <div class="flex items-center justify-between mb-8">
 
@@ -363,49 +368,14 @@ async function renderDashboard(){
 
       </div>
 
-      <div class="space-y-3 mb-8">
-
-        <input
-          id="bizName"
-          placeholder="Nombre negocio"
-          class="w-full p-3 rounded-xl bg-slate-900 border border-slate-700"
-        />
-
-        <input
-          id="bizSlug"
-          placeholder="Slug"
-          class="w-full p-3 rounded-xl bg-slate-900 border border-slate-700"
-        />
-
-        <textarea
-          id="welcomeMessage"
-          placeholder="Mensaje bienvenida"
-          class="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 h-24"
-        ></textarea>
-
-        <textarea
-          id="productInfo"
-          placeholder="Producto"
-          class="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 h-24"
-        ></textarea>
-
-        <input
-          id="productLink"
-          placeholder="Link producto"
-          class="w-full p-3 rounded-xl bg-slate-900 border border-slate-700"
-        />
-
-        <input
-          id="whatsappNumber"
-          placeholder="WhatsApp"
-          class="w-full p-3 rounded-xl bg-slate-900 border border-slate-700"
-        />
+      <!-- 🔥 BOTÓN NUEVO NEGOCIO -->
+      <div class="mb-8">
 
         <button
-          onclick="createBusiness()"
-          class="w-full bg-emerald-500 hover:bg-emerald-600 p-4 rounded-2xl font-bold"
+          onclick="openCreateBusinessModal()"
+          class="w-full bg-emerald-500 hover:bg-emerald-600 transition p-4 rounded-2xl font-bold"
         >
-          Crear Negocio
+          ➕ Crear Nuevo Negocio
         </button>
 
       </div>
@@ -416,7 +386,7 @@ async function renderDashboard(){
           Mis negocios
         </h3>
 
-        <div id="businessList" class="space-y-3"></div>
+        <div id="businessList" class="space-y-3 sidebar-scroll pr-2"></div>
 
       </div>
 
@@ -477,9 +447,213 @@ async function renderDashboard(){
 
   </div>
 
+  <!-- 🔥 MODAL CREAR NEGOCIO -->
+  <div
+    id="createBusinessModal"
+    class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-50 p-6"
+  >
+
+    <div class="glass w-full max-w-2xl rounded-3xl p-6 max-h-[90vh] overflow-y-auto">
+
+      <div class="flex items-center justify-between mb-6">
+
+        <div>
+
+          <h2 class="text-2xl font-black">
+            ➕ Crear Negocio
+          </h2>
+
+          <p class="text-slate-400 text-sm mt-1">
+            Configura tu chat IA
+          </p>
+
+        </div>
+
+        <button
+          onclick="closeCreateBusinessModal()"
+          class="bg-red-500 w-10 h-10 rounded-xl font-bold"
+        >
+          ✕
+        </button>
+
+      </div>
+
+      <div class="space-y-4">
+
+        <input
+          id="bizName"
+          placeholder="Nombre negocio"
+          class="w-full p-3 rounded-xl bg-slate-900 border border-slate-700"
+        />
+
+        <input
+          id="bizSlug"
+          placeholder="Slug"
+          class="w-full p-3 rounded-xl bg-slate-900 border border-slate-700"
+        />
+
+        <!-- 🔥 FOTO PERFIL CHAT -->
+        <div class="glass rounded-2xl p-4 border border-white/10">
+
+          <div class="text-sm font-bold mb-3">
+            Foto perfil chat
+          </div>
+
+          <input
+            type="file"
+            id="logoFile"
+            accept="image/*"
+            onchange="previewLogo()"
+            class="w-full p-3 rounded-xl bg-slate-900 border border-slate-700"
+          />
+
+          <img
+            id="logoPreview"
+            class="w-24 h-24 rounded-2xl object-cover mt-4 hidden border border-white/10"
+          />
+
+        </div>
+
+        <!-- 🔥 COLOR CHAT -->
+        <div class="glass rounded-2xl p-4 border border-white/10">
+
+          <div class="text-sm font-bold mb-3">
+            Color principal chat
+          </div>
+
+          <input
+            type="color"
+            id="color"
+            value="#25D366"
+            class="w-full h-14 rounded-xl bg-slate-900 border border-slate-700 p-2"
+          />
+
+        </div>
+
+        <textarea
+          id="welcomeMessage"
+          placeholder="Mensaje bienvenida"
+          class="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 h-24"
+        ></textarea>
+
+        <textarea
+          id="productInfo"
+          placeholder="Producto"
+          class="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 h-24"
+        ></textarea>
+
+        <input
+          id="productLink"
+          placeholder="Link producto"
+          class="w-full p-3 rounded-xl bg-slate-900 border border-slate-700"
+        />
+
+        <!-- 🔥 SELECTOR PAÍS -->
+        <select
+          id="countryCode"
+          class="w-full p-3 rounded-xl bg-slate-900 border border-slate-700"
+        >
+
+          <option value="57">🇨🇴 Colombia (+57)</option>
+          <option value="58">🇻🇪 Venezuela (+58)</option>
+          <option value="51">🇵🇪 Perú (+51)</option>
+          <option value="52">🇲🇽 México (+52)</option>
+          <option value="54">🇦🇷 Argentina (+54)</option>
+          <option value="56">🇨🇱 Chile (+56)</option>
+          <option value="593">🇪🇨 Ecuador (+593)</option>
+          <option value="591">🇧🇴 Bolivia (+591)</option>
+          <option value="595">🇵🇾 Paraguay (+595)</option>
+          <option value="598">🇺🇾 Uruguay (+598)</option>
+
+          <option value="1">🇺🇸 Estados Unidos (+1)</option>
+          <option value="34">🇪🇸 España (+34)</option>
+          <option value="55">🇧🇷 Brasil (+55)</option>
+
+        </select>
+
+        <input
+          id="whatsappNumber"
+          placeholder="WhatsApp (3001234567)"
+          class="w-full p-3 rounded-xl bg-slate-900 border border-slate-700"
+        />
+
+        <!-- 🔥 MENSAJE WHATSAPP -->
+        <textarea
+          id="waMessage"
+          placeholder="Mensaje automático de WhatsApp"
+          class="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 h-24"
+        ></textarea>
+
+        <!-- 🔥 TESTIMONIOS -->
+        <div class="glass rounded-2xl p-4 border border-dashed border-white/20">
+
+          <label class="text-sm font-bold block mb-3">
+            Añadir Testimonios (Imágenes/Videos)
+          </label>
+
+          <input
+            type="file"
+            id="testimonialFile"
+            accept="image/*,video/*"
+            multiple
+            onchange="uploadToR2()"
+            class="w-full p-3 rounded-xl bg-slate-900 border border-slate-700"
+          />
+
+          <div
+            id="testimonialsList"
+            class="flex gap-3 flex-wrap mt-4"
+          ></div>
+
+          <input
+            type="hidden"
+            id="testimonials"
+          />
+
+        </div>
+
+        <button
+          onclick="createBusiness()"
+          class="w-full bg-emerald-500 hover:bg-emerald-600 p-4 rounded-2xl font-bold"
+        >
+          Crear Negocio
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
   `;
 
   loadBusinesses();
+}
+
+// =========================================
+// 🔥 OPEN CREATE MODAL
+// =========================================
+
+function openCreateBusinessModal(){
+
+  const modal = document.getElementById("createBusinessModal");
+
+  modal.classList.remove("hidden");
+
+  modal.classList.add("flex");
+}
+
+// =========================================
+// 🔥 CLOSE CREATE MODAL
+// =========================================
+
+function closeCreateBusinessModal(){
+
+  const modal = document.getElementById("createBusinessModal");
+
+  modal.classList.add("hidden");
+
+  modal.classList.remove("flex");
 }
 
 // =========================================
@@ -1097,7 +1271,7 @@ async function openBusiness(business){
                     target="_blank"
                     class="bg-blue-500/20 text-blue-300 px-3 py-2 rounded-xl text-sm"
                   >
-                    🔗 Link Producto
+                    🔗 Link de pago
                   </a>
                 `
                 : ``
