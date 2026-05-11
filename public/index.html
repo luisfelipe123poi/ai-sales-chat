@@ -995,40 +995,40 @@ async function createBusiness(){
   try{
 
     // =========================================
-    // 🔥 CAPTURAR CAMPOS
+    // 🔥 CAPTURAR CAMPOS (FIX IDS NULL SAFE)
     // =========================================
 
     const name =
-      document.getElementById("name").value.trim();
+      document.getElementById("bizName")?.value?.trim();
 
     const slug =
-      document.getElementById("slug").value.trim();
+      document.getElementById("bizSlug")?.value?.trim();
 
     const welcomeMessage =
-      document.getElementById("welcome").value.trim();
+      document.getElementById("welcomeMessage")?.value?.trim();
 
     const productInfo =
-      document.getElementById("info").value.trim();
+      document.getElementById("productInfo")?.value?.trim();
 
     const productLink =
-      document.getElementById("link").value.trim();
+      document.getElementById("productLink")?.value?.trim();
 
     const primaryColor =
-      document.getElementById("color").value;
+      document.getElementById("color")?.value;
 
     const waMessage =
-      document.getElementById("waMessage").value.trim();
+      document.getElementById("waMessage")?.value?.trim();
 
     // =========================================
     // 🔥 WHATSAPP CON PREFIJO PAÍS
     // =========================================
 
     const countryCode =
-      document.getElementById("countryCode").value;
+      document.getElementById("countryCode")?.value || "";
 
     const phone =
-      document.getElementById("wa").value
-        .replace(/\D/g,"");
+      document.getElementById("whatsappNumber")?.value
+        ?.replace(/\D/g,"") || "";
 
     const whatsappNumber =
       countryCode + phone;
@@ -1053,7 +1053,7 @@ async function createBusiness(){
     let testimonials = [];
 
     const hiddenTestimonials =
-      document.getElementById("testimonials").value;
+      document.getElementById("testimonials")?.value;
 
     if(hiddenTestimonials){
 
@@ -1166,7 +1166,6 @@ async function createBusiness(){
     // =========================================
 
     if(data.error){
-
       return alert(data.error);
     }
 
@@ -1174,17 +1173,21 @@ async function createBusiness(){
     // 🔥 SUCCESS
     // =========================================
 
-    document.getElementById("createMsg").innerHTML = `
-      ✅ Negocio creado:
-      <br><br>
-      <a
-        href="${data.url}"
-        target="_blank"
-        style="color:#22c55e;font-weight:bold;"
-      >
-        ${data.url}
-      </a>
-    `;
+    const createMsgEl = document.getElementById("createMsg");
+
+    if(createMsgEl){
+      createMsgEl.innerHTML = `
+        ✅ Negocio creado:
+        <br><br>
+        <a
+          href="${data.url}"
+          target="_blank"
+          style="color:#22c55e;font-weight:bold;"
+        >
+          ${data.url}
+        </a>
+      `;
+    }
 
     alert("✅ Negocio creado");
 
@@ -1192,19 +1195,30 @@ async function createBusiness(){
     // 🔥 LIMPIAR FORM
     // =========================================
 
-    document.getElementById("name").value = "";
-    document.getElementById("slug").value = "";
-    document.getElementById("welcome").value = "";
-    document.getElementById("info").value = "";
-    document.getElementById("link").value = "";
-    document.getElementById("wa").value = "";
-    document.getElementById("waMessage").value = "";
+    const bizNameEl = document.getElementById("bizName");
+    const bizSlugEl = document.getElementById("bizSlug");
+    const welcomeEl = document.getElementById("welcomeMessage");
+    const infoEl = document.getElementById("productInfo");
+    const linkEl = document.getElementById("productLink");
+    const waEl = document.getElementById("whatsappNumber");
+    const waMsgEl = document.getElementById("waMessage");
+    const logoEl = document.getElementById("logoPreview");
+    const testimonialsEl = document.getElementById("testimonials");
+    const testimonialsListEl = document.getElementById("testimonialsList");
 
-    document.getElementById("testimonials").value = "";
+    if(bizNameEl) bizNameEl.value = "";
+    if(bizSlugEl) bizSlugEl.value = "";
+    if(welcomeEl) welcomeEl.value = "";
+    if(infoEl) infoEl.value = "";
+    if(linkEl) linkEl.value = "";
+    if(waEl) waEl.value = "";
+    if(waMsgEl) waMsgEl.value = "";
 
-    document.getElementById("testimonialsList").innerHTML = "";
+    if(testimonialsEl) testimonialsEl.value = "";
 
-    document.getElementById("logoPreview").src = "";
+    if(testimonialsListEl) testimonialsListEl.innerHTML = "";
+
+    if(logoEl) logoEl.src = "";
 
     // =========================================
     // 🔥 RECARGAR NEGOCIOS
