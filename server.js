@@ -1196,7 +1196,7 @@ app.put("/business/:id", auth, async (req, res) => {
       return res.status(404).json({ error: "No existe" });
     }
 
-    if (business.userId !== req.user.id) {
+    if (business.userId.toString() !== req.user.id) {
       return res.status(403).json({ error: "No autorizado" });
     }
 
