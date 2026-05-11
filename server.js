@@ -1479,6 +1479,18 @@ app.get("/:slug", async (req, res, next) => {
     return next();
   }
 
+  // 🚨 FIX CRÍTICO: evitar que API caiga aquí
+  // (esto evita que /business/:id o rutas similares entren como landing)
+  if (
+    slug.includes("business") ||
+    slug.includes("api") ||
+    slug.includes("upload") ||
+    slug.includes("conversation") ||
+    slug.includes("analytics")
+  ) {
+    return next();
+  }
+
   try {
 
     console.log("🔥 SLUG LANDING:", slug);
@@ -1503,7 +1515,6 @@ app.get("/:slug", async (req, res, next) => {
     return res.status(500).send("Error servidor");
   }
 });
-
 // =========================
 // 🚀 START
 // =========================
