@@ -1452,3 +1452,7 @@ app.get("/chat/:slug", (req, res) => {
 // =========================
 app.use(express.static(path.join(__dirname, "public")));
 
+// 🔥 SIEMPRE ÚLTIMO
+app.get("/:slug", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "chat.html"));
+});
