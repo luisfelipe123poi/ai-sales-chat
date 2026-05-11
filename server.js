@@ -1437,25 +1437,18 @@ app.listen(PORT, () => {
 // 🌐 PÁGINAS
 // =========================
 
-
-
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
-
+// CRM
 app.get("/crm/:slug", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "crm.html"));
 });
 
+// CHAT
 app.get("/chat/:slug", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "chat.html"));
 });
 
-app.get("/dashboard", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "dashboard.html"));
-});
+// =========================
+// 📦 STATIC (🔥 ESTO FALTABA)
+// =========================
+app.use(express.static(path.join(__dirname, "public")));
 
-// fallback final
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
