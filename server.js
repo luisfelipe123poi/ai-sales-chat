@@ -928,7 +928,7 @@ app.post("/business", auth, async (req, res) => {
 
     res.json({
       message: "Negocio creado",
-      url: `https://prestigecloser.com/chat.html?slug=${cleanSlug}`,
+      url: `${protocol}://${host}/chat.html?slug=${cleanSlug}`,
       business
     });
 
