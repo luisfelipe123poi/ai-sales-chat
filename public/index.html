@@ -507,6 +507,8 @@ function logout(){
   render();
 }
 
+
+
 // =========================================
 // 🏢 CREATE BUSINESS
 // =========================================
@@ -515,53 +517,377 @@ async function createBusiness(){
 
   try{
 
+    // =========================================
+    // 🔥 CAPTURAR CAMPOS
+    // =========================================
+
+    const name =
+      document.getElementById("name").value.trim();
+
+    const slug =
+      document.getElementById("slug").value.trim();
+
+    const welcomeMessage =
+      document.getElementById("welcome").value.trim();
+
+    const productInfo =
+      document.getElementById("info").value.trim();
+
+    const productLink =
+      document.getElementById("link").value.trim();
+
+    const primaryColor =
+      document.getElementById("color").value;
+
+    const waMessage =
+      document.getElementById("waMessage").value.trim();
+
+    // =========================================
+    // 🔥 WHATSAPP CON PREFIJO PAÍS
+    // =========================================
+
+    const countryCode =
+      document.getElementById("countryCode").value;
+
+    const phone =
+      document.getElementById("wa").value
+        .replace(/\D/g,"");
+
+    const whatsappNumber =
+      countryCode + phone;
+
+    // =========================================
+    // 🔥 LOGO
+    // =========================================
+
+    let logo = "";
+
+    const logoPreview =
+      document.getElementById("logoPreview");
+
+    if(logoPreview && logoPreview.src){
+      logo = logoPreview.src;
+    }
+
+    // =========================================
+    // 🔥 TESTIMONIOS
+    // =========================================
+
+    let testimonials = [];
+
+    const hiddenTestimonials =
+      document.getElementById("testimonials").value;
+
+    if(hiddenTestimonials){
+
+      try{
+
+        testimonials = JSON.parse(hiddenTestimonials);
+
+      }catch(e){
+
+        console.error("❌ ERROR TESTIMONIOS:",e);
+
+        testimonials = [];
+      }
+    }
+
+    // =========================================
+    // 🔥 VALIDACIONES
+    // =========================================
+
+    if(!name){
+      return alert("Falta nombre negocio");
+    }
+
+    if(!slug){
+      return alert("Falta slug");
+    }
+
+    if(!welcomeMessage){
+      return alert("Falta mensaje bienvenida");
+    }
+
+    if(!productInfo){
+      return alert("Falta info producto");
+    }
+
+    if(!productLink){
+      return alert("Falta link producto");
+    }
+
+    if(!whatsappNumber){
+      return alert("Falta WhatsApp");
+    }
+
+    // =========================================
+    // 🔥 PAYLOAD
+    // =========================================
+
     const payload = {
 
-      name:document.getElementById("bizName").value,
+      name,
 
-      slug:document.getElementById("bizSlug").value,
+      slug,
 
-      welcomeMessage:document.getElementById("welcomeMessage").value,
+      logo,
 
-      productInfo:document.getElementById("productInfo").value,
+      primaryColor,
 
-      productLink:document.getElementById("productLink").value,
+      welcomeMessage,
 
-      whatsappNumber:document.getElementById("whatsappNumber").value,
+      productInfo,
 
-      primaryColor:"#3b82f6",
+      productLink,
 
-      logo:"",
+      whatsappNumber,
 
-      testimonials:[]
+      waMessage,
+
+      testimonials
     };
 
+    console.log("🔥 PAYLOAD:",payload);
+
+    // =========================================
+    // 🔥 REQUEST
+    // =========================================
+
     const res = await fetch(`${API}/business`,{
+
       method:"POST",
+
       headers:{
         "Content-Type":"application/json",
         Authorization:`Bearer ${token}`
       },
+
       body:JSON.stringify(payload)
     });
 
-    const data = await res.json();
+    console.log("🔥 STATUS:",res.status);
+
+    const text = await res.text();
+
+    console.log("🔥 RAW:",text);
+
+    let data = {};
+
+    try{
+
+      data = JSON.parse(text);
+
+    }catch(err){
+
+      console.error("❌ JSON ERROR:",err);
+
+      return alert("Backend devolvió HTML o texto");
+    }
+
+    // =========================================
+    // 🔥 ERROR
+    // =========================================
 
     if(data.error){
+
       return alert(data.error);
     }
 
-    alert("Negocio creado");
+    // =========================================
+    // 🔥 SUCCESS
+    // =========================================
+
+    document.getElementById("createMsg").innerHTML = `
+      ✅ Negocio creado:
+      <br><br>
+      <a
+        href="${data.url}"
+        target="_blank"
+        style="color:#22c55e;font-weight:bold;"
+      >
+        ${data.url}
+      </a>
+    `;
+
+    alert("✅ Negocio creado");
+
+    // =========================================
+    // 🔥 LIMPIAR FORM
+    // =========================================
+
+    document.getElementById("name").value = "";
+    document.getElementById("slug").value = "";
+    document.getElementById("welcome").value = "";
+    document.getElementById("info").value = "";
+    document.getElementById("link").value = "";
+    document.getElementById("wa").value = "";
+    document.getElementById("waMessage").value = "";
+
+    document.getElementById("testimonials").value = "";
+
+    document.getElementById("testimonialsList").innerHTML = "";
+
+    document.getElementById("logoPreview").src = "";
+
+    // =========================================
+    // 🔥 RECARGAR NEGOCIOS
+    // =========================================
 
     loadBusinesses();
 
   }catch(err){
 
-    console.error(err);
+    console.error("❌ CREATE ERROR:",err);
 
     alert("Error creando negocio");
   }
 }
+
+// =========================================
+// 🖼 PREVIEW LOGO
+// =========================================
+
+function previewLogo(){
+
+  const file =
+    document.getElementById("logoFile").files[0];
+
+  if(!file) return;
+
+  const reader = new FileReader();
+
+  reader.onload = e=>{
+
+    document.getElementById("logoPreview").src =
+      e.target.result;
+  };
+
+  reader.readAsDataURL(file);
+}
+
+// =========================================
+// ☁️ UPLOAD TESTIMONIALS TO R2
+// =========================================
+
+async function uploadToR2(){
+
+  const files =
+    document.getElementById("testimonialFile").files;
+
+  if(!files.length) return;
+
+  const list =
+    document.getElementById("testimonialsList");
+
+  let testimonials = [];
+
+  try{
+
+    for(const file of files){
+
+      const formData = new FormData();
+
+      formData.append("file",file);
+
+      const res = await fetch(`${API}/upload-testimonial`,{
+        method:"POST",
+        body:formData
+      });
+
+      const data = await res.json();
+
+      console.log("🔥 R2 FILE:",data);
+
+      if(data.url){
+
+        // =========================================
+        // 🔥 DETECTAR TYPE
+        // =========================================
+
+        let type = "text";
+
+        if(file.type.startsWith("image/")){
+          type = "image";
+        }
+
+        if(file.type.startsWith("video/")){
+          type = "video";
+        }
+
+        // =========================================
+        // 🔥 PUSH TESTIMONIAL
+        // =========================================
+
+        testimonials.push({
+          type,
+          content:data.url
+        });
+
+        // =========================================
+        // 🔥 PREVIEW
+        // =========================================
+
+        const div = document.createElement("div");
+
+        div.style.width = "80px";
+        div.style.height = "80px";
+        div.style.borderRadius = "10px";
+        div.style.overflow = "hidden";
+        div.style.border = "1px solid #333";
+
+        if(type === "image"){
+
+          div.innerHTML = `
+            <img
+              src="${data.url}"
+              style="
+                width:100%;
+                height:100%;
+                object-fit:cover;
+              "
+            />
+          `;
+        }
+
+        if(type === "video"){
+
+          div.innerHTML = `
+            <video
+              src="${data.url}"
+              style="
+                width:100%;
+                height:100%;
+                object-fit:cover;
+              "
+            ></video>
+          `;
+        }
+
+        list.appendChild(div);
+      }
+    }
+
+    // =========================================
+    // 🔥 GUARDAR EN INPUT HIDDEN
+    // =========================================
+
+    document.getElementById("testimonials").value =
+      JSON.stringify(testimonials);
+
+    console.log(
+      "🔥 TESTIMONIOS:",
+      testimonials
+    );
+
+  }catch(err){
+
+    console.error("❌ R2 ERROR:",err);
+
+    alert("Error subiendo testimonios");
+  }
+}
+
+
 
 // =========================================
 // 📦 LOAD BUSINESSES
@@ -600,15 +926,59 @@ async function loadBusinesses(){
 
         <div class="flex items-center justify-between gap-3">
 
-          <div>
+          <div class="flex items-center gap-3">
 
-            <h4 class="font-bold">
-              ${business.name}
-            </h4>
+            ${
+              business.logo
+              ? `
+                <img
+                  src="${business.logo}"
+                  class="w-14 h-14 rounded-2xl object-cover border border-white/10"
+                />
+              `
+              : `
+                <div class="w-14 h-14 rounded-2xl bg-slate-800 flex items-center justify-center text-xl">
+                  🏢
+                </div>
+              `
+            }
 
-            <p class="text-sm text-slate-400">
-              /${business.slug}
-            </p>
+            <div>
+
+              <h4 class="font-bold">
+                ${business.name}
+              </h4>
+
+              <p class="text-sm text-slate-400">
+                /${business.slug}
+              </p>
+
+              <div class="flex items-center gap-2 mt-2 flex-wrap">
+
+                ${
+                  business.whatsappNumber
+                  ? `
+                    <span class="text-[11px] bg-emerald-500/20 text-emerald-300 px-2 py-1 rounded-lg">
+                      📲 ${business.whatsappNumber}
+                    </span>
+                  `
+                  : ``
+                }
+
+                ${
+                  business.primaryColor
+                  ? `
+                    <div
+                      class="w-5 h-5 rounded-full border border-white/20"
+                      style="background:${business.primaryColor}"
+                    ></div>
+                  `
+                  : ``
+                }
+
+              </div>
+
+            </div>
 
           </div>
 
@@ -654,25 +1024,148 @@ async function openBusiness(business){
 
   document.getElementById("chatTitle").innerHTML = `
 
-    <div>
+    <div class="w-full">
 
-      <div class="flex items-center gap-3">
+      <div class="flex items-center justify-between flex-wrap gap-4">
 
-        <span>${business.name}</span>
+        <div class="flex items-center gap-4">
 
-        <a
-          href="https://ai-sales-chat.onrender.com/${business.slug}"
-          target="_blank"
-          class="text-sm bg-emerald-500 px-3 py-1 rounded-xl"
-        >
-          Abrir Link
-        </a>
+          ${
+            business.logo
+            ? `
+              <img
+                src="${business.logo}"
+                class="w-20 h-20 rounded-3xl object-cover border border-white/10"
+              />
+            `
+            : `
+              <div class="w-20 h-20 rounded-3xl bg-slate-800 flex items-center justify-center text-4xl">
+                🏢
+              </div>
+            `
+          }
+
+          <div>
+
+            <div class="flex items-center gap-3 flex-wrap">
+
+              <span class="text-3xl font-black">
+                ${business.name}
+              </span>
+
+              <a
+                href="https://ai-sales-chat.onrender.com/${business.slug}"
+                target="_blank"
+                class="text-sm bg-emerald-500 px-3 py-1 rounded-xl"
+              >
+                Abrir Link
+              </a>
+
+            </div>
+
+            <div class="text-sm text-slate-400 mt-2">
+              https://ai-sales-chat.onrender.com/${business.slug}
+            </div>
+
+            ${
+              business.productInfo
+              ? `
+                <div class="mt-4 text-sm text-slate-300 max-w-3xl whitespace-pre-wrap">
+                  ${business.productInfo}
+                </div>
+              `
+              : ``
+            }
+
+            <div class="flex flex-wrap gap-2 mt-4">
+
+              ${
+                business.whatsappNumber
+                ? `
+                  <div class="bg-emerald-500/20 text-emerald-300 px-3 py-2 rounded-xl text-sm">
+                    📲 ${business.whatsappNumber}
+                  </div>
+                `
+                : ``
+              }
+
+              ${
+                business.productLink
+                ? `
+                  <a
+                    href="${business.productLink}"
+                    target="_blank"
+                    class="bg-blue-500/20 text-blue-300 px-3 py-2 rounded-xl text-sm"
+                  >
+                    🔗 Link Producto
+                  </a>
+                `
+                : ``
+              }
+
+              ${
+                business.primaryColor
+                ? `
+                  <div class="flex items-center gap-2 bg-white/5 px-3 py-2 rounded-xl text-sm">
+                    <div
+                      class="w-4 h-4 rounded-full border border-white/20"
+                      style="background:${business.primaryColor}"
+                    ></div>
+                    Color Principal
+                  </div>
+                `
+                : ``
+              }
+
+            </div>
+
+          </div>
+
+        </div>
 
       </div>
 
-      <div class="text-sm text-slate-400 mt-2">
-        https://ai-sales-chat.onrender.com/${business.slug}
-      </div>
+      ${
+        business.testimonials && business.testimonials.length
+        ? `
+          <div class="mt-6">
+
+            <div class="text-sm font-bold text-slate-300 mb-3">
+              Testimonios
+            </div>
+
+            <div class="flex gap-3 overflow-x-auto pb-2">
+
+              ${business.testimonials.map(item=>{
+
+                if(
+                  item.match(/\.(mp4|mov|webm|mkv)$/i)
+                ){
+
+                  return `
+                    <video
+                      src="${item}"
+                      controls
+                      class="w-48 h-32 object-cover rounded-2xl border border-white/10 bg-black"
+                    ></video>
+                  `;
+                }
+
+                return `
+                  <img
+                    src="${item}"
+                    class="w-48 h-32 object-cover rounded-2xl border border-white/10"
+                  />
+                `;
+
+              }).join("")}
+
+            </div>
+
+          </div>
+        `
+        : ``
+      }
 
     </div>
 
