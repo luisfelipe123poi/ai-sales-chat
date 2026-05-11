@@ -1418,29 +1418,7 @@ app.post("/upload-testimonial", upload.single("file"), async (req, res) => {
   }
 });
 
-app.get("/business/:slug", async (req,res)=>{
 
-  try{
-
-    const business = await Business.findOne({
-      slug:req.params.slug
-    });
-
-    if(!business){
-      return res.status(404).json({
-        error:"Negocio no encontrado"
-      });
-    }
-
-    res.json(business);
-
-  }catch(err){
-
-    res.status(500).json({
-      error:"Error"
-    });
-  }
-});
 
 // =========================
 // 🚀 SERVER
@@ -1450,48 +1428,84 @@ const PORT = process.env.PORT || 3000;
 app.set("trust proxy", 1);
 
 // =========================
-// 📦 STATIC FILES (PRIMERO)
+// 📦 STATIC FILES
 // =========================
 app.use(express.static(path.join(__dirname, "public")));
 
 // =========================
-// 🌐 PÁGINAS FIJAS
+// 🌐 DASHBOARD
+// =========================
+app.get("/dashboard", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "dashboard.html"));
+});
+
+// =========================
+// 🌐 CRM
 // =========================
 app.get("/crm/:slug", (req, res) => {
-  return res.sendFile(path.join(__dirname, "public", "crm.html"));
+  res.sendFile(path.join(__dirname, "public", "crm.html"));
 });
 
+// =========================
+// 🌐 CHAT
+// =========================
 app.get("/chat/:slug", (req, res) => {
-  return res.sendFile(path.join(__dirname, "public", "chat.html"));
-});
-
-app.get("/dashboard", (req, res) => {
-  return res.sendFile(path.join(__dirname, "public", "dashboard.html"));
+  res.sendFile(path.join(__dirname, "public", "chat.html"));
 });
 
 // =========================
-// 🧠 FALLBACK SOLO PARA LANDING
+// 🔥 LANDING DINÁMICA
 // =========================
-app.get("/:slug", (req, res, next) => {
+app.get("/:slug", async (req, res, next) => {
+
+  const slug = req.params.slug;
+
   const protectedRoutes = [
+    "dashboard",
     "crm",
     "chat",
-    "dashboard",
-    "api",
     "login",
     "register",
-    "business"
+    "business",
+    "conversation",
+    "analytics",
+    "my-businesses",
+    "upload-testimonial",
+    "ai-closer"
   ];
 
-  if (protectedRoutes.includes(req.params.slug)) {
-    return next(); // 🔥 NO INTERCEPTAR RUTAS REALES
+  // 🔥 NO TOCAR RUTAS DEL SISTEMA
+  if (protectedRoutes.includes(slug)) {
+    return next();
   }
 
-  return res.sendFile(path.join(__dirname, "public", "chat.html"));
+  try {
+
+    console.log("🔥 SLUG LANDING:", slug);
+
+    const business = await Business.findOne({ slug });
+
+    console.log("🔥 BUSINESS ENCONTRADO:", business);
+
+    if (!business) {
+      return res.status(404).send("Negocio no encontrado");
+    }
+
+    // 🔥 SERVIR CHAT.HTML
+    return res.sendFile(
+      path.join(__dirname, "public", "chat.html")
+    );
+
+  } catch (err) {
+
+    console.error("❌ FALLBACK ERROR:", err);
+
+    return res.status(500).send("Error servidor");
+  }
 });
 
 // =========================
-// 🚀 SERVER START (AL FINAL SIEMPRE)
+// 🚀 START
 // =========================
 app.listen(PORT, () => {
   console.log(`🔥 Servidor corriendo en puerto ${PORT}`);
