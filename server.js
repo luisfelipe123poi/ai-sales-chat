@@ -24,7 +24,7 @@ const Business = require("./models/Business");
 const mongooseUser = require("mongoose");
 
 const userSchema = new mongooseUser.Schema({
-  email: { type: String, unique: true },
+  email: { type: String, unique: true }, 
   password: String
 }, { timestamps: true });
 
