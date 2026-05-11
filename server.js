@@ -1429,30 +1429,56 @@ app.listen(PORT, () => {
   console.log(`🔥 Servidor corriendo en puerto ${PORT}`);
 });
 
-// =========================
-// 🌐 PÁGINAS
-// =========================
+// 🔥 IMPORTANTE: confiar proxy (Cloudflare / Render)
+app.set("trust proxy", 1);
 
 // =========================
 // 🌐 PÁGINAS
 // =========================
 
-// CRM
+// CRM (DEBE IR ANTES DEL WILDCARD)
 app.get("/crm/:slug", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "crm.html"));
+  return res.sendFile(path.join(__dirname, "public", "crm.html"));
 });
 
 // CHAT
 app.get("/chat/:slug", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "chat.html"));
+  return res.sendFile(path.join(__dirname, "public", "chat.html"));
 });
 
 // =========================
-// 📦 STATIC (🔥 ESTO FALTABA)
+// 📦 STATIC FILES
 // =========================
 app.use(express.static(path.join(__dirname, "public")));
 
-// 🔥 SIEMPRE ÚLTIMO
-app.get("/:slug", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "chat.html"));
+// =========================
+// 🧠 SAFE FALLBACK ROUTE (NO ROMPE CRM / DASHBOARD)
+// =========================
+app.get("/:slug", (req, res, next) => {
+  const slug = req.params.slug;
+
+  // 🔥 PROTEGER RUTAS REALES DEL SISTEMA
+  const protectedRoutes = [
+    "crm",
+    "chat",
+    "dashboard",
+    "api",
+    "login",
+    "register",
+    "business"
+  ];
+
+  if (protectedRoutes.includes(slug)) {
+    return next();
+  }
+
+  // 🔥 TODO LO DEMÁS VA AL CHAT
+  return res.sendFile(path.join(__dirname, "public", "chat.html"));
+});
+
+// =========================
+// 🧱 404 FALLBACK FINAL (IMPORTANTE EN PRODUCCIÓN)
+// =========================
+app.use((req, res) => {
+  return res.sendFile(path.join(__dirname, "public", "chat.html"));
 });
