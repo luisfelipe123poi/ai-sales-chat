@@ -1425,57 +1425,52 @@ app.post("/upload-testimonial", upload.single("file"), async (req, res) => {
 // =========================
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
-  console.log(`🔥 Servidor corriendo en puerto ${PORT}`);
-});
-
-// 🔥 IMPORTANTE: confiar proxy (Cloudflare / Render)
 app.set("trust proxy", 1);
 
 // =========================
-// 🌐 PÁGINAS
-// =========================
-
-// CRM (DEBE IR ANTES DEL WILDCARD)
-app.get("/crm/:slug", (req, res) => {
-  return res.sendFile(path.join(__dirname, "public", "crm.html"));
-});
-
-// CHAT
-app.get("/chat/:slug", (req, res) => {
-  return res.sendFile(path.join(__dirname, "public", "chat.html"));
-});
-
-// =========================
-// 📦 STATIC FILES
+// 📦 STATIC FILES (PRIMERO)
 // =========================
 app.use(express.static(path.join(__dirname, "public")));
 
 // =========================
-// 🧠 RUTAS FIJAS DEL SISTEMA
+// 🌐 PÁGINAS FIJAS
 // =========================
-
 app.get("/crm/:slug", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "crm.html"));
+  return res.sendFile(path.join(__dirname, "public", "crm.html"));
 });
 
 app.get("/chat/:slug", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "chat.html"));
+  return res.sendFile(path.join(__dirname, "public", "chat.html"));
 });
 
 app.get("/dashboard", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "dashboard.html"));
+  return res.sendFile(path.join(__dirname, "public", "dashboard.html"));
 });
 
 // =========================
-// 🧠 FALLBACK SOLO PARA LANDING O CHAT PUBLICO
+// 🧠 FALLBACK SOLO PARA LANDING
 // =========================
-app.get("/:slug", (req, res) => {
-  const blocked = ["crm", "chat", "dashboard", "api", "login", "register", "business"];
+app.get("/:slug", (req, res, next) => {
+  const protectedRoutes = [
+    "crm",
+    "chat",
+    "dashboard",
+    "api",
+    "login",
+    "register",
+    "business"
+  ];
 
-  if (blocked.includes(req.params.slug)) {
-    return res.status(404).send("Not Found");
+  if (protectedRoutes.includes(req.params.slug)) {
+    return next(); // 🔥 NO INTERCEPTAR RUTAS REALES
   }
 
   return res.sendFile(path.join(__dirname, "public", "chat.html"));
+});
+
+// =========================
+// 🚀 SERVER START (AL FINAL SIEMPRE)
+// =========================
+app.listen(PORT, () => {
+  console.log(`🔥 Servidor corriendo en puerto ${PORT}`);
 });
