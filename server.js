@@ -1436,33 +1436,23 @@ app.listen(PORT, () => {
 // =========================
 // 🌐 PÁGINAS
 // =========================
-// =========================
-// 📦 STATIC (🔥 ESTO FALTABA)
-// =========================
-app.use(express.static(path.join(__dirname, "public"), {
-  index: false
-}));
 
-app.use((req, res, next) => {
-  console.log("🔥 REQUEST:", req.method, req.url);
-  next();
-});
-
+// CRM
 app.get("/crm/:slug", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "crm.html"));
 });
 
+// CHAT
 app.get("/chat/:slug", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "chat.html"));
 });
 
-app.get("/dashboard/:slug", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "dashboard.html"));
+// =========================
+// 📦 STATIC (🔥 ESTO FALTABA)
+// =========================
+app.use(express.static(path.join(__dirname, "public")));
+
+// 🔥 SIEMPRE ÚLTIMO
+app.get("/:slug", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "chat.html"));
 });
-
-
-app.get("/test-crm", (req, res) => {
-  console.log("🔥 HIT TEST CRM");
-  res.send("OK CRM ROUTE WORKS");
-});
-
