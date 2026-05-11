@@ -1452,35 +1452,29 @@ app.get("/chat/:slug", (req, res) => {
 app.use(express.static(path.join(__dirname, "public")));
 
 // =========================
-// 🧠 SAFE FALLBACK ROUTE (NO ROMPE CRM / DASHBOARD)
+// 🧠 RUTAS FIJAS DEL SISTEMA
 // =========================
-app.get("/:slug", (req, res, next) => {
-  const slug = req.params.slug;
 
-  // 🔥 PROTEGER RUTAS REALES DEL SISTEMA
-  const protectedRoutes = [
-    "crm",
-    "chat",
-    "dashboard",
-    "api",
-    "login",
-    "register",
-    "business"
-  ];
-
-  if (protectedRoutes.includes(slug)) {
-    return next();
-  }
-
-  // 🔥 TODO LO DEMÁS VA AL CHAT
-  return res.sendFile(path.join(__dirname, "public", "chat.html"));
+app.get("/crm/:slug", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "crm.html"));
 });
 
-app.get("/:slug", (req, res, next) => {
-  const publicPages = ["crm", "chat", "dashboard"];
+app.get("/chat/:slug", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "chat.html"));
+});
 
-  if (publicPages.includes(req.params.slug)) {
-    return next();
+app.get("/dashboard", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "dashboard.html"));
+});
+
+// =========================
+// 🧠 FALLBACK SOLO PARA LANDING O CHAT PUBLICO
+// =========================
+app.get("/:slug", (req, res) => {
+  const blocked = ["crm", "chat", "dashboard", "api", "login", "register", "business"];
+
+  if (blocked.includes(req.params.slug)) {
+    return res.status(404).send("Not Found");
   }
 
   return res.sendFile(path.join(__dirname, "public", "chat.html"));
