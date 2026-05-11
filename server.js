@@ -928,7 +928,7 @@ app.post("/business", auth, async (req, res) => {
 
     res.json({
       message: "Negocio creado",
-      url: `${protocol}://${host}/${cleanSlug}`, // 🔥 TAMBIÉN AQUÍ
+      url: `${protocol}://${host}/chat.html?slug=${cleanSlug}`,
       business
     });
 
