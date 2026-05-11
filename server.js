@@ -1476,9 +1476,12 @@ app.get("/:slug", (req, res, next) => {
   return res.sendFile(path.join(__dirname, "public", "chat.html"));
 });
 
-// =========================
-// 🧱 404 FALLBACK FINAL (IMPORTANTE EN PRODUCCIÓN)
-// =========================
-app.use((req, res) => {
+app.get("/:slug", (req, res, next) => {
+  const publicPages = ["crm", "chat", "dashboard"];
+
+  if (publicPages.includes(req.params.slug)) {
+    return next();
+  }
+
   return res.sendFile(path.join(__dirname, "public", "chat.html"));
 });
