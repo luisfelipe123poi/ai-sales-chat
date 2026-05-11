@@ -1421,23 +1421,8 @@ app.post("/upload-testimonial", upload.single("file"), async (req, res) => {
 
 
 // =========================
-// 🚀 SERVER
+// 🌐 RUTAS HTML (PRIMERO)
 // =========================
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  console.log(`🔥 Servidor corriendo en puerto ${PORT}`);
-});
-
-// =========================
-// 🌐 PÁGINAS
-// =========================
-
-// =========================
-// 🌐 PÁGINAS
-// =========================
-
-
 
 // CRM
 app.get("/crm/:slug", (req, res) => {
@@ -1449,10 +1434,14 @@ app.get("/chat/:slug", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "chat.html"));
 });
 
-// 🔥 SIEMPRE ÚLTIMO
+// =========================
+// 📦 STATIC (DESPUÉS)
+// =========================
+app.use(express.static(path.join(__dirname, "public")));
+
+// =========================
+// 🔥 FALLBACK (ÚLTIMO)
+// =========================
 app.get("/:slug", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "chat.html"));
 });
-
-
-
