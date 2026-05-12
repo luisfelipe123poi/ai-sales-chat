@@ -1418,6 +1418,66 @@ app.post("/upload-testimonial", upload.single("file"), async (req, res) => {
   }
 });
 
+// =========================================
+// ✅ UPDATE SOLD STATUS
+// =========================================
+
+app.put("/lead/status/:id", auth, async(req,res)=>{
+
+  try{
+
+    const lead = await Lead.findById(req.params.id);
+
+    if(!lead){
+
+      return res.status(404).json({
+        error:"Lead no encontrado"
+      });
+    }
+
+    lead.sold = req.body.sold;
+
+    await lead.save();
+
+    res.json({
+      success:true,
+      sold:lead.sold
+    });
+
+  }catch(err){
+
+    console.error(err);
+
+    res.status(500).json({
+      error:"Error actualizando lead"
+    });
+  }
+});
+
+// =========================================
+// 🗑️ DELETE LEAD
+// =========================================
+
+app.delete("/lead/:id", auth, async(req,res)=>{
+
+  try{
+
+    await Lead.findByIdAndDelete(req.params.id);
+
+    res.json({
+      success:true
+    });
+
+  }catch(err){
+
+    console.error(err);
+
+    res.status(500).json({
+      error:"Error eliminando lead"
+    });
+  }
+});
+
 
 
 // =========================
