@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 
 const leadSchema = new mongoose.Schema({
+
   // =========================
   // 🏢 RELACIÓN NEGOCIO
   // =========================
@@ -38,7 +39,12 @@ const leadSchema = new mongoose.Schema({
   // =========================
   stage: {
     type: String,
-    enum: ["attention", "interest", "desire", "action"],
+    enum: [
+      "attention",
+      "interest",
+      "desire",
+      "action"
+    ],
     default: "attention",
     index: true
   },
@@ -48,8 +54,22 @@ const leadSchema = new mongoose.Schema({
   // =========================
   status: {
     type: String,
-    enum: ["cold", "warm", "hot", "client"],
+    enum: [
+      "cold",
+      "warm",
+      "hot",
+      "client"
+    ],
     default: "cold",
+    index: true
+  },
+
+  // =========================
+  // ✅ VENTA CERRADA
+  // =========================
+  sold: {
+    type: Boolean,
+    default: false,
     index: true
   },
 
@@ -58,7 +78,7 @@ const leadSchema = new mongoose.Schema({
   // =========================
   source: {
     type: String,
-    default: "chat" // luego puedes poner: instagram, tiktok, ads
+    default: "chat"
   },
 
   notes: {
@@ -66,13 +86,16 @@ const leadSchema = new mongoose.Schema({
     default: null
   }
 
-}, {
-  timestamps: true
+},{
+  timestamps:true
 });
 
 // =========================
 // ⚡ INDEX COMPUESTO (ESCALA)
 // =========================
-leadSchema.index({ businessId: 1, createdAt: -1 });
+leadSchema.index({
+  businessId:1,
+  createdAt:-1
+});
 
 module.exports = mongoose.model("Lead", leadSchema);
