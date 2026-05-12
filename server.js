@@ -1418,41 +1418,7 @@ app.post("/upload-testimonial", upload.single("file"), async (req, res) => {
   }
 });
 
-// =========================================
-// ✅ UPDATE SOLD STATUS
-// =========================================
 
-app.put("/lead/status/:id", auth, async(req,res)=>{
-
-  try{
-
-    const lead = await Lead.findById(req.params.id);
-
-    if(!lead){
-
-      return res.status(404).json({
-        error:"Lead no encontrado"
-      });
-    }
-
-    lead.sold = req.body.sold;
-
-    await lead.save();
-
-    res.json({
-      success:true,
-      sold:lead.sold
-    });
-
-  }catch(err){
-
-    console.error(err);
-
-    res.status(500).json({
-      error:"Error actualizando lead"
-    });
-  }
-});
 
 // =========================================
 // 🗑️ DELETE LEAD
@@ -1481,21 +1447,24 @@ app.delete("/lead/:id", auth, async(req,res)=>{
 // =========================
 // ✅ MARCAR LEAD COMO VENDIDO
 // =========================
+
 app.put("/lead/status/:id", auth, async (req,res)=>{
 
   try{
 
-    const { sold } = req.body;
+    console.log("BODY:", req.body);
 
     const lead = await Lead.findById(req.params.id);
 
     if(!lead){
+
       return res.status(404).json({
         error:"Lead no encontrado"
       });
     }
 
-    lead.sold = sold;
+    // 🔥 FIX CRÍTICO
+    lead.sold = Boolean(req.body.sold);
 
     await lead.save();
 
@@ -1506,10 +1475,10 @@ app.put("/lead/status/:id", auth, async (req,res)=>{
 
   }catch(error){
 
-    console.error("UPDATE LEAD STATUS ERROR:",error);
+    console.error("UPDATE LEAD STATUS ERROR:", error);
 
     res.status(500).json({
-      error:"Error actualizando lead"
+      error:error.message
     });
   }
 });
