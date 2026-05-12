@@ -13,127 +13,265 @@
 
   <style>
 
-    *{
-      font-family:'Inter',sans-serif;
+  *{
+    font-family:'Inter',sans-serif;
+    min-width:0;
+    box-sizing:border-box;
+  }
+
+  html,
+  body{
+    width:100%;
+    max-width:100%;
+    overflow-x:hidden;
+    margin:0;
+    padding:0;
+  }
+
+  body{
+    background:#0f172a;
+    overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
+
+  img,
+  video{
+    max-width:100%;
+    display:block;
+  }
+
+  a{
+    word-break:break-word;
+  }
+
+  .glass{
+    background:rgba(255,255,255,0.06);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    border:1px solid rgba(255,255,255,0.08);
+    overflow:hidden;
+  }
+
+  .message-user{
+    background:linear-gradient(135deg,#3b82f6,#2563eb);
+  }
+
+  .message-bot{
+    background:rgba(255,255,255,0.08);
+  }
+
+  .animate-fade{
+    animation:fade .25s ease;
+  }
+
+  @keyframes fade{
+    from{
+      opacity:0;
+      transform:translateY(10px);
+    }
+    to{
+      opacity:1;
+      transform:translateY(0px);
+    }
+  }
+
+  .loader{
+    width:18px;
+    height:18px;
+    border:2px solid rgba(255,255,255,0.2);
+    border-top:2px solid white;
+    border-radius:999px;
+    animation:spin .6s linear infinite;
+    flex-shrink:0;
+  }
+
+  @keyframes spin{
+    to{
+      transform:rotate(360deg);
+    }
+  }
+
+  .sidebar-scroll{
+    max-height:calc(100vh - 200px);
+    overflow-y:auto;
+    overflow-x:hidden;
+
+    scrollbar-width:thin;
+    scrollbar-color:#22c55e rgba(2, 6, 23, 0.2);
+  }
+
+  @keyframes floatLogo{
+    0%{
+      transform:translateY(0px);
+    }
+    50%{
+      transform:translateY(-10px);
+    }
+    100%{
+      transform:translateY(0px);
+    }
+  }
+
+  .floating-logo{
+    animation:floatLogo 3s ease-in-out infinite;
+    filter:drop-shadow(0 10px 20px rgba(0,0,0,0.4));
+  }
+
+  /* ========================= */
+  /* 🔥 SCROLL MODERNO SIDEBAR */
+  /* ========================= */
+
+  /* Chrome / Edge / Safari */
+  .sidebar-scroll::-webkit-scrollbar{
+    width:8px;
+    height:8px;
+  }
+
+  .sidebar-scroll::-webkit-scrollbar-track{
+    background:rgba(2, 6, 23, 0.2);
+    border-radius:20px;
+  }
+
+  .sidebar-scroll::-webkit-scrollbar-thumb{
+    background:linear-gradient(180deg,#22c55e,#3b82f6);
+    border-radius:20px;
+    border:2px solid rgba(2, 6, 23, 0.8);
+    box-shadow:0 0 10px rgba(34, 197, 94, 0.3);
+    transition:all .3s ease;
+  }
+
+  .sidebar-scroll::-webkit-scrollbar-thumb:hover{
+    background:linear-gradient(180deg,#16a34a,#2563eb);
+    box-shadow:0 0 15px rgba(59, 130, 246, 0.5);
+    transform:scale(1.1);
+  }
+
+  /* ocultación suave del track en idle */
+  .sidebar-scroll::-webkit-scrollbar-track-piece{
+    background:transparent;
+  }
+
+  /* ========================================= */
+  /* 📱 RESPONSIVE GLOBAL */
+  /* ========================================= */
+
+  #app{
+    width:100%;
+    max-width:100%;
+    overflow-x:hidden;
+  }
+
+  #chatMessages{
+    scroll-behavior:smooth;
+    overflow-x:hidden;
+    word-break:break-word;
+  }
+
+  #chatTitle{
+    word-break:break-word;
+    overflow:hidden;
+  }
+
+  #dynamicOptions{
+    overflow-x:auto;
+  }
+
+  input,
+  textarea,
+  select,
+  button{
+    max-width:100%;
+  }
+
+  textarea{
+    resize:vertical;
+  }
+
+  video{
+    height:auto;
+  }
+
+  /* ========================================= */
+  /* 📱 TABLET */
+  /* ========================================= */
+
+  @media (max-width:1024px){
+
+    .sidebar-scroll{
+      max-height:none;
     }
 
+  }
+
+  /* ========================================= */
+  /* 📱 MOBILE */
+  /* ========================================= */
+
+  @media (max-width:768px){
+
     body{
-      background:#0f172a;
       overflow-x:hidden;
     }
 
-    .glass{
-      background:rgba(255,255,255,0.06);
-      backdrop-filter:blur(12px);
-      border:1px solid rgba(255,255,255,0.08);
-    }
-
-    .message-user{
-      background:linear-gradient(135deg,#3b82f6,#2563eb);
-    }
-
+    .message-user,
     .message-bot{
-      background:rgba(255,255,255,0.08);
+      max-width:100% !important;
+      width:fit-content;
+      word-break:break-word;
+      overflow-wrap:break-word;
     }
 
-    .animate-fade{
-      animation:fade .25s ease;
+    #chatMessages{
+      padding:16px;
+      padding-bottom:110px;
     }
 
-    @keyframes fade{
-      from{
-        opacity:0;
-        transform:translateY(10px);
-      }
-      to{
-        opacity:1;
-        transform:translateY(0px);
-      }
+    #chatTitle{
+      width:100%;
     }
 
-    .loader{
-      width:18px;
-      height:18px;
-      border:2px solid rgba(255,255,255,0.2);
-      border-top:2px solid white;
-      border-radius:999px;
-      animation:spin .6s linear infinite;
+    .sidebar-scroll{
+      max-height:none;
+      overflow-x:hidden;
     }
 
-    @keyframes spin{
-      to{
-        transform:rotate(360deg);
-      }
+    input,
+    textarea,
+    select,
+    button{
+      font-size:16px;
     }
 
-    .sidebar-scroll {
-      max-height: calc(100vh - 200px);
-      overflow-y: auto;
+    img,
+    video{
+      max-width:100%;
+      height:auto;
     }
 
-    @keyframes floatLogo {
-      0% {
-        transform: translateY(0px);
-      }
-      50% {
-        transform: translateY(-10px);
-      }
-      100% {
-        transform: translateY(0px);
-      }
+  }
+
+  /* ========================================= */
+  /* 📱 SMALL MOBILE */
+  /* ========================================= */
+
+  @media (max-width:480px){
+
+    #chatMessages{
+      padding:12px;
+      padding-bottom:120px;
     }
 
-    .floating-logo {
-      animation: floatLogo 3s ease-in-out infinite;
-      filter: drop-shadow(0 10px 20px rgba(0,0,0,0.4));
+    .glass{
+      border-radius:20px;
     }
 
-    img {
-      display: block;
-    }
+  }
 
-    /* ========================= */
-    /* 🔥 SCROLL MODERNO SIDEBAR */
-    /* ========================= */
-
-    .sidebar-scroll {
-      scrollbar-width: thin;
-      scrollbar-color: #22c55e rgba(2, 6, 23, 0.2);
-    }
-
-    /* Chrome / Edge / Safari */
-    .sidebar-scroll::-webkit-scrollbar {
-      width: 8px;
-    }
-
-    .sidebar-scroll::-webkit-scrollbar-track {
-      background: rgba(2, 6, 23, 0.2);
-      border-radius: 20px;
-    }
-
-    .sidebar-scroll::-webkit-scrollbar-thumb {
-      background: linear-gradient(180deg, #22c55e, #3b82f6);
-      border-radius: 20px;
-      border: 2px solid rgba(2, 6, 23, 0.8);
-      box-shadow: 0 0 10px rgba(34, 197, 94, 0.3);
-      transition: all 0.3s ease;
-    }
-
-    .sidebar-scroll::-webkit-scrollbar-thumb:hover {
-      background: linear-gradient(180deg, #16a34a, #2563eb);
-      box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
-      transform: scale(1.1);
-    }
-
-    /* ocultación suave del track en idle */
-    .sidebar-scroll::-webkit-scrollbar-track-piece {
-      background: transparent;
-    }
-
-  </style>
+</style>
 </head>
 
-<body class="text-white min-h-screen">
+<body class="text-white min-h-screen overflow-x-hidden">
 
 <div id="app"></div>
 
@@ -338,70 +476,244 @@ async function renderDashboard(){
 
   app.innerHTML = `
 
-  <div class="flex min-h-screen bg-gradient-to-br from-[#05070f] via-[#0b1220] to-[#05070f]">
+  <div class="
+    flex
+    flex-col
+    lg:flex-row
+    min-h-screen
+    bg-gradient-to-br
+    from-[#05070f]
+    via-[#0b1220]
+    to-[#05070f]
+    overflow-x-hidden
+  ">
 
     <!-- ========================= -->
     <!-- 🔥 SIDEBAR -->
     <!-- ========================= -->
-    <aside class="w-[340px] h-screen sticky top-0 glass border-r border-white/10 p-4 flex flex-col">
+    <aside class="
+      w-full
+      lg:w-[340px]
+      lg:h-screen
+      lg:sticky
+      top-0
+      glass
+      border-b
+      lg:border-b-0
+      lg:border-r
+      border-white/10
+      p-4
+      flex
+      flex-col
+      shrink-0
+    ">
 
-      <!-- 🔥 LOGO ARRIBA (AJUSTADO PRO) -->
+      <!-- 🔥 LOGO ARRIBA -->
       <div class="flex justify-center items-start m-0 p-0 leading-none mb-4 shrink-0">
         <img
           src="logo.png"
-          class="h-[150px] w-auto object-contain floating-logo block m-0 p-0"
+          class="
+            h-[90px]
+            sm:h-[120px]
+            lg:h-[150px]
+            w-auto
+            object-contain
+            floating-logo
+            block
+            m-0
+            p-0
+          "
         />
       </div>
 
       <!-- HEADER -->
-        <div class="flex flex-col mb-6 gap-4 shrink-0">
+      <div class="flex flex-col mb-6 gap-4 shrink-0">
 
-          <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between flex-wrap gap-3">
 
-            <div>
+          <div class="min-w-0">
 
-              <h2 class="text-2xl font-black tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
-                Panel de Control
-              </h2>
+            <h2 class="
+              text-xl
+              sm:text-2xl
+              font-black
+              tracking-tight
+              bg-gradient-to-r
+              from-white
+              to-slate-400
+              bg-clip-text
+              text-transparent
+              break-words
+            ">
+              Panel de Control
+            </h2>
 
-              <p class="text-slate-400 text-xs mt-1">
-                Prestige Closer • 24/7
-              </p>
-
-            </div>
+            <p class="text-slate-400 text-xs mt-1">
+              Prestige Closer • 24/7
+            </p>
 
           </div>
 
-          <!-- BOTÓN SALIR -->
-          <button
-            onclick="logout()"
-            class="bg-red-500/90 hover:bg-red-500 transition px-4 py-2 rounded-xl text-xs font-bold shadow-lg"
-          >
-            Salir
-          </button>
-
         </div>
+
+        <!-- BOTÓN SALIR -->
+        <button
+          onclick="logout()"
+          class="
+            w-full
+            bg-red-500/90
+            hover:bg-red-500
+            transition
+            px-4
+            py-3
+            rounded-xl
+            text-sm
+            font-bold
+            shadow-lg
+          "
+        >
+          Salir
+        </button>
+
+      </div>
 
       <!-- BOTÓN CREAR -->
       <div class="mb-4 shrink-0">
 
         <button
           onclick="openCreateBusinessModal()"
-          class="w-full bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-400 hover:to-green-400 transition p-4 rounded-2xl font-bold shadow-lg shadow-green-500/20"
+          class="
+            w-full
+            bg-gradient-to-r
+            from-emerald-500
+            to-green-500
+            hover:from-emerald-400
+            hover:to-green-400
+            transition
+            p-4
+            rounded-2xl
+            font-bold
+            shadow-lg
+            shadow-green-500/20
+            text-sm
+            sm:text-base
+          "
         >
           ➕ Crear Nuevo Negocio
         </button>
 
       </div>
 
-      <!-- LISTA (SCROLL PERFECTO FIX) -->
-      <div class="flex-1 overflow-y-auto pr-2 sidebar-scroll pb-4 relative">
+      <!-- ================================= -->
+      <!-- 🔥 ACORDEÓN NEGOCIOS -->
+      <!-- ================================= -->
+      <div class="mb-4">
 
-        <h3 class="text-sm font-bold text-slate-300 mb-4 uppercase tracking-wider sticky top-0 z-20 bg-transparent backdrop-blur-md py-2 text-center w-full">
-          Mis negocios
-        </h3>
+        <button
+          onclick="toggleBusinessesAccordion()"
+          class="
+            w-full
+            flex
+            items-center
+            justify-between
+            gap-3
+            px-4
+            py-4
+            rounded-2xl
+            bg-white/5
+            border
+            border-white/10
+            hover:bg-white/10
+            transition
+            backdrop-blur-xl
+          "
+        >
 
-        <div id="businessList" class="space-y-3"></div>
+          <div class="flex items-center gap-3 min-w-0">
+
+            <div class="
+              w-10
+              h-10
+              rounded-xl
+              bg-gradient-to-br
+              from-emerald-500/20
+              to-blue-500/20
+              flex
+              items-center
+              justify-center
+              text-lg
+              shrink-0
+            ">
+              🏢
+            </div>
+
+            <div class="text-left min-w-0">
+
+              <div class="
+                text-sm
+                sm:text-base
+                font-bold
+                text-white
+                break-words
+              ">
+                Negocios
+              </div>
+
+              <div class="text-xs text-slate-400">
+                Mostrar / Ocultar
+              </div>
+
+            </div>
+
+          </div>
+
+          <div
+            id="businessAccordionIcon"
+            class="
+              text-slate-400
+              text-lg
+              transition-transform
+              duration-300
+              shrink-0
+            "
+          >
+            ▼
+          </div>
+
+        </button>
+
+      </div>
+
+      <!-- ================================= -->
+      <!-- 🔥 LISTA NEGOCIOS -->
+      <!-- ================================= -->
+      <div
+        id="businessAccordion"
+        class="
+          flex-1
+          overflow-hidden
+          transition-all
+          duration-300
+        "
+      >
+
+        <div class="
+          overflow-y-auto
+          pr-0
+          lg:pr-2
+          sidebar-scroll
+          pb-4
+          relative
+          max-h-[500px]
+          lg:max-h-[calc(100vh-340px)]
+        ">
+
+          <div
+            id="businessList"
+            class="space-y-3"
+          ></div>
+
+        </div>
 
       </div>
 
@@ -410,35 +722,87 @@ async function renderDashboard(){
     <!-- ========================= -->
     <!-- 🔥 MAIN -->
     <!-- ========================= -->
-    <main class="flex-1 flex flex-col">
+    <main class="flex-1 flex flex-col min-w-0">
 
       <!-- HEADER CHAT -->
-      <div class="p-6 border-b border-white/10 flex items-center justify-between bg-black/20 backdrop-blur-xl sticky top-0 z-50">
+      <div class="
+        p-4
+        sm:p-6
+        border-b
+        border-white/10
+        flex
+        flex-col
+        lg:flex-row
+        lg:items-center
+        lg:justify-between
+        gap-4
+        bg-black/20
+        backdrop-blur-xl
+        sticky
+        top-0
+        z-50
+      ">
 
-        <div>
+        <div class="min-w-0 w-full">
 
-          <h1 id="chatTitle" class="text-3xl font-black tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
+          <h1
+            id="chatTitle"
+            class="
+              text-2xl
+              sm:text-3xl
+              font-black
+              tracking-tight
+              bg-gradient-to-r
+              from-white
+              to-slate-400
+              bg-clip-text
+              text-transparent
+              break-words
+            "
+          >
             Selecciona negocio
           </h1>
 
-          <p class="text-slate-400 text-sm mt-1">
+          <p class="text-slate-400 text-xs sm:text-sm mt-1 break-words">
             Chat conectado a tu backend • Render API
           </p>
 
         </div>
 
-        <div id="analytics" class="text-right"></div>
+        <div
+          id="analytics"
+          class="
+            w-full
+            lg:w-auto
+            text-left
+            lg:text-right
+          "
+        ></div>
 
       </div>
 
       <!-- CHAT -->
       <div
         id="chatMessages"
-        class="flex-1 overflow-y-auto p-6 space-y-4"
+        class="
+          flex-1
+          overflow-y-auto
+          p-3
+          sm:p-6
+          space-y-4
+          min-h-[300px]
+        "
       ></div>
 
       <!-- INPUT AREA -->
-      <div class="border-t border-white/10 p-6 bg-black/20 backdrop-blur-xl">
+      <div class="
+        border-t
+        border-white/10
+        p-3
+        sm:p-6
+        bg-black/20
+        backdrop-blur-xl
+      ">
 
         <!-- OPTIONS -->
         <div
@@ -447,17 +811,54 @@ async function renderDashboard(){
         ></div>
 
         <!-- INPUT -->
-        <div class="flex gap-3 items-center">
+        <div class="
+          flex
+          flex-col
+          sm:flex-row
+          gap-3
+          items-stretch
+          sm:items-center
+        ">
 
           <input
             id="messageInput"
             placeholder="Responder al lead..."
-            class="flex-1 p-4 rounded-2xl bg-white/5 border border-white/10 outline-none text-white placeholder-slate-500 focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 transition"
+            class="
+              flex-1
+              w-full
+              p-4
+              rounded-2xl
+              bg-white/5
+              border
+              border-white/10
+              outline-none
+              text-white
+              placeholder-slate-500
+              focus:border-indigo-500/50
+              focus:ring-2
+              focus:ring-indigo-500/20
+              transition
+            "
           />
 
           <button
             onclick="sendMessage()"
-            class="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-400 hover:to-indigo-400 transition px-8 py-4 rounded-2xl font-bold shadow-lg shadow-blue-500/20"
+            class="
+              w-full
+              sm:w-auto
+              bg-gradient-to-r
+              from-blue-500
+              to-indigo-500
+              hover:from-blue-400
+              hover:to-indigo-400
+              transition
+              px-8
+              py-4
+              rounded-2xl
+              font-bold
+              shadow-lg
+              shadow-blue-500/20
+            "
           >
             Enviar
           </button>
@@ -475,17 +876,51 @@ async function renderDashboard(){
   <!-- ========================= -->
   <div
     id="createBusinessModal"
-    class="fixed inset-0 bg-black/80 backdrop-blur-xl hidden items-center justify-center z-50 p-6"
+    class="
+      fixed
+      inset-0
+      bg-black/80
+      backdrop-blur-xl
+      hidden
+      items-center
+      justify-center
+      z-50
+      p-3
+      sm:p-6
+    "
   >
 
-    <div class="glass w-full max-w-2xl rounded-3xl p-6 max-h-[90vh] overflow-y-auto border border-white/10 shadow-2xl">
+    <div class="
+      glass
+      w-full
+      max-w-2xl
+      rounded-3xl
+      p-4
+      sm:p-6
+      max-h-[90vh]
+      overflow-y-auto
+      border
+      border-white/10
+      shadow-2xl
+    ">
 
       <!-- HEADER MODAL -->
-      <div class="flex items-center justify-between mb-8">
+      <div class="
+        flex
+        items-center
+        justify-between
+        gap-4
+        mb-8
+      ">
 
-        <div>
+        <div class="min-w-0">
 
-          <h2 class="text-2xl font-black">
+          <h2 class="
+            text-xl
+            sm:text-2xl
+            font-black
+            break-words
+          ">
             ➕ Crear Negocio
           </h2>
 
@@ -497,7 +932,17 @@ async function renderDashboard(){
 
         <button
           onclick="closeCreateBusinessModal()"
-          class="bg-red-500 hover:bg-red-400 transition w-10 h-10 rounded-xl font-bold shadow-lg"
+          class="
+            bg-red-500
+            hover:bg-red-400
+            transition
+            w-10
+            h-10
+            rounded-xl
+            font-bold
+            shadow-lg
+            shrink-0
+          "
         >
           ✕
         </button>
@@ -510,13 +955,31 @@ async function renderDashboard(){
         <input
           id="bizName"
           placeholder="Nombre negocio"
-          class="w-full p-4 rounded-2xl bg-white/5 border border-white/10 outline-none focus:border-indigo-500/50"
+          class="
+            w-full
+            p-4
+            rounded-2xl
+            bg-white/5
+            border
+            border-white/10
+            outline-none
+            focus:border-indigo-500/50
+          "
         />
 
         <input
           id="bizSlug"
           placeholder="Slug"
-          class="w-full p-4 rounded-2xl bg-white/5 border border-white/10 outline-none focus:border-indigo-500/50"
+          class="
+            w-full
+            p-4
+            rounded-2xl
+            bg-white/5
+            border
+            border-white/10
+            outline-none
+            focus:border-indigo-500/50
+          "
         />
 
         <!-- LOGO -->
@@ -531,12 +994,29 @@ async function renderDashboard(){
             id="logoFile"
             accept="image/*"
             onchange="previewLogo()"
-            class="w-full p-3 rounded-xl bg-white/5 border border-white/10"
+            class="
+              w-full
+              p-3
+              rounded-xl
+              bg-white/5
+              border
+              border-white/10
+            "
           />
 
           <img
             id="logoPreview"
-            class="w-24 h-24 rounded-2xl object-cover mt-4 hidden border border-white/10 shadow-lg"
+            class="
+              w-24
+              h-24
+              rounded-2xl
+              object-cover
+              mt-4
+              hidden
+              border
+              border-white/10
+              shadow-lg
+            "
           />
 
         </div>
@@ -552,7 +1032,14 @@ async function renderDashboard(){
             type="color"
             id="color"
             value="#25D366"
-            class="w-full h-14 rounded-xl bg-white/5 border border-white/10"
+            class="
+              w-full
+              h-14
+              rounded-xl
+              bg-white/5
+              border
+              border-white/10
+            "
           />
 
         </div>
@@ -560,25 +1047,58 @@ async function renderDashboard(){
         <textarea
           id="welcomeMessage"
           placeholder="Mensaje bienvenida"
-          class="w-full p-4 rounded-2xl bg-white/5 border border-white/10 h-24 outline-none"
+          class="
+            w-full
+            p-4
+            rounded-2xl
+            bg-white/5
+            border
+            border-white/10
+            h-24
+            outline-none
+          "
         ></textarea>
 
         <textarea
           id="productInfo"
           placeholder="Producto"
-          class="w-full p-4 rounded-2xl bg-white/5 border border-white/10 h-24 outline-none"
+          class="
+            w-full
+            p-4
+            rounded-2xl
+            bg-white/5
+            border
+            border-white/10
+            h-24
+            outline-none
+          "
         ></textarea>
 
         <input
           id="productLink"
           placeholder="Link producto"
-          class="w-full p-4 rounded-2xl bg-white/5 border border-white/10 outline-none"
+          class="
+            w-full
+            p-4
+            rounded-2xl
+            bg-white/5
+            border
+            border-white/10
+            outline-none
+          "
         />
 
         <!-- PAÍS -->
         <select
           id="countryCode"
-          class="w-full p-4 rounded-2xl bg-white/5 border border-white/10"
+          class="
+            w-full
+            p-4
+            rounded-2xl
+            bg-white/5
+            border
+            border-white/10
+          "
         >
 
           <option value="57">🇨🇴 Colombia (+57)</option>
@@ -600,17 +1120,41 @@ async function renderDashboard(){
         <input
           id="whatsappNumber"
           placeholder="WhatsApp (3001234567)"
-          class="w-full p-4 rounded-2xl bg-white/5 border border-white/10 outline-none"
+          class="
+            w-full
+            p-4
+            rounded-2xl
+            bg-white/5
+            border
+            border-white/10
+            outline-none
+          "
         />
 
         <textarea
           id="waMessage"
           placeholder="Mensaje automático WhatsApp"
-          class="w-full p-4 rounded-2xl bg-white/5 border border-white/10 h-24 outline-none"
+          class="
+            w-full
+            p-4
+            rounded-2xl
+            bg-white/5
+            border
+            border-white/10
+            h-24
+            outline-none
+          "
         ></textarea>
 
         <!-- TESTIMONIOS -->
-        <div class="glass rounded-2xl p-5 border border-dashed border-white/20">
+        <div class="
+          glass
+          rounded-2xl
+          p-5
+          border
+          border-dashed
+          border-white/20
+        ">
 
           <label class="text-sm font-bold block mb-3 text-slate-300">
             Testimonios (Imágenes / Videos)
@@ -622,7 +1166,14 @@ async function renderDashboard(){
             accept="image/*,video/*"
             multiple
             onchange="uploadToR2()"
-            class="w-full p-3 rounded-xl bg-white/5 border border-white/10"
+            class="
+              w-full
+              p-3
+              rounded-xl
+              bg-white/5
+              border
+              border-white/10
+            "
           />
 
           <div
@@ -636,7 +1187,19 @@ async function renderDashboard(){
 
         <button
           onclick="createBusiness()"
-          class="w-full bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-400 hover:to-green-400 transition p-4 rounded-2xl font-bold shadow-lg"
+          class="
+            w-full
+            bg-gradient-to-r
+            from-emerald-500
+            to-green-500
+            hover:from-emerald-400
+            hover:to-green-400
+            transition
+            p-4
+            rounded-2xl
+            font-bold
+            shadow-lg
+          "
         >
           Crear Negocio
         </button>
@@ -652,6 +1215,71 @@ async function renderDashboard(){
   loadBusinesses();
 }
 
+// =========================================
+// 🔥 TOGGLE ACORDEÓN NEGOCIOS
+// =========================================
+
+let businessesAccordionOpen = true;
+
+function toggleBusinessesAccordion(force = null){
+
+  const accordion = document.getElementById("businessAccordion");
+
+  const icon = document.getElementById("businessAccordionIcon");
+
+  if(!accordion || !icon) return;
+
+  // =========================================
+  // 🔥 ESTADO FORZADO
+  // =========================================
+
+  if(force !== null){
+
+    businessesAccordionOpen = force;
+
+  }else{
+
+    businessesAccordionOpen = !businessesAccordionOpen;
+  }
+
+  // =========================================
+  // 🔥 ABRIR
+  // =========================================
+
+  if(businessesAccordionOpen){
+
+    accordion.style.display = "block";
+
+    accordion.style.opacity = "1";
+
+    accordion.style.maxHeight = "2000px";
+
+    icon.style.transform = "rotate(0deg)";
+
+  }
+
+  // =========================================
+  // 🔥 CERRAR
+  // =========================================
+
+  else{
+
+    accordion.style.opacity = "0";
+
+    accordion.style.maxHeight = "0px";
+
+    icon.style.transform = "rotate(-90deg)";
+
+    setTimeout(()=>{
+
+      if(!businessesAccordionOpen){
+
+        accordion.style.display = "none";
+      }
+
+    },250);
+  }
+}
 // =========================================
 // 🔥 OPEN CREATE MODAL
 // =========================================
@@ -1313,21 +1941,75 @@ async function openBusiness(business){
 
   conversationId = null;
 
+  // =========================================
+  // 🔥 CERRAR ACORDEÓN NEGOCIOS AUTOMÁTICO
+  // =========================================
+
+  const accordion = document.getElementById("businessAccordion");
+
+  const icon = document.getElementById("businessAccordionIcon");
+
+  if(accordion){
+
+    accordion.style.display = "block";
+
+    accordion.style.overflow = "hidden";
+
+    accordion.style.transition = "all .3s ease";
+
+    accordion.style.maxHeight = "0px";
+
+    accordion.style.opacity = "0";
+
+    setTimeout(()=>{
+
+      accordion.classList.add("hidden");
+
+    },300);
+  }
+
+  if(icon){
+
+    icon.style.transform = "rotate(-90deg)";
+  }
+
+  // =========================================
+  // 🔥 HEADER NEGOCIO
+  // =========================================
+
   document.getElementById("chatTitle").innerHTML = `
 
-    <div class="space-y-6">
+    <div class="space-y-4 sm:space-y-6 w-full overflow-hidden">
 
       <!-- HEADER CARD -->
       <div class="
-        p-6
+        p-4
+        sm:p-6
         rounded-2xl
         bg-slate-900/40
         border border-slate-800
+        overflow-hidden
       ">
 
-        <div class="flex items-start justify-between flex-wrap gap-6">
+        <div class="
+          flex
+          flex-col
+          xl:flex-row
+          xl:items-start
+          xl:justify-between
+          gap-6
+        ">
 
-          <div class="flex items-center gap-5">
+          <div class="
+            flex
+            flex-col
+            sm:flex-row
+            sm:items-start
+            gap-4
+            sm:gap-5
+            min-w-0
+            w-full
+          ">
 
             ${
               business.logo
@@ -1336,31 +2018,48 @@ async function openBusiness(business){
                   src="${business.logo}"
                   class="
                     w-16 h-16
+                    sm:w-20 sm:h-20
                     rounded-xl
                     object-cover
                     border border-slate-700
+                    shrink-0
                   "
                 />
               `
               : `
                 <div class="
                   w-16 h-16
+                  sm:w-20 sm:h-20
                   rounded-xl
                   bg-slate-800
                   flex items-center justify-center
                   text-3xl
                   border border-slate-700
+                  shrink-0
                 ">
                   🏢
                 </div>
               `
             }
 
-            <div>
+            <div class="min-w-0 flex-1">
 
-              <div class="flex items-center gap-3 flex-wrap">
+              <div class="
+                flex
+                flex-col
+                sm:flex-row
+                sm:items-center
+                gap-3
+                flex-wrap
+              ">
 
-                <span class="text-2xl font-bold text-white">
+                <span class="
+                  text-xl
+                  sm:text-2xl
+                  font-bold
+                  text-white
+                  break-words
+                ">
                   ${business.name}
                 </span>
 
@@ -1377,6 +2076,8 @@ async function openBusiness(business){
                     hover:bg-emerald-500
                     hover:text-white
                     transition
+                    w-fit
+                    whitespace-nowrap
                   "
                 >
                   Abrir link
@@ -1384,7 +2085,12 @@ async function openBusiness(business){
 
               </div>
 
-              <div class="text-xs text-slate-500 mt-1">
+              <div class="
+                text-xs
+                text-slate-500
+                mt-1
+                break-all
+              ">
                 https://ai-sales-chat.onrender.com/${business.slug}
               </div>
 
@@ -1397,6 +2103,7 @@ async function openBusiness(business){
                     text-slate-300
                     max-w-2xl
                     leading-relaxed
+                    break-words
                   ">
                     ${business.productInfo}
                   </div>
@@ -1411,7 +2118,12 @@ async function openBusiness(business){
         </div>
 
         <!-- TAGS -->
-        <div class="flex flex-wrap gap-2 mt-5">
+        <div class="
+          flex
+          flex-wrap
+          gap-2
+          mt-5
+        ">
 
           ${
             business.whatsappNumber
@@ -1423,6 +2135,8 @@ async function openBusiness(business){
                 bg-slate-800
                 border border-slate-700
                 text-slate-300
+                break-all
+                max-w-full
               ">
                 📲 ${business.whatsappNumber}
               </div>
@@ -1446,6 +2160,8 @@ async function openBusiness(business){
                   hover:bg-blue-500
                   hover:text-white
                   transition
+                  break-all
+                  max-w-full
                 "
               >
                 🔗 Pago
@@ -1457,9 +2173,16 @@ async function openBusiness(business){
           ${
             business.primaryColor
             ? `
-              <div class="flex items-center gap-2 text-xs text-slate-400">
+              <div class="
+                flex
+                items-center
+                gap-2
+                text-xs
+                text-slate-400
+                flex-wrap
+              ">
                 <div
-                  class="w-3 h-3 rounded-full border border-slate-600"
+                  class="w-3 h-3 rounded-full border border-slate-600 shrink-0"
                   style="background:${business.primaryColor}"
                 ></div>
                 Color Chat
@@ -1477,17 +2200,29 @@ async function openBusiness(business){
         business.testimonials && business.testimonials.length
         ? `
           <div class="
-            p-5
+            p-4
+            sm:p-5
             rounded-2xl
             bg-slate-900/30
             border border-slate-800
+            overflow-hidden
           ">
 
-            <div class="text-sm font-semibold text-white mb-3">
+            <div class="
+              text-sm
+              font-semibold
+              text-white
+              mb-3
+            ">
               Testimonios
             </div>
 
-            <div class="flex gap-3 overflow-x-auto">
+            <div class="
+              flex
+              gap-3
+              overflow-x-auto
+              pb-2
+            ">
 
               ${business.testimonials.map(item=>{
 
@@ -1498,10 +2233,14 @@ async function openBusiness(business){
                       src="${item}"
                       controls
                       class="
-                        w-44 h-28
+                        w-40
+                        h-28
+                        sm:w-44
+                        sm:h-28
                         rounded-xl
                         object-cover
                         border border-slate-700
+                        shrink-0
                       "
                     ></video>
                   `;
@@ -1511,10 +2250,14 @@ async function openBusiness(business){
                   <img
                     src="${item}"
                     class="
-                      w-44 h-28
+                      w-40
+                      h-28
+                      sm:w-44
+                      sm:h-28
                       rounded-xl
                       object-cover
                       border border-slate-700
+                      shrink-0
                     "
                   />
                 `;
@@ -1633,6 +2376,120 @@ async function loadLeads(){
 }
 
 // =========================================
+// 🗑️ ELIMINAR LEAD
+// =========================================
+
+async function deleteLead(leadId){
+
+  const confirmDelete = confirm("¿Eliminar este lead?");
+
+  if(!confirmDelete) return;
+
+  try{
+
+    await fetch(`${API}/lead/${leadId}`,{
+      method:"DELETE",
+      headers:{
+        Authorization:`Bearer ${token}`
+      }
+    });
+
+    leads = leads.filter(l=>l._id !== leadId);
+
+    renderLeads();
+
+    if(currentLead && currentLead._id === leadId){
+
+      currentLead = null;
+
+      document.getElementById("chatMessages").innerHTML = "";
+    }
+
+  }catch(err){
+
+    console.error(err);
+  }
+}
+
+// =========================================
+// ✅ MARCAR VENTA CERRADA
+// =========================================
+
+async function markLeadAsSold(lead){
+
+  try{
+
+    const res = await fetch(`${API}/lead/status/${lead._id}`,{
+      method:"PUT",
+      headers:{
+        "Content-Type":"application/json",
+        Authorization:`Bearer ${token}`
+      },
+      body:JSON.stringify({
+        sold:true
+      })
+    });
+
+    const data = await res.json();
+
+    console.log("MARK SOLD RESPONSE:", data);
+
+    if(!res.ok){
+
+      console.error("ERROR:", data);
+
+      return;
+    }
+
+    // 🔥 RECARGAR LEADS DESDE DB
+    await loadLeads();
+
+  }catch(err){
+
+    console.error("MARK SOLD ERROR:", err);
+  }
+}
+
+// =========================================
+// 🔄 REABRIR LEAD
+// =========================================
+
+async function reopenLead(lead){
+
+  try{
+
+    const res = await fetch(`${API}/lead/status/${lead._id}`,{
+      method:"PUT",
+      headers:{
+        "Content-Type":"application/json",
+        Authorization:`Bearer ${token}`
+      },
+      body:JSON.stringify({
+        sold:false
+      })
+    });
+
+    const data = await res.json();
+
+    console.log("REOPEN RESPONSE:", data);
+
+    if(!res.ok){
+
+      console.error("ERROR:", data);
+
+      return;
+    }
+
+    // 🔥 RECARGAR LEADS DESDE DB
+    await loadLeads();
+
+  }catch(err){
+
+    console.error("REOPEN ERROR:", err);
+  }
+}
+
+// =========================================
 // 👥 RENDER LEADS
 // =========================================
 
@@ -1646,7 +2503,12 @@ function renderLeads(){
 
     container.innerHTML = `
 
-      <div class="text-center text-slate-400 mt-20">
+      <div class="
+        text-center
+        text-slate-400
+        mt-20
+        px-4
+      ">
 
         No hay leads todavía
 
@@ -1657,55 +2519,453 @@ function renderLeads(){
     return;
   }
 
-  leads.forEach(lead=>{
+  // =========================================
+  // 🔥 DIVIDIR LEADS
+  // =========================================
 
-    const div = document.createElement("div");
+  const openLeads = leads.filter(lead => !lead.sold);
 
-    div.className = `
-      glass
-      rounded-3xl
-      p-5
-      cursor-pointer
-      hover:scale-[1.01]
-      transition
-    `;
+  const soldLeads = leads.filter(lead => lead.sold);
 
-    div.innerHTML = `
+  // =========================================
+  // 🟡 ABIERTOS
+  // =========================================
 
-      <div class="flex items-center justify-between">
+  if(openLeads.length){
 
-        <div>
+    container.innerHTML += `
 
-          <div class="font-bold text-lg">
-            ${lead.name || "Lead"}
-          </div>
+      <div class="
+        flex
+        items-center
+        gap-2
+        mb-4
+        mt-2
+      ">
 
-          <div class="text-sm text-slate-400">
-            ${lead.phone || ""}
-          </div>
-
+        <div class="
+          text-lg
+          font-bold
+          text-blue-300
+        ">
+          🟡 Leads Abiertos
         </div>
 
-        <div class="text-right">
-
-          <div class="text-xs text-slate-400">
-            Conversación
-          </div>
-
-          <div class="font-bold">
-            Ver Chat
-          </div>
-
+        <div class="
+          text-xs
+          px-2
+          py-1
+          rounded-lg
+          bg-blue-500/10
+          border
+          border-blue-500/20
+          text-blue-300
+        ">
+          ${openLeads.length}
         </div>
 
       </div>
 
     `;
 
-    div.onclick = ()=>openLeadConversation(lead);
+    openLeads.forEach(lead=>{
 
-    container.appendChild(div);
-  });
+      const div = document.createElement("div");
+
+      div.className = `
+        glass
+        rounded-3xl
+        p-4
+        sm:p-5
+        cursor-pointer
+        hover:scale-[1.01]
+        transition
+        w-full
+        overflow-hidden
+        border
+        mb-4
+        ${
+          lead.sold
+          ? "border-emerald-500/30"
+          : "border-white/10"
+        }
+      `;
+
+      div.innerHTML = `
+
+        <div class="
+          flex
+          flex-col
+          gap-4
+        ">
+
+          <!-- TOP -->
+          <div class="
+            flex
+            flex-col
+            sm:flex-row
+            sm:items-center
+            sm:justify-between
+            gap-4
+          ">
+
+            <div class="min-w-0">
+
+              <div class="
+                font-bold
+                text-base
+                sm:text-lg
+                break-words
+              ">
+                ${lead.name || "Lead"}
+              </div>
+
+              <div class="
+                text-sm
+                text-slate-400
+                break-all
+              ">
+                ${lead.phone || ""}
+              </div>
+
+            </div>
+
+            <div class="
+              text-left
+              sm:text-right
+              shrink-0
+            ">
+
+              <div class="text-xs text-slate-400">
+                Conversación
+              </div>
+
+              <div class="font-bold">
+                Ver Chat
+              </div>
+
+            </div>
+
+          </div>
+
+          <!-- STATUS -->
+          <div class="
+            flex
+            flex-wrap
+            gap-2
+          ">
+
+            <div class="
+              text-xs
+              px-3
+              py-1.5
+              rounded-xl
+              border
+              bg-blue-500/10
+              border-blue-500/20
+              text-blue-300
+            ">
+              🟡 Lead Abierto
+            </div>
+
+          </div>
+
+          <!-- ACTIONS -->
+          <div class="
+            flex
+            flex-wrap
+            gap-2
+          ">
+
+            <button
+              class="
+                px-4
+                py-2
+                rounded-xl
+                text-sm
+                font-bold
+                bg-blue-500/10
+                border
+                border-blue-500/20
+                text-blue-300
+                hover:bg-blue-500
+                hover:text-white
+                transition
+              "
+              onclick="event.stopPropagation(); openLeadConversation(${JSON.stringify(lead).replace(/"/g,'&quot;')})"
+            >
+              💬 Abrir
+            </button>
+
+            <button
+              class="
+                px-4
+                py-2
+                rounded-xl
+                text-sm
+                font-bold
+                bg-emerald-500/10
+                border
+                border-emerald-500/20
+                text-emerald-300
+                hover:bg-emerald-500
+                hover:text-white
+                transition
+              "
+              onclick="event.stopPropagation(); markLeadAsSold(${JSON.stringify(lead).replace(/"/g,'&quot;')})"
+            >
+              ✅ Marcar Venta
+            </button>
+
+            <button
+              class="
+                px-4
+                py-2
+                rounded-xl
+                text-sm
+                font-bold
+                bg-red-500/10
+                border
+                border-red-500/20
+                text-red-300
+                hover:bg-red-500
+                hover:text-white
+                transition
+              "
+              onclick="event.stopPropagation(); deleteLead('${lead._id}')"
+            >
+              🗑️ Eliminar
+            </button>
+
+          </div>
+
+        </div>
+
+      `;
+
+      div.onclick = ()=>openLeadConversation(lead);
+
+      container.appendChild(div);
+    });
+  }
+
+  // =========================================
+  // ✅ VENTAS CERRADAS
+  // =========================================
+
+  if(soldLeads.length){
+
+    container.innerHTML += `
+
+      <div class="
+        flex
+        items-center
+        gap-2
+        mb-4
+        mt-8
+      ">
+
+        <div class="
+          text-lg
+          font-bold
+          text-emerald-300
+        ">
+          ✅ Ventas Cerradas
+        </div>
+
+        <div class="
+          text-xs
+          px-2
+          py-1
+          rounded-lg
+          bg-emerald-500/10
+          border
+          border-emerald-500/20
+          text-emerald-300
+        ">
+          ${soldLeads.length}
+        </div>
+
+      </div>
+
+    `;
+
+    soldLeads.forEach(lead=>{
+
+      const div = document.createElement("div");
+
+      div.className = `
+        glass
+        rounded-3xl
+        p-4
+        sm:p-5
+        cursor-pointer
+        hover:scale-[1.01]
+        transition
+        w-full
+        overflow-hidden
+        border
+        border-emerald-500/30
+        mb-4
+      `;
+
+      div.innerHTML = `
+
+        <div class="
+          flex
+          flex-col
+          gap-4
+        ">
+
+          <!-- TOP -->
+          <div class="
+            flex
+            flex-col
+            sm:flex-row
+            sm:items-center
+            sm:justify-between
+            gap-4
+          ">
+
+            <div class="min-w-0">
+
+              <div class="
+                font-bold
+                text-base
+                sm:text-lg
+                break-words
+              ">
+                ${lead.name || "Lead"}
+              </div>
+
+              <div class="
+                text-sm
+                text-slate-400
+                break-all
+              ">
+                ${lead.phone || ""}
+              </div>
+
+            </div>
+
+            <div class="
+              text-left
+              sm:text-right
+              shrink-0
+            ">
+
+              <div class="text-xs text-slate-400">
+                Conversación
+              </div>
+
+              <div class="font-bold">
+                Ver Chat
+              </div>
+
+            </div>
+
+          </div>
+
+          <!-- STATUS -->
+          <div class="
+            flex
+            flex-wrap
+            gap-2
+          ">
+
+            <div class="
+              text-xs
+              px-3
+              py-1.5
+              rounded-xl
+              border
+              bg-emerald-500/10
+              border-emerald-500/20
+              text-emerald-300
+            ">
+              ✅ Venta Cerrada
+            </div>
+
+          </div>
+
+          <!-- ACTIONS -->
+          <div class="
+            flex
+            flex-wrap
+            gap-2
+          ">
+
+            <button
+              class="
+                px-4
+                py-2
+                rounded-xl
+                text-sm
+                font-bold
+                bg-blue-500/10
+                border
+                border-blue-500/20
+                text-blue-300
+                hover:bg-blue-500
+                hover:text-white
+                transition
+              "
+              onclick="event.stopPropagation(); openLeadConversation(${JSON.stringify(lead).replace(/"/g,'&quot;')})"
+            >
+              💬 Abrir
+            </button>
+
+            <button
+              class="
+                px-4
+                py-2
+                rounded-xl
+                text-sm
+                font-bold
+                bg-orange-500/10
+                border
+                border-orange-500/20
+                text-orange-300
+                hover:bg-orange-500
+                hover:text-white
+                transition
+              "
+              onclick="event.stopPropagation(); reopenLead(${JSON.stringify(lead).replace(/"/g,'&quot;')})"
+            >
+              🔄 Reabrir
+            </button>
+
+            <button
+              class="
+                px-4
+                py-2
+                rounded-xl
+                text-sm
+                font-bold
+                bg-red-500/10
+                border
+                border-red-500/20
+                text-red-300
+                hover:bg-red-500
+                hover:text-white
+                transition
+              "
+              onclick="event.stopPropagation(); deleteLead('${lead._id}')"
+            >
+              🗑️ Eliminar
+            </button>
+
+          </div>
+
+        </div>
+
+      `;
+
+      div.onclick = ()=>openLeadConversation(lead);
+
+      container.appendChild(div);
+    });
+  }
 }
 
 // =========================================
@@ -1936,10 +3196,16 @@ function addMessage(content,role){
 
   div.className = `
     animate-fade
-    max-w-[80%]
-    p-5
+    w-fit
+    max-w-full
+    sm:max-w-[90%]
+    lg:max-w-[80%]
+    p-4
+    sm:p-5
     rounded-3xl
     whitespace-pre-wrap
+    break-words
+    overflow-hidden
     ${
       role === "user"
       ? "message-user ml-auto"
@@ -1954,7 +3220,14 @@ function addMessage(content,role){
       div.innerHTML = `
         <img
           src="${content}"
-          class="rounded-2xl max-w-full mb-2"
+          class="
+            rounded-2xl
+            max-w-full
+            h-auto
+            mb-2
+            object-cover
+            block
+          "
         />
       `;
     }
@@ -1962,7 +3235,16 @@ function addMessage(content,role){
     else if(isVideo(content)){
 
       div.innerHTML = `
-        <video controls class="rounded-2xl max-w-full">
+        <video
+          controls
+          class="
+            rounded-2xl
+            max-w-full
+            w-full
+            h-auto
+            block
+          "
+        >
           <source src="${content}">
         </video>
       `;
@@ -1974,7 +3256,11 @@ function addMessage(content,role){
         <a
           href="${content}"
           target="_blank"
-          class="underline text-blue-300"
+          class="
+            underline
+            text-blue-300
+            break-all
+          "
         >
           Abrir contenido
         </a>
@@ -2003,10 +3289,27 @@ function showTyping(){
 
   div.id = "typing";
 
-  div.className = "message-bot rounded-3xl p-5 w-fit";
+  div.className = `
+    message-bot
+    rounded-3xl
+    p-4
+    sm:p-5
+    w-fit
+    max-w-full
+    animate-fade
+    overflow-hidden
+  `;
 
   div.innerHTML = `
-    <div class="loader"></div>
+    <div class="
+      flex
+      items-center
+      justify-center
+      min-w-[24px]
+      min-h-[24px]
+    ">
+      <div class="loader"></div>
+    </div>
   `;
 
   container.appendChild(div);
