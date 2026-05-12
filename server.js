@@ -1478,7 +1478,41 @@ app.delete("/lead/:id", auth, async(req,res)=>{
   }
 });
 
+// =========================
+// ✅ MARCAR LEAD COMO VENDIDO
+// =========================
+app.put("/lead/status/:id", auth, async (req,res)=>{
 
+  try{
+
+    const { sold } = req.body;
+
+    const lead = await Lead.findById(req.params.id);
+
+    if(!lead){
+      return res.status(404).json({
+        error:"Lead no encontrado"
+      });
+    }
+
+    lead.sold = sold;
+
+    await lead.save();
+
+    res.json({
+      success:true,
+      lead
+    });
+
+  }catch(error){
+
+    console.error("UPDATE LEAD STATUS ERROR:",error);
+
+    res.status(500).json({
+      error:"Error actualizando lead"
+    });
+  }
+});
 
 // =========================
 // 🚀 SERVER
