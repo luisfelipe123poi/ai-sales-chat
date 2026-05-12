@@ -40,10 +40,23 @@ const leadSchema = new mongoose.Schema({
   stage: {
     type: String,
     enum: [
+
+      // AIDA ORIGINAL
       "attention",
       "interest",
       "desire",
-      "action"
+      "action",
+
+      // 🔥 NUEVOS STAGES BOT
+      "ask_name",
+      "money_flow",
+      "hobby_flow",
+      "learn_flow",
+      "pre_action",
+      "awaiting_emotion",
+      "hype_desire",
+      "capture_whatsapp"
+
     ],
     default: "attention",
     index: true
@@ -82,6 +95,14 @@ const leadSchema = new mongoose.Schema({
   },
 
   notes: {
+    type: mongoose.Schema.Types.Mixed,
+    default: {}
+  },
+
+  // =========================
+  // 🎯 META DEL USUARIO
+  // =========================
+  user_goal: {
     type: String,
     default: null
   }
