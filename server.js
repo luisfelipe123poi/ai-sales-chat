@@ -735,6 +735,152 @@ Solo quedan 3 cupos para el bono de hoy. Si no envías el comprobante en las pr�
     showInput: false
   };
 }
+
+// =========================
+// 💅 BOT ESTÉTICA
+// =========================
+function esteticaBot(message, business, lead) {
+
+  let reply = "";
+  let options = [];
+
+  if (!message) {
+    message = "";
+  }
+
+  // =====================================
+  // START
+  // =====================================
+
+  if (message === "start") {
+
+    lead.stage = "ask_name";
+
+    return {
+
+      reply:
+`Hola hermosa 💖
+
+Bienvenida a ${business.name}
+
+Antes de continuar...
+
+¿Cómo te llamas?`,
+
+      options: [],
+
+      showInput: true,
+
+      inputType: "name"
+    };
+  }
+
+  // =====================================
+  // CAPTURAR NOMBRE
+  // =====================================
+
+  if (lead.stage === "ask_name") {
+
+    lead.name = message;
+
+    lead.stage = "main";
+
+    return {
+
+      reply:
+`${lead.name} ✨
+
+¿Qué te gustaría mejorar más en este momento?`,
+
+      options: [
+
+        {
+          label: "✨ Mi piel",
+          value: "piel"
+        },
+
+        {
+          label: "💆 Mi cabello",
+          value: "cabello"
+        },
+
+        {
+          label: "😍 Verme más bonita",
+          value: "beauty"
+        }
+      ],
+
+      showInput: false
+    };
+  }
+
+  // =====================================
+  // OPCIONES
+  // =====================================
+
+  if (lead.stage === "main") {
+
+    if (
+      message === "piel" ||
+      message === "cabello" ||
+      message === "beauty"
+    ) {
+
+      lead.stage = "capture_phone";
+
+      return {
+
+        reply:
+`Perfecto ${lead.name} 💖
+
+Tenemos un tratamiento ideal para ti ✨
+
+Déjanos tu WhatsApp y una asesora te enviará toda la información, promociones y resultados reales.`,
+
+        options: [],
+
+        showInput: true,
+
+        inputType: "phone"
+      };
+    }
+  }
+
+  // =====================================
+  // CAPTURAR WHATSAPP
+  // =====================================
+
+  if (lead.stage === "capture_phone") {
+
+    lead.phone = message;
+
+    lead.stage = "done";
+
+    return {
+
+      reply:
+`Perfecto ${lead.name} 💖
+
+Tu asesora te escribirá en unos minutos ✨`,
+
+      options: [],
+
+      showInput: false,
+
+      showWhatsApp: true
+    };
+  }
+
+  return {
+
+    reply:
+"Cuéntame un poco más 💖",
+
+    options: [],
+
+    showInput: false
+  };
+}
 // =========================
 // 🧠 CLOSER BOT (AIDA)
 // =========================
@@ -1149,6 +1295,114 @@ app.post("/chat", async (req, res) => {
     res.status(500).json({ error: "Error en chat" });
   }
 });
+
+// =========================
+// 💅 CHAT ESTÉTICA
+// =========================
+app.post("/chat-estetica", async (req, res) => {
+
+  const {
+    message,
+    leadId,
+    conversationId,
+    businessId
+  } = req.body;
+
+  try {
+
+    if (!businessId) {
+      return res.status(400).json({
+        error: "businessId requerido"
+      });
+    }
+
+    const business = await Business.findById(businessId);
+
+    if (!business) {
+      return res.status(404).json({
+        error: "Negocio no existe"
+      });
+    }
+
+    let lead = leadId
+      ? await Lead.findById(leadId)
+      : await Lead.create({
+          businessId,
+          stage: "attention"
+        });
+
+    let conversation = conversationId
+      ? await Conversation.findById(conversationId)
+      : await Conversation.create({
+          leadId: lead._id,
+          businessId
+        });
+
+    // 🔥 NUEVO BOT
+    const result = esteticaBot(
+      message,
+      business,
+      lead
+    );
+
+    await Message.create({
+      conversationId: conversation._id,
+      role: "user",
+      content: message
+    });
+
+    await Message.create({
+      conversationId: conversation._id,
+      role: "assistant",
+      content: result.reply
+    });
+
+    await Lead.findByIdAndUpdate(
+      lead._id,
+      {
+        name: lead.name,
+        phone: lead.phone,
+        stage: lead.stage
+      }
+    );
+
+    res.json({
+
+      reply: result.reply,
+
+      options: result.options || [],
+
+      leadId: lead._id,
+
+      conversationId: conversation._id,
+
+      showInput:
+        result.showInput || false,
+
+      inputType:
+        result.inputType || "text",
+
+      showWhatsApp:
+        result.showWhatsApp || false,
+
+      whatsappNumber:
+        business.whatsappNumber
+    });
+
+  } catch (error) {
+
+    console.error(
+      "CHAT ESTETICA ERROR:",
+      error
+    );
+
+    res.status(500).json({
+      error: "Error en chat estética"
+    });
+  }
+});
+
+
 // =========================
 // 📊 ANALYTICS
 // =========================
@@ -1512,8 +1766,14 @@ app.get("/crm/:slug", (req, res) => {
 // =========================
 // 🌐 CHAT
 // =========================
+// INFOPRODUCTOS
 app.get("/chat/:slug", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "chat.html"));
+});
+
+// ESTÉTICA
+app.get("/estetica/:slug", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "estetica.html"));
 });
 
 // =========================
