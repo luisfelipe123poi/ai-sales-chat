@@ -1548,6 +1548,7 @@ app.post("/business", auth, async (req, res) => {
     const {
       name,
       slug,
+      type,
       logo,
       primaryColor,
       welcomeMessage,
@@ -1555,7 +1556,9 @@ app.post("/business", auth, async (req, res) => {
       productLink,
       whatsappNumber,
       waMessage,
-      testimonials: testimonialsRaw // Capturamos "testimonials" del front
+      testimonials: testimonialsRaw,
+      categories,
+      promotions
     } = req.body;
 
     // 🔥 FIX CRÍTICO: LIMPIAR SLUG
@@ -1596,6 +1599,9 @@ app.post("/business", auth, async (req, res) => {
       name,
       slug: cleanSlug, // 🔥 USAMOS EL SLUG LIMPIO
       logo,
+      type,
+      categories,
+      promotions,
       primaryColor,
       welcomeMessage,
       productInfo,
