@@ -2367,6 +2367,21 @@ app.get("/:slug", async (req, res, next) => {
     }
 
     // 🔥 SERVIR CHAT.HTML
+    // =====================================
+    // 🔥 DETECTAR TIPO DE NEGOCIO
+    // =====================================
+
+    if (business.type === "estetica") {
+
+      return res.sendFile(
+        path.join(__dirname, "public", "estetica.html")
+      );
+    }
+
+    // =====================================
+    // 🔥 DEFAULT CHAT
+    // =====================================
+
     return res.sendFile(
       path.join(__dirname, "public", "chat.html")
     );
