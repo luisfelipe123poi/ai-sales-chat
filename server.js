@@ -737,7 +737,7 @@ Solo quedan 3 cupos para el bono de hoy. Si no envías el comprobante en las pr�
 }
 
 // =========================
-// 💅 BOT ESTÉTICA
+// 💅 BOT ESTÉTICA ULTRA PREMIUM
 // =========================
 function esteticaBot(message, business, lead) {
 
@@ -746,6 +746,23 @@ function esteticaBot(message, business, lead) {
 
   if (!message) {
     message = "";
+  }
+
+  // =====================================
+  // NORMALIZAR
+  // =====================================
+
+  message =
+    String(message)
+    .toLowerCase()
+    .trim();
+
+  // =====================================
+  // ASEGURAR ESTRUCTURAS
+  // =====================================
+
+  if (!business.categories) {
+    business.categories = [];
   }
 
   // =====================================
@@ -761,11 +778,18 @@ function esteticaBot(message, business, lead) {
       reply:
 `Hola hermosa 💖
 
-Bienvenida a ${business.name}
+Bienvenida a ${business.name} ✨
 
-Antes de continuar...
+Qué alegría tenerte aquí 🌸
 
-¿Cómo te llamas?`,
+Más que una clienta…
+queremos que te sientas como una amiga más de la casa 🤍
+
+Aquí vas a encontrar un espacio pensado para consentirte, relajarte y ayudarte a verte todavía más hermosa ✨
+
+Antes de comenzar…
+
+¿Cómo te gustaría que te llamemos? 💖`,
 
       options: [],
 
@@ -788,25 +812,39 @@ Antes de continuar...
     return {
 
       reply:
-`${lead.name} ✨
+`${lead.name} 💖
 
-¿Qué te gustaría mejorar más en este momento?`,
+Qué lindo tenerte aquí ✨
+
+Cuéntame hermosa…
+
+¿Qué te gustaría hacer hoy? 🌸`,
 
       options: [
 
         {
-          label: "✨ Mi piel",
-          value: "piel"
+          label: "💅 Quiero cotizar un servicio",
+          value: "cotizar"
         },
 
         {
-          label: "💆 Mi cabello",
-          value: "cabello"
+          label: "📅 Quiero agendar una cita",
+          value: "agendar"
         },
 
         {
-          label: "😍 Verme más bonita",
-          value: "beauty"
+          label: "🔥 Ver promociones especiales",
+          value: "promo"
+        },
+
+        {
+          label: "✨ Ver tratamientos más deseados",
+          value: "top_servicios"
+        },
+
+        {
+          label: "📍 Ver ubicación",
+          value: "ubicacion"
         }
       ],
 
@@ -815,15 +853,18 @@ Antes de continuar...
   }
 
   // =====================================
-  // OPCIONES
+  // MENÚ PRINCIPAL
   // =====================================
 
   if (lead.stage === "main") {
 
+    // =====================================
+    // COTIZAR / AGENDAR
+    // =====================================
+
     if (
-      message === "piel" ||
-      message === "cabello" ||
-      message === "beauty"
+      message === "cotizar" ||
+      message === "agendar"
     ) {
 
       lead.stage = "capture_phone";
@@ -833,15 +874,160 @@ Antes de continuar...
         reply:
 `Perfecto ${lead.name} 💖
 
-Tenemos un tratamiento ideal para ti ✨
+Antes de mostrarte nuestros tratamientos y beneficios especiales ✨
 
-Déjanos tu WhatsApp y una asesora te enviará toda la información, promociones y resultados reales.`,
+¿A qué número de WhatsApp te podemos enviar promociones VIP, seguimiento personalizado y prioridad de agenda? 🌸`,
 
         options: [],
 
         showInput: true,
 
         inputType: "phone"
+      };
+    }
+
+    // =====================================
+    // PROMOS
+    // =====================================
+
+    if (message === "promo") {
+
+      let promoText = "";
+
+      if (
+        business.promotions &&
+        business.promotions.length > 0
+      ) {
+
+        promoText =
+          business.promotions
+            .map(p => `🔥 ${p}`)
+            .join("\n");
+
+      } else {
+
+        promoText =
+`🔥 Beneficios especiales en tratamientos faciales
+🔥 Promociones VIP activas
+🔥 Agenda prioritaria disponible`;
+      }
+
+      return {
+
+        reply:
+`🔥 PROMOCIONES ESPECIALES DE HOY ✨
+
+${promoText}
+
+⚠️ Algunos cupos ya fueron reservados hoy.
+
+💖 Queremos ayudarte a sentirte más hermosa, segura y feliz contigo misma ✨`,
+
+        options: [
+
+          {
+            label: "💆 Ver tratamientos",
+            value: "ver_categorias"
+          },
+
+          {
+            label: "📅 Quiero agendar",
+            value: "agendar"
+          }
+        ],
+
+        showInput: false
+      };
+    }
+
+    // =====================================
+    // TOP SERVICIOS
+    // =====================================
+
+    if (message === "top_servicios") {
+
+      let topServices = [];
+
+      business.categories.forEach(cat => {
+
+        if (
+          cat.services &&
+          cat.services.length > 0
+        ) {
+
+          cat.services.forEach(service => {
+
+            if (service.top) {
+              topServices.push(`✨ ${service.name}`);
+            }
+          });
+        }
+      });
+
+      if (topServices.length <= 0) {
+
+        topServices = [
+          "✨ Hollywood Peel",
+          "✨ Dermapen",
+          "✨ Limpieza facial",
+          "✨ Pestañas premium"
+        ];
+      }
+
+      return {
+
+        reply:
+`✨ Estos son algunos de los tratamientos más deseados por nuestras chicas 💖
+
+${topServices.join("\n")}
+
+Muchas llegan buscando verse más lindas…
+y terminan sintiéndose muchísimo más seguras y felices consigo mismas ✨`,
+
+        options: [
+
+          {
+            label: "💆 Ver categorías",
+            value: "ver_categorias"
+          },
+
+          {
+            label: "📅 Quiero agendar",
+            value: "agendar"
+          }
+        ],
+
+        showInput: false
+      };
+    }
+
+    // =====================================
+    // UBICACIÓN
+    // =====================================
+
+    if (message === "ubicacion") {
+
+      return {
+
+        reply:
+`📍 Estamos ubicadas en una zona cómoda, segura y súper agradable ✨
+
+💖 Nuestro espacio fue diseñado para que te sientas relajada, consentida y especial desde el primer momento 🌸
+
+👇 Aquí puedes ver nuestra ubicación:`,
+
+        options: [
+
+          {
+            label: "📍 Ver ubicación",
+            type: "url",
+            url:
+              business.productLink ||
+              "https://maps.google.com"
+          }
+        ],
+
+        showInput: false
       };
     }
   }
@@ -854,6 +1040,274 @@ Déjanos tu WhatsApp y una asesora te enviará toda la información, promociones
 
     lead.phone = message;
 
+    lead.stage = "categories";
+
+    // =====================================
+    // CATEGORÍAS DINÁMICAS
+    // =====================================
+
+    let dynamicCategories = [];
+
+    if (
+      business.categories &&
+      business.categories.length > 0
+    ) {
+
+      dynamicCategories =
+        business.categories.map((cat, index) => {
+
+          return {
+
+            label:
+              `${cat.icon || "✨"} ${cat.name}`,
+
+            value:
+              `category_${index}`
+          };
+        });
+    }
+
+    // =====================================
+    // FALLBACK
+    // =====================================
+
+    if (dynamicCategories.length <= 0) {
+
+      dynamicCategories = [
+
+        {
+          label: "💆 Facial",
+          value: "category_0"
+        }
+      ];
+    }
+
+    return {
+
+      reply:
+`Perfecto hermosa 💖
+
+Tu acceso VIP quedó activado ✨
+
+A partir de ahora podrás recibir:
+• promociones privadas
+• prioridad de agenda
+• beneficios especiales
+• seguimiento personalizado 🌸
+
+Y recuerda…
+
+Aquí no queremos que te sientas como una clienta más 🤍
+queremos que te sientas escuchada, consentida y súper especial ✨
+
+Cuéntame hermosa…
+
+¿Qué categoría te gustaría ver primero? 💖`,
+
+      options: dynamicCategories,
+
+      showInput: false
+    };
+  }
+
+  // =====================================
+  // CATEGORÍAS
+  // =====================================
+
+  if (
+    message.startsWith("category_")
+  ) {
+
+    const index =
+      Number(
+        message.replace("category_", "")
+      );
+
+    const category =
+      business.categories[index];
+
+    if (!category) {
+
+      return {
+
+        reply:
+`No encontramos esa categoría hermosa 💖`,
+
+        options: [],
+
+        showInput: false
+      };
+    }
+
+    lead.selectedCategory = index;
+
+    lead.stage = "services";
+
+    let services = [];
+
+    if (
+      category.services &&
+      category.services.length > 0
+    ) {
+
+      services =
+        category.services.map((service, i) => {
+
+          return {
+
+            label:
+              `${service.icon || "✨"} ${service.name}`,
+
+            value:
+              `service_${index}_${i}`
+          };
+        });
+    }
+
+    return {
+
+      reply:
+`${category.name} ✨
+
+${category.description || "Tenemos tratamientos hermosos para ayudarte a sentirte todavía más increíble 💖"}
+
+⚠️ Hoy algunos tratamientos tienen beneficios especiales activos.`,
+
+      options: services,
+
+      showInput: false
+    };
+  }
+
+  // =====================================
+  // SERVICIOS
+  // =====================================
+
+  if (
+    message.startsWith("service_")
+  ) {
+
+    const parts =
+      message.split("_");
+
+    const categoryIndex =
+      Number(parts[1]);
+
+    const serviceIndex =
+      Number(parts[2]);
+
+    const category =
+      business.categories[categoryIndex];
+
+    if (!category) {
+
+      return {
+
+        reply:
+`No encontramos la categoría 💖`,
+
+        options: [],
+
+        showInput: false
+      };
+    }
+
+    const service =
+      category.services[serviceIndex];
+
+    if (!service) {
+
+      return {
+
+        reply:
+`No encontramos el tratamiento 💖`,
+
+        options: [],
+
+        showInput: false
+      };
+    }
+
+    lead.selectedService =
+      service.name;
+
+    let benefits = "";
+
+    if (
+      service.benefits &&
+      service.benefits.length > 0
+    ) {
+
+      benefits =
+        service.benefits
+          .map(b => `• ${b}`)
+          .join("\n");
+    }
+
+    let testimonials = "";
+
+    if (
+      service.testimonials &&
+      service.testimonials.length > 0
+    ) {
+
+      testimonials =
+        "\n\n🔥 Mira algunos resultados reales:\n\n" +
+        service.testimonials.join("\n");
+    }
+
+    return {
+
+      reply:
+`${service.icon || "✨"} ${service.name} ✨
+
+${service.description || ""}
+
+${benefits}
+
+💖 Muchas chicas aman este procedimiento porque ayuda a verse mucho más lindas, seguras y radiantes ✨
+
+🔥 Más de ${
+  service.clients ||
+  "320"
+} chicas felices con sus resultados.
+
+⚠️ Hoy solo quedan pocos espacios con beneficio especial.${testimonials}
+
+💖 Imagínate viéndote así hermosa…
+
+✨ ¿Te gustaría agendar tu valoración?`,
+
+      options: [
+
+        {
+          label: "📅 Quiero agendar valoración",
+          value: "final_agendar"
+        },
+
+        {
+          label: "🔥 Quiero mi beneficio especial",
+          value: "final_discount"
+        },
+
+        {
+          label: "📲 Hablar con asesora",
+          value: "asesora"
+        }
+      ],
+
+      showInput: false
+    };
+  }
+
+  // =====================================
+  // AGENDAR
+  // =====================================
+
+  if (
+    message === "final_agendar"
+  ) {
+
     lead.stage = "done";
 
     return {
@@ -861,7 +1315,15 @@ Déjanos tu WhatsApp y una asesora te enviará toda la información, promociones
       reply:
 `Perfecto ${lead.name} 💖
 
-Tu asesora te escribirá en unos minutos ✨`,
+Tu solicitud quedó registrada exitosamente ✨
+
+En unos minutos una chica de nuestro equipo te escribirá personalmente para ayudarte con tu cita 🌸
+
+⚠️ Tu beneficio especial quedará reservado únicamente por hoy.
+
+Y tranquila hermosa…
+
+Vamos a ayudarte a sentirte increíble ✨`,
 
       options: [],
 
@@ -871,12 +1333,90 @@ Tu asesora te escribirá en unos minutos ✨`,
     };
   }
 
+  // =====================================
+  // BENEFICIO
+  // =====================================
+
+  if (
+    message === "final_discount"
+  ) {
+
+    lead.stage = "done";
+
+    return {
+
+      reply:
+`🔥 Perfecto hermosa 💖
+
+Tu beneficio especial quedó reservado ✨
+
+⚠️ Hoy tenemos muy pocos espacios disponibles con esta promoción.
+
+En unos minutos una asesora te escribirá personalmente para ayudarte con todo 🌸`,
+
+      options: [],
+
+      showInput: false,
+
+      showWhatsApp: true
+    };
+  }
+
+  // =====================================
+  // ASESORA
+  // =====================================
+
+  if (
+    message === "asesora"
+  ) {
+
+    lead.stage = "done";
+
+    return {
+
+      reply:
+`Perfecto hermosa 💖
+
+Te vamos a conectar con una asesora especializada ✨
+
+Queremos ayudarte a elegir lo mejor para ti y resolver todas tus dudas con muchísimo cariño 🌸`,
+
+      options: [],
+
+      showInput: false,
+
+      showWhatsApp: true
+    };
+  }
+
+  // =====================================
+  // FALLBACK
+  // =====================================
+
   return {
 
     reply:
-"Cuéntame un poco más 💖",
+`Estoy aquí para ayudarte hermosa 💖
 
-    options: [],
+Cuéntame qué tratamiento te llama más la atención ✨`,
+
+    options: [
+
+      {
+        label: "💆 Ver tratamientos",
+        value: "ver_categorias"
+      },
+
+      {
+        label: "🔥 Ver promociones",
+        value: "promo"
+      },
+
+      {
+        label: "📅 Quiero agendar",
+        value: "agendar"
+      }
+    ],
 
     showInput: false
   };
