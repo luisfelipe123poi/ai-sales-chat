@@ -1735,7 +1735,7 @@ app.get("/my-businesses", auth, async (req, res) => {
 });
 
 // =========================
-// 💬 CHAT
+// 💬 CHAT INTELIGENTE UNIFICADO
 // =========================
 app.post("/chat", async (req, res) => {
   const { message, leadId, conversationId, businessId } = req.body;
@@ -1748,6 +1748,7 @@ app.post("/chat", async (req, res) => {
     const business = await Business.findById(businessId);
 
     console.log("🔥 BUSINESS:", business);
+    console.log("🔥 TIPO DE NEGOCIO:", business?.type);
     console.log("🔥 TESTIMONIOS EN BD:", business?.testimonials);
 
     if (!business) {
@@ -1793,8 +1794,17 @@ app.post("/chat", async (req, res) => {
       }
     }
 
-    // 🔥 AQUI LLAMAS TU BOT (NUEVO)
-    const result = closerBot(message, business, lead);
+    // ========================================================
+    // 🔀 ENRUTAMIENTO DINÁMICO SEGÚN EL TIPO DE NEGOCIO
+    // ========================================================
+    let result;
+    if (business.type === "estetica") {
+      console.log("💅 Ejecutando motor: esteticaBot");
+      result = esteticaBot(message, business, lead);
+    } else {
+      console.log("🤖 Ejecutando motor: closerBot");
+      result = closerBot(message, business, lead);
+    }
 
     console.log("🔥 RESULT BOT:", result);
 
@@ -1816,10 +1826,10 @@ app.post("/chat", async (req, res) => {
       stage: lead.stage
     });
 
-    const showWhatsApp =
-      lead.stage === "action" &&
-      lead.name &&
-      (lead.phone || lead.email);
+    // Adaptamos la lógica de WhatsApp según el flujo que responda
+    const showWhatsApp = business.type === "estetica"
+      ? (result.showWhatsApp || false)
+      : (lead.stage === "action" && lead.name && (lead.phone || lead.email));
 
     res.json({
       reply,
@@ -1839,112 +1849,6 @@ app.post("/chat", async (req, res) => {
   } catch (error) {
     console.error("CHAT ERROR:", error);
     res.status(500).json({ error: "Error en chat" });
-  }
-});
-
-// =========================
-// 💅 CHAT ESTÉTICA
-// =========================
-app.post("/chat-estetica", async (req, res) => {
-
-  const {
-    message,
-    leadId,
-    conversationId,
-    businessId
-  } = req.body;
-
-  try {
-
-    if (!businessId) {
-      return res.status(400).json({
-        error: "businessId requerido"
-      });
-    }
-
-    const business = await Business.findById(businessId);
-
-    if (!business) {
-      return res.status(404).json({
-        error: "Negocio no existe"
-      });
-    }
-
-    let lead = leadId
-      ? await Lead.findById(leadId)
-      : await Lead.create({
-          businessId,
-          stage: "attention"
-        });
-
-    let conversation = conversationId
-      ? await Conversation.findById(conversationId)
-      : await Conversation.create({
-          leadId: lead._id,
-          businessId
-        });
-
-    // 🔥 NUEVO BOT
-    const result = esteticaBot(
-      message,
-      business,
-      lead
-    );
-
-    await Message.create({
-      conversationId: conversation._id,
-      role: "user",
-      content: message
-    });
-
-    await Message.create({
-      conversationId: conversation._id,
-      role: "assistant",
-      content: result.reply
-    });
-
-    await Lead.findByIdAndUpdate(
-      lead._id,
-      {
-        name: lead.name,
-        phone: lead.phone,
-        stage: lead.stage
-      }
-    );
-
-    res.json({
-
-      reply: result.reply,
-
-      options: result.options || [],
-
-      leadId: lead._id,
-
-      conversationId: conversation._id,
-
-      showInput:
-        result.showInput || false,
-
-      inputType:
-        result.inputType || "text",
-
-      showWhatsApp:
-        result.showWhatsApp || false,
-
-      whatsappNumber:
-        business.whatsappNumber
-    });
-
-  } catch (error) {
-
-    console.error(
-      "CHAT ESTETICA ERROR:",
-      error
-    );
-
-    res.status(500).json({
-      error: "Error en chat estética"
-    });
   }
 });
 
