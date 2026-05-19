@@ -1671,7 +1671,10 @@ app.post("/clone-template/:id", auth, async (req, res) => {
 // =========================
 app.get("/business/:slug", async (req, res) => {
   try {
-    const business = await Business.findOne({ slug: req.params.slug });
+    // 🔥 FIX CRÍTICO: Forzar minúsculas y limpiar espacios en la búsqueda
+    const slugBuscado = req.params.slug.toLowerCase().trim();
+    
+    const business = await Business.findOne({ slug: slugBuscado });
 
     if (!business) {
       return res.status(404).json({ error: "Negocio no encontrado" });
@@ -1715,6 +1718,7 @@ app.get("/business/:slug", async (req, res) => {
     res.json(businessSafe);
 
   } catch (error) {
+    console.error("❌ ERROR EN GET BUSINESS:", error);
     res.status(500).json({ error: "Error" });
   }
 });
