@@ -109,6 +109,139 @@ function closerBot(message, business, lead) {
   if (!message) message = "";
 
   // ==========================================
+  // 🔥 CATEGORÍAS LOCALES
+  // ==========================================
+
+  const localCategories = [
+
+    {
+      name: "Faciales",
+      icon: "💆",
+
+      description:
+`Tratamientos diseñados para ayudarte a verte más fresca, luminosa y radiante ✨`,
+
+      services: [
+
+        {
+          name: "Hollywood Peel",
+          icon: "✨",
+
+          description:
+`Un tratamiento facial premium que ayuda a iluminar la piel, mejorar textura y dar un efecto glow increíble ✨`,
+
+          benefits: [
+
+            "Piel más luminosa",
+            "Efecto glow inmediato",
+            "Ayuda con manchas y poros"
+          ],
+
+          testimonials: [
+
+            "😍 Mi piel quedó divina",
+            "✨ Me sentí muchísimo más segura",
+            "💖 Lo volvería a hacer mil veces"
+          ],
+
+          clients: "520"
+        },
+
+        {
+          name: "Limpieza Facial",
+          icon: "🫧",
+
+          description:
+`Ideal para limpiar profundamente la piel y devolverle frescura y suavidad ✨`,
+
+          benefits: [
+
+            "Elimina impurezas",
+            "Ayuda con puntos negros",
+            "Piel más suave"
+          ],
+
+          testimonials: [
+
+            "💖 Sentí mi piel súper limpia",
+            "✨ Me encantó el resultado"
+          ],
+
+          clients: "430"
+        }
+      ]
+    },
+
+    {
+      name: "Pestañas",
+      icon: "👁️",
+
+      description:
+`Realza tu mirada y siéntete todavía más hermosa ✨`,
+
+      services: [
+
+        {
+          name: "Pestañas Premium",
+          icon: "✨",
+
+          description:
+`Diseño de pestañas elegante y natural para una mirada más impactante 💖`,
+
+          benefits: [
+
+            "Mirada más intensa",
+            "Acabado natural",
+            "Mayor volumen"
+          ],
+
+          testimonials: [
+
+            "😍 Me veo divina",
+            "💖 Súper naturales"
+          ],
+
+          clients: "610"
+        }
+      ]
+    },
+
+    {
+      name: "Corporales",
+      icon: "🌸",
+
+      description:
+`Tratamientos corporales pensados para ayudarte a sentirte más segura y hermosa ✨`,
+
+      services: [
+
+        {
+          name: "Moldeo Corporal",
+          icon: "🔥",
+
+          description:
+`Ayuda a moldear zonas específicas y mejorar la apariencia corporal ✨`,
+
+          benefits: [
+
+            "Mejora visual",
+            "Resultados progresivos",
+            "Mayor seguridad"
+          ],
+
+          testimonials: [
+
+            "💖 Me sentí más segura",
+            "🔥 Noté cambios muy rápido"
+          ],
+
+          clients: "370"
+        }
+      ]
+    }
+  ];
+
+  // ==========================================
   // 🔥 TESTIMONIOS
   // ==========================================
 
@@ -183,7 +316,7 @@ A veces el mayor cambio empieza simplemente tomando una decisión ✨
   }
 
   // ==========================================
-  // 🔥 DUDAS GLOBALES
+  // 🔥 DUDAS
   // ==========================================
 
   if (
@@ -196,6 +329,7 @@ A veces el mayor cambio empieza simplemente tomando una decisión ✨
 `Es completamente normal tener dudas hermosa 💖
 
 Muchas chicas llegaron igual que tú…
+
 con miedo,
 inseguridad
 o pensando demasiado.
@@ -239,16 +373,9 @@ ${formatTestimonials() || "🔥 Muchísimas chicas ya vivieron su transformació
       reply:
 `Hola hermosa 💖
 
-Bienvenida a ${business.name} ✨
+Bienvenida a ${business.name || "nuestro centro"} ✨
 
 Qué alegría tenerte aquí 🌸
-
-Más que una clienta…
-queremos que te sientas como una amiga más de la casa 🤍
-
-Aquí vas a encontrar un espacio pensado para consentirte, relajarte y ayudarte a verte todavía más hermosa ✨
-
-Antes de comenzar…
 
 ¿Cómo te gustaría que te llamemos? 💖`,
 
@@ -277,30 +404,28 @@ Antes de comenzar…
 
 Qué lindo tenerte aquí ✨
 
-Cuéntame hermosa…
-
 ¿Qué te gustaría hacer hoy? 🌸`,
 
       options: [
 
         {
-          label: "💅 Quiero cotizar un servicio",
+          label: "💅 Cotizar servicio",
           value: "cotizar"
         },
 
         {
-          label: "📅 Quiero agendar una cita",
+          label: "📅 Agendar cita",
           value: "agendar"
         },
 
         {
-          label: "🔥 Ver promociones especiales",
+          label: "🔥 Ver promociones",
           value: "promo"
         },
 
         {
-          label: "✨ Ver tratamientos más deseados",
-          value: "top_servicios"
+          label: "✨ Ver tratamientos",
+          value: "go_categories"
         },
 
         {
@@ -319,10 +444,6 @@ Cuéntame hermosa…
 
   if (lead.stage === "main") {
 
-    // ==========================================
-    // 🔥 COTIZAR / AGENDAR
-    // ==========================================
-
     if (
       message === "cotizar" ||
       message === "agendar"
@@ -335,9 +456,7 @@ Cuéntame hermosa…
         reply:
 `Perfecto ${lead.name} 💖
 
-Antes de mostrarte nuestros tratamientos y beneficios especiales ✨
-
-¿A qué número de WhatsApp te podemos enviar promociones VIP, prioridad de agenda y seguimiento personalizado? 🌸`,
+¿A qué número de WhatsApp te podemos enviar promociones VIP y prioridad de agenda? ✨`,
 
         options: [],
 
@@ -347,143 +466,37 @@ Antes de mostrarte nuestros tratamientos y beneficios especiales ✨
       };
     }
 
-    // ==========================================
-    // 🔥 PROMOS
-    // ==========================================
-
     if (message === "promo") {
-
-      let promoText = "";
-
-      if (
-        business.promotions &&
-        business.promotions.length > 0
-      ) {
-
-        promoText =
-          business.promotions
-            .map(p => `🔥 ${p}`)
-            .join("\n");
-
-      } else {
-
-        promoText =
-`🔥 Beneficios especiales activos
-🔥 Agenda VIP prioritaria
-🔥 Cupos limitados hoy`;
-      }
 
       return {
 
         reply:
 `🔥 PROMOCIONES ESPECIALES ✨
 
-${promoText}
+🔥 Beneficios especiales activos
+🔥 Agenda VIP prioritaria
+🔥 Cupos limitados hoy
 
-⚠️ Algunos espacios ya fueron reservados hoy.
-
-💖 Queremos ayudarte a sentirte más hermosa, segura y feliz contigo misma ✨`,
+💖 Queremos ayudarte a sentirte más hermosa y segura ✨`,
 
         options: [
 
           {
             label: "💆 Ver tratamientos",
             value: "go_categories"
-          },
-
-          {
-            label: "📅 Quiero agendar",
-            value: "agendar"
           }
         ],
 
         showInput: false
       };
     }
-
-    // ==========================================
-    // 🔥 TOP SERVICIOS
-    // ==========================================
-
-    if (message === "top_servicios") {
-
-      let topServices = [];
-
-      if (
-        business.categories &&
-        business.categories.length > 0
-      ) {
-
-        business.categories.forEach(cat => {
-
-          if (
-            cat.services &&
-            cat.services.length > 0
-          ) {
-
-            cat.services.forEach(service => {
-
-              if (service.top) {
-
-                topServices.push(
-                  `✨ ${service.name}`
-                );
-              }
-            });
-          }
-        });
-      }
-
-      if (topServices.length <= 0) {
-
-        topServices = [
-
-          "✨ Hollywood Peel",
-          "✨ Dermapen",
-          "✨ Limpieza facial",
-          "✨ Pestañas premium"
-        ];
-      }
-
-      return {
-
-        reply:
-`✨ Estos son algunos de los tratamientos más deseados por nuestras chicas 💖
-
-${topServices.join("\n")}
-
-Muchas llegan buscando verse más lindas…
-y terminan sintiéndose muchísimo más seguras y felices consigo mismas ✨`,
-
-        options: [
-
-          {
-            label: "💆 Ver categorías",
-            value: "go_categories"
-          },
-
-          {
-            label: "📅 Quiero agendar",
-            value: "agendar"
-          }
-        ],
-
-        showInput: false
-      };
-    }
-
-    // ==========================================
-    // 🔥 UBICACIÓN
-    // ==========================================
 
     if (message === "ubicacion") {
 
       return {
 
         reply:
-`📍 Estamos ubicadas en una zona cómoda, segura y súper agradable ✨
-
-💖 Nuestro espacio fue diseñado para que te sientas relajada, consentida y especial desde el primer momento 🌸
+`📍 Estamos ubicadas en una zona cómoda y segura ✨
 
 👇 Aquí puedes ver nuestra ubicación:`,
 
@@ -502,67 +515,32 @@ y terminan sintiéndose muchísimo más seguras y felices consigo mismas ✨`,
       };
     }
 
-    // ==========================================
-    // 🔥 IR CATEGORÍAS
-    // ==========================================
-
     if (
       message === "go_categories"
     ) {
 
-      // 🔥 FIX CRÍTICO
       lead.stage = "categories";
-
-      // 🔥 asegurar persistencia
-      if (!lead.notes) {
-        lead.notes = {};
-      }
-
-      lead.notes.last_stage =
-        "categories";
-
-      let dynamicCategories = [];
-
-      if (
-        business.categories &&
-        business.categories.length > 0
-      ) {
-
-        dynamicCategories =
-          business.categories.map((cat, index) => {
-
-            return {
-
-              label:
-                `${cat.icon || "✨"} ${cat.name}`,
-
-              value:
-                `category_${index}`
-            };
-          });
-      }
-
-      if (dynamicCategories.length <= 0) {
-
-        dynamicCategories = [
-
-          {
-            label: "💆 Facial",
-            value: "category_0"
-          }
-        ];
-      }
 
       return {
 
         reply:
 `Perfecto hermosa 💖
 
-Cuéntame…
-
 ¿Qué categoría te gustaría ver primero? ✨`,
 
-        options: dynamicCategories,
+        options:
+
+          localCategories.map((cat, index) => {
+
+            return {
+
+              label:
+                `${cat.icon} ${cat.name}`,
+
+              value:
+                `category_${index}`
+            };
+          }),
 
         showInput: false
       };
@@ -570,7 +548,7 @@ Cuéntame…
   }
 
   // ==========================================
-  // 🔥 CAPTURAR WHATSAPP
+  // 🔥 CAPTURAR PHONE
   // ==========================================
 
   if (lead.stage === "capture_phone") {
@@ -582,7 +560,7 @@ Cuéntame…
         reply:
 `${lead.name || "Hermosa"} 💖
 
-Necesito un número válido para poder enviarte los beneficios VIP y ayudarte con prioridad ✨`,
+Necesito un número válido ✨`,
 
         options: [],
 
@@ -596,38 +574,6 @@ Necesito un número válido para poder enviarte los beneficios VIP y ayudarte co
 
     lead.stage = "categories";
 
-    let dynamicCategories = [];
-
-    if (
-      business.categories &&
-      business.categories.length > 0
-    ) {
-
-      dynamicCategories =
-        business.categories.map((cat, index) => {
-
-          return {
-
-            label:
-              `${cat.icon || "✨"} ${cat.name}`,
-
-            value:
-              `category_${index}`
-          };
-        });
-    }
-
-    if (dynamicCategories.length <= 0) {
-
-      dynamicCategories = [
-
-        {
-          label: "💆 Facial",
-          value: "category_0"
-        }
-      ];
-    }
-
     return {
 
       reply:
@@ -635,21 +581,21 @@ Necesito un número válido para poder enviarte los beneficios VIP y ayudarte co
 
 Tu acceso VIP quedó activado ✨
 
-A partir de ahora podrás recibir:
-• promociones privadas
-• prioridad de agenda
-• beneficios especiales
-• seguimiento personalizado 🌸
-
-Y recuerda…
-
-Aquí no queremos que te sientas como una clienta más 🤍
-
-queremos que te sientas escuchada, consentida y súper especial ✨
-
 ¿Qué categoría te gustaría ver primero? 💖`,
 
-      options: dynamicCategories,
+      options:
+
+        localCategories.map((cat, index) => {
+
+          return {
+
+            label:
+              `${cat.icon} ${cat.name}`,
+
+            value:
+              `category_${index}`
+          };
+        }),
 
       showInput: false
     };
@@ -672,7 +618,7 @@ queremos que te sientas escuchada, consentida y súper especial ✨
       );
 
     const category =
-      business.categories[index];
+      localCategories[index];
 
     if (!category) {
 
@@ -691,33 +637,25 @@ queremos que te sientas escuchada, consentida y súper especial ✨
 
     lead.stage = "services";
 
-    let services = [];
+    let services =
+      category.services.map((service, i) => {
 
-    if (
-      category.services &&
-      category.services.length > 0
-    ) {
+        return {
 
-      services =
-        category.services.map((service, i) => {
+          label:
+            `${service.icon} ${service.name}`,
 
-          return {
-
-            label:
-              `${service.icon || "✨"} ${service.name}`,
-
-            value:
-              `service_${index}_${i}`
-          };
-        });
-    }
+          value:
+            `service_${index}_${i}`
+        };
+      });
 
     return {
 
       reply:
 `${category.name} ✨
 
-${category.description || "Tenemos tratamientos hermosos para ayudarte a sentirte todavía más increíble 💖"}
+${category.description}
 
 ⚠️ Hoy algunos tratamientos tienen beneficios especiales activos.`,
 
@@ -745,7 +683,7 @@ ${category.description || "Tenemos tratamientos hermosos para ayudarte a sentirt
       Number(parts[2]);
 
     const category =
-      business.categories[categoryIndex];
+      localCategories[categoryIndex];
 
     if (!category) {
 
@@ -781,49 +719,29 @@ ${category.description || "Tenemos tratamientos hermosos para ayudarte a sentirt
 
     lead.stage = "pre_close";
 
-    let benefits = "";
+    let benefits =
+      service.benefits
+        .map(b => `• ${b}`)
+        .join("\n");
 
-    if (
-      service.benefits &&
-      service.benefits.length > 0
-    ) {
-
-      benefits =
-        service.benefits
-          .map(b => `• ${b}`)
-          .join("\n");
-    }
-
-    let testimonials = "";
-
-    if (
-      service.testimonials &&
-      service.testimonials.length > 0
-    ) {
-
-      testimonials =
+    let testimonials =
 `\n\n🔥 Mira algunos resultados reales:\n\n` +
-        service.testimonials.join("\n");
-    }
+      service.testimonials.join("\n");
 
     return {
 
       reply:
-`${service.icon || "✨"} ${service.name} ✨
+`${service.icon} ${service.name} ✨
 
-${service.description || ""}
+${service.description}
 
 ${benefits}
 
-💖 Muchas chicas aman este procedimiento porque ayuda a verse mucho más lindas, seguras y radiantes ✨
+💖 Muchas chicas aman este procedimiento ✨
 
 🔥 Más de ${
-  service.clients || "320"
-} chicas felices con sus resultados.
-
-⚠️ Hoy quedan pocos espacios con beneficio especial.${testimonials}
-
-💖 Imagínate viéndote así hermosa…
+  service.clients
+} chicas felices.${testimonials}
 
 ✨ ¿Te gustaría agendar tu valoración?`,
 
@@ -864,10 +782,6 @@ ${benefits}
 
 Tu beneficio VIP puede quedar reservado hoy mismo ✨
 
-⚠️ Estamos priorizando a las chicas que toman acción inmediata porque quedan muy pocos espacios disponibles.
-
-Laura te ayudará personalmente a elegir la mejor opción para ti 🌸
-
 Déjame tu WhatsApp y te enviaremos toda la información ahora mismo ✨`,
 
       options: [],
@@ -879,7 +793,7 @@ Déjame tu WhatsApp y te enviaremos toda la información ahora mismo ✨`,
   }
 
   // ==========================================
-  // 🔥 CAPTURE WHATSAPP FINAL
+  // 🔥 CAPTURE FINAL
   // ==========================================
 
   if (
@@ -893,7 +807,7 @@ Déjame tu WhatsApp y te enviaremos toda la información ahora mismo ✨`,
         reply:
 `${lead.name || "Hermosa"} 💖
 
-Necesito un número válido para reservar tu beneficio especial ✨`,
+Necesito un número válido ✨`,
 
         options: [],
 
@@ -914,10 +828,7 @@ Necesito un número válido para reservar tu beneficio especial ✨`,
 
 Tu beneficio VIP quedó reservado exitosamente ✨
 
-En unos minutos una asesora especializada te escribirá personalmente para ayudarte con todo 🌸
-
-⚠️ IMPORTANTE:
-Tu beneficio especial quedará reservado únicamente por hoy.`,
+En unos minutos una asesora especializada te escribirá personalmente 🌸`,
 
       options: [],
 
@@ -937,9 +848,7 @@ Tu beneficio especial quedará reservado únicamente por hoy.`,
   return {
 
     reply:
-`Estoy aquí para ayudarte hermosa 💖
-
-Cuéntame qué tratamiento te llama más la atención ✨`,
+`Estoy aquí para ayudarte hermosa 💖`,
 
     options: [
 
