@@ -510,7 +510,16 @@ y terminan sintiéndose muchísimo más seguras y felices consigo mismas ✨`,
       message === "go_categories"
     ) {
 
+      // 🔥 FIX CRÍTICO
       lead.stage = "categories";
+
+      // 🔥 asegurar persistencia
+      if (!lead.notes) {
+        lead.notes = {};
+      }
+
+      lead.notes.last_stage =
+        "categories";
 
       let dynamicCategories = [];
 
@@ -651,7 +660,6 @@ queremos que te sientas escuchada, consentida y súper especial ✨
   // ==========================================
 
   if (
-    lead.stage === "categories" &&
     message.startsWith("category_")
   ) {
 
@@ -724,7 +732,6 @@ ${category.description || "Tenemos tratamientos hermosos para ayudarte a sentirt
   // ==========================================
 
   if (
-    lead.stage === "services" &&
     message.startsWith("service_")
   ) {
 
