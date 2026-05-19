@@ -3,6 +3,13 @@ const mongoose = require("mongoose");
 const businessSchema = new mongoose.Schema({
   name: String,
   slug: String,
+
+  // 🔥 REPARACIÓN CRÍTICA: Definir el tipo de negocio en el esquema de la BD
+  type: { 
+    type: String, 
+    default: "chat" 
+  },
+
   logo: String,
   primaryColor: String,
   welcomeMessage: String,
