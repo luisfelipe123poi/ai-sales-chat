@@ -94,644 +94,864 @@ function closerBot(message, business, lead) {
 
   if (!lead) lead = {};
 
-  // 🔥 doble blindaje real
-  if (!lead.notes || typeof lead.notes !== "object" || lead.notes === null) {
+  // ==========================================
+  // 🔥 DOBLE BLINDAJE
+  // ==========================================
+
+  if (
+    !lead.notes ||
+    typeof lead.notes !== "object" ||
+    lead.notes === null
+  ) {
     lead.notes = {};
   }
 
   if (!message) message = "";
 
-  const getGenderWord = () => {
-    return "";
-  };
+  // ==========================================
+  // 🔥 TESTIMONIOS
+  // ==========================================
 
-// 🔥 PARSEADOR UNIVERSAL TESTIMONIOS (CORREGIDO PARA MEDIA Y LINKS DRIVE)
   const formatTestimonials = () => {
-    if (!business.testimonials || !business.testimonials.length) return "";
+
+    if (
+      !business.testimonials ||
+      !business.testimonials.length
+    ) return "";
 
     return business.testimonials.map(t => {
 
-      // compatibilidad vieja (strings)
-      if (typeof t === "string") return t.trim(); 
+      if (typeof t === "string") {
+        return t.trim();
+      }
 
-      // nuevo formato
       if (t.type === "text") {
-        // Si el texto es un link (como los de Drive), lo enviamos limpio sin el emoji
-        // para que el frontend lo detecte como media/link automáticamente
-        if (t.content.trim().startsWith("http")) {
+
+        if (
+          t.content.trim().startsWith("http")
+        ) {
           return t.content.trim();
         }
+
         return `💬 ${t.content}`;
       }
-      
-      if (t.type === "image") return t.content.trim(); // Enviamos solo la URL para que el frontend la renderice
-      if (t.type === "video") return t.content.trim(); // Enviamos solo la URL para que el frontend la renderice
+
+      if (t.type === "image") {
+        return t.content.trim();
+      }
+
+      if (t.type === "video") {
+        return t.content.trim();
+      }
 
       return "";
+
     }).join("\n\n");
   };
 
   // ==========================================
-  // 🔥 FILTRO GLOBAL "WAIT" (FIX PRIORITARIO)
+  // 🔥 WAIT GLOBAL
   // ==========================================
+
   if (message === "wait") {
-    
-    let waitAction = lead.user_goal === "money" ? "la oportunidad de generar ingresos" : (lead.user_goal === "hobby" ? "la oportunidad de empezar algo para ti" : "esta oportunidad de aprender");
-    let waitText = lead.user_goal === "money" ? "tu estabilidad" : (lead.user_goal === "hobby" ? "tu momento de relax" : "tu aprendizaje");
 
-    reply = `Pensarlo no cambia nada. Decidir sí. 
+    reply =
+`Pensarlo demasiado no cambia nada hermosa 💖
 
-¿Vas a dejar pasar ${waitAction} hoy o vas a seguir postergando ${waitText}?`;
+A veces el mayor cambio empieza simplemente tomando una decisión ✨
+
+¿Vas a seguir postergándote o vas a darte el gusto de sentirte todavía más hermosa hoy?`;
 
     options = [
-      { label: "🔥 Entrar ahora", value: "push_close" },
-      { label: "🤔 Dudar", value: "objection_doubt" }
+
+      {
+        label: "🔥 Quiero mi cambio",
+        value: "push_close"
+      },
+
+      {
+        label: "🤔 Tengo dudas",
+        value: "objection_doubt"
+      }
     ];
 
-    return { reply, options, showInput: false };
+    return {
+      reply,
+      options,
+      showInput: false
+    };
   }
 
   // ==========================================
-  // 🔥 FILTRO GLOBAL "DUDAR" (PREVIENE CRASH)
+  // 🔥 DUDAS GLOBALES
   // ==========================================
+
   if (
-    message === "objection_doubt" || 
-    message === "objection_doubt_alt1" || 
-    message === "objection_doubt_alt2" ||
-    message === "action_doubt"
+    message === "objection_doubt" ||
+    message === "objection_doubt_alt1" ||
+    message === "objection_doubt_alt2"
   ) {
 
-    // MEJORA FLUJO DINERO EN DUDA
-    if (lead.user_goal === "money") {
-      reply = `La duda es el enemigo número uno de tu cuenta bancaria, ${lead.name}. 
+    reply =
+`Es completamente normal tener dudas hermosa 💖
 
-Mientras lo piensas, otros ya están aplicando el sistema y cobrando sus primeras comisiones. El miedo no paga facturas, las decisiones sí.
+Muchas chicas llegaron igual que tú…
+con miedo,
+inseguridad
+o pensando demasiado.
 
-Mira a los que dejaron la duda atrás:
+Pero mira lo felices que terminaron después de decidir darse ese regalo ✨
 
-${formatTestimonials() || "Nuestros alumnos ya están facturando."}
+${formatTestimonials() || "🔥 Muchísimas chicas ya vivieron su transformación."}
 
-¿Vas a ver cómo otros lo logran o vas a ser tú el siguiente?`;
-    } else {
-      reply = `La duda no desaparece pensando… desaparece actuando.
-
-Muchas personas tenían miedo al fracaso, pero mira cómo lograron avanzar aplicando el sistema:
-
-${formatTestimonials() || "Nuestros alumnos ya están viendo resultados."}
-
-¿Avanzas o te quedas donde estás?`;
-    }
+✨ A veces el cambio que necesitas empieza con una sola decisión.`;
 
     options = [
-      { label: "🔥 Avanzar", value: "push_close" },
-      { label: "😕 Esperar", value: "wait" }
+
+      {
+        label: "💖 Quiero intentarlo",
+        value: "push_close"
+      },
+
+      {
+        label: "😕 Prefiero esperar",
+        value: "wait"
+      }
     ];
 
-    return { reply, options, showInput: false };
+    return {
+      reply,
+      options,
+      showInput: false
+    };
   }
 
-  // =========================
-  // 🔥 START (PEDIR NOMBRE)
-  // =========================
+  // ==========================================
+  // 🔥 START
+  // ==========================================
+
   if (message === "start") {
-
-    reply = `Hola 💖
-
-antes de empezar…
-
-¿cómo te llamas?`;
-
-    options = [];
 
     lead.stage = "ask_name";
 
     return {
-      reply,
-      options,
+
+      reply:
+`Hola hermosa 💖
+
+Bienvenida a ${business.name} ✨
+
+Qué alegría tenerte aquí 🌸
+
+Más que una clienta…
+queremos que te sientas como una amiga más de la casa 🤍
+
+Aquí vas a encontrar un espacio pensado para consentirte, relajarte y ayudarte a verte todavía más hermosa ✨
+
+Antes de comenzar…
+
+¿Cómo te gustaría que te llamemos? 💖`,
+
+      options: [],
+
       showInput: true,
+
       inputType: "name"
     };
   }
 
-  // =========================
+  // ==========================================
   // 🔥 CAPTURAR NOMBRE
-  // =========================
-  else if (lead.stage === "ask_name") {
+  // ==========================================
+
+  if (lead.stage === "ask_name") {
 
     lead.name = message;
 
-    reply = `Mucho gusto ${lead.name} 💖
-
-me alegra verte aquí ✨
-
-quiero entender mejor algo 👇
-
-¿qué te gustaría lograr realmente con esto?`;
-
-    options = [
-      { label: "💰 Ganar dinero", value: "money" },
-      { label: "🎨 Hacerlo por hobby", value: "hobby" },
-      { label: "🧠 Aprender algo nuevo", value: "learn" }
-    ];
-
-    lead.stage = "interest";
+    lead.stage = "main";
 
     return {
-      reply,
-      options,
+
+      reply:
+`${lead.name} 💖
+
+Qué lindo tenerte aquí ✨
+
+Cuéntame hermosa…
+
+¿Qué te gustaría hacer hoy? 🌸`,
+
+      options: [
+
+        {
+          label: "💅 Quiero cotizar un servicio",
+          value: "cotizar"
+        },
+
+        {
+          label: "📅 Quiero agendar una cita",
+          value: "agendar"
+        },
+
+        {
+          label: "🔥 Ver promociones especiales",
+          value: "promo"
+        },
+
+        {
+          label: "✨ Ver tratamientos más deseados",
+          value: "top_servicios"
+        },
+
+        {
+          label: "📍 Ver ubicación",
+          value: "ubicacion"
+        }
+      ],
+
       showInput: false
     };
   }
 
-  // =========================
-  // 🔥 FLUJOS SEPARADOS
-  // =========================
-  else if (lead.stage === "interest") {
-
-    const testimonialsText = formatTestimonials()
-      ? "\n\n🔥 Mira lo que dicen otros:\n\n" + formatTestimonials()
-      : "";
-
-    if (message === "money") {
-      lead.user_goal = "money"; // Guardamos la meta
-      reply = `Brutal ${lead.name} 💰
-
-Elegiste el camino de los resultados. La mayoría de alumnos empiezan aquí con hambre de libertad financiera.
-
-Este sistema no es para "probar", es para ejecutar y facturar cada semana. Aquí no vendemos humo, vendemos un método que funciona si tú funcionas ✨.${testimonialsText}
-
-dime 👇
-
-¿ya intentaste vender algo antes?`;
-
-      options = [
-        { label: "Sí", value: "money_sold_before" },
-        { label: "No", value: "money_first_time" }
-      ];
-
-      lead.stage = "money_flow";
-
-      return { reply, options, showInput: false };
-    }
-
-    if (message === "hobby") {
-      lead.user_goal = "hobby"; // Guardamos la meta
-      let hobbyText = business.type === "creativo"
-        ? "crear cosas con tus manos, relajarte y desconectarte del estrés"
-        : "aprender algo nuevo, estimular tu mente y disfrutar el proceso";
-
-      reply = `Me encanta eso ${lead.name} 💖
-
-porque cuando lo haces por hobby…
-
-lo haces por ti.
-
-sin presión,
-sin estrés,
-solo disfrutando ✨
-
-muchas personas usan esto para:
-
-${hobbyText}${testimonialsText}
-
-¿te gustaría vivir eso?`;
-
-      options = [
-        { label: "😍 Sí, me encantaría", value: "hobby_yes" },
-        { label: "🤔 No estoy seguro", value: "hobby_doubt" }
-      ];
-
-      lead.stage = "hobby_flow";
-
-      return { reply, options, showInput: false };
-    }
-
-    if (message === "learn") {
-      lead.user_goal = "learn"; // Guardamos la meta
-      reply = `Excelente decisión ${lead.name} 🧠
-
-aprender algo nuevo cambia completamente tu forma de pensar.
-
-muchas personas empiezan sin saber nada…
-
-y en pocas semanas ya entienden cosas que antes parecían imposibles.
-
-no necesitas experiencia.
-
-solo empezar.${testimonialsText}
-
-dime 👇
-
-¿te gustaría aprender desde cero paso a paso?`;
-
-      options = [
-        { label: "💖 Sí, desde cero", value: "learn_yes" },
-        { label: "🤔 Tengo dudas", value: "learn_doubt" }
-      ];
-
-      lead.stage = "learn_flow";
-
-      return { reply, options, showInput: false };
-    }
-  }
-
-  // =========================
-  // 💰 CONTINUACIÓN DINERO (RE-DISEÑADO MORTAL)
-  // =========================
-  else if (lead.stage === "money_flow") {
-
-    if (message === "money_sold_before") {
-      reply = `Perfecto ${lead.name} 💰
-
-¡Eso es una ventaja enorme! Si ya tienes experiencia, este sistema es la pieza del rompecabezas que te faltaba para profesionalizar y escalar tus ganancias. 
-
-Vas a dejar de "intentar" y vas a empezar a facturar con una estructura probada.
-
-Imagina este escenario 👇 en solo 30 días ya viendo cómo entran tus propios resultados por aplicar el método.
-
-🔥 Mira la facturación de los que ya están dentro:
-${formatTestimonials() || "Nuestros alumnos ya están escalando sus ventas."}
-
-¿Estás listo para dejar de jugar y empezar a construir tu libertad hoy mismo?`;
-
-      options = [
-        { label: "🚀 ¡SÍ, QUIERO FACTURAR!", value: "push_close" },
-        { label: "🤔 Tengo algunas dudas", value: "action_doubt" }
-      ];
-
-      lead.stage = "pre_action";
-      return { reply, options, showInput: false };
-    }
-
-    if (message === "money_first_time") {
-      reply = `Excelente ${lead.name} 💰
-
-Que sea tu primera vez es lo mejor que te puede pasar. No tienes vicios de otros métodos que no sirven. Vas a aprender el sistema correcto desde cero.
-
-Aquí no necesitas ser un experto en ventas... necesitas decisión y seguir el paso a paso.
-
-Imagina esto 👇 en 30 días, mirando atrás y agradeciendo el haber empezado hoy.
-
-🔥 Mira lo que logran personas que empezaron exactamente como tú:
-${formatTestimonials() || "Alumnos desde cero ya están cobrando sus primeras ganancias."}
-
-¿Estás listo para que este sea el inicio de tus propios resultados?`;
-
-      options = [
-        { label: "🚀 ¡SÍ, QUIERO EMPEZAR!", value: "push_close" },
-        { label: "🤔 Tengo algunas dudas", value: "action_doubt" }
-      ];
-
-      lead.stage = "pre_action";
-      return { reply, options, showInput: false };
-    }
-  }
-
-  // =========================
-  // 🎨 CONTINUACIÓN HOBBY
-  // =========================
-  else if (lead.stage === "hobby_flow") {
-
-    if (message === "hobby_yes") {
-
-      reply = `Es una sensación increíble 💖
-
-muchas personas empiezan así…
-
-y terminan enamoradas del proceso 😍
-
-🔥 mira esto:
-${formatTestimonials() || ""}
-
-¿te gustaría aprender paso a paso aunque empieces desde cero?`;
-
-      options = [
-        { label: "💖 Sí", value: "hobby_start" },
-        { label: "🤔 Tengo dudas", value: "hobby_doubt" }
-      ];
-
-      return { reply, options, showInput: false };
-    }
-
-    if (message === "hobby_doubt") {
-
-      reply = `Es normal dudar 💖
-
-pero aquí no necesitas experiencia…
-
-solo ganas de probar.
-
-🔥 otros ya empezaron:
-${formatTestimonials() || ""}
-
-¿quieres intentarlo?`;
-
-      options = [
-        { label: "💖 Sí", value: "hobby_start" },
-        { label: "😕 Prefiero esperar", value: "wait" }
-      ];
-
-      return { reply, options, showInput: false };
-    }
-
-    if (message === "hobby_start") {
-
-      reply = `Perfecto 💖
-
-imagina tu primera creación terminada…
-
-y la satisfacción de haberlo logrado ✨
-
-¿quieres empezar hoy?`;
-
-      options = [
-        { label: "🔥 Sí", value: "push_close" },
-        { label: "🤔 Aún no", value: "wait" }
-      ];
-
-      lead.stage = "pre_action";
-
-      return { reply, options, showInput: false };
-    }
-  }
-
-  // =========================
-  // 🧠 CONTINUACIÓN APRENDER
-  // =========================
-  else if (lead.stage === "learn_flow") {
-
-    if (message === "learn_yes") {
-
-      reply = `Perfecto ${lead.name} 🧠
-
-vas a avanzar más rápido de lo que crees.
-
-cuando tienes una guía paso a paso…
-
-todo se vuelve mucho más fácil.
-
-🔥 mira resultados reales:
-${formatTestimonials() || ""}
-
-¿quieres empezar hoy mismo?`;
-
-      options = [
-        { label: "🔥 Sí", value: "push_close" },
-        { label: "🤔 Aún no", value: "wait" }
-      ];
-
-      lead.stage = "pre_action";
-
-      return { reply, options, showInput: false };
-    }
-
-    if (message === "learn_doubt") {
-
-      reply = `Es normal tener dudas.
-
-pero no necesitas saberlo todo para empezar.
-
-solo dar el primer paso.
-
-🔥 otros ya lo hicieron:
-${formatTestimonials() || ""}
-
-¿quieres intentarlo?`;
-
-      options = [
-        { label: "💖 Sí", value: "push_close" },
-        { label: "😕 Prefiero esperar", value: "wait" }
-      ];
-
-      lead.stage = "pre_action";
-
-      return { reply, options, showInput: false };
-    }
-  }
-
-  // =========================
-  // 🔥 FASE DE TRANSICIÓN A OBJECIONES
-  // =========================
-  else if (lead.stage === "pre_action" && message === "action_doubt") {
-
-    reply = `Te entiendo perfectamente. Es normal querer estar seguro antes de dar un gran paso.
-
-¿Qué es lo que te hace dudar ahora mismo?`;
-
-    options = [
-      { label: "💸 El dinero", value: "objection_money" },
-      { label: "⏳ El tiempo", value: "objection_time" },
-      { label: "🤔 Cómo funciona", value: "objection_doubt" }
-    ];
-
-    return { reply, options, showInput: false };
-  }
-
-  // =========================
-  // 🔥 OBJECIONES (CON COSTO DE OPORTUNIDAD)
-  // =========================
-  else if (message === "objection_money") {
-    
-    let moneyAction = lead.user_goal === "money" 
-      ? "invertirlo en tu libertad y ver cómo se multiplica"
-      : (lead.user_goal === "hobby" ? "dedicarlo a tu bienestar y algo que te apasiona" : "invertirlo en un conocimiento que te servirá para siempre");
-
-    if (lead.user_goal === "money") {
-      reply = `Te entiendo, ${lead.name}. Pero piénsalo así:
-
-Si hoy no tienes ${business.price || "46 USD"} para invertir en tu futuro, esa es exactamente la razón por la que NECESITAS entrar.
-
-Ese monto es lo que gastas en una cena que olvidas mañana. Aquí lo estás poniendo a trabajar para ti. 
-
-¿Vas a seguir gastando o vas a ${moneyAction}?`;
-    } else {
-      reply = `Te entiendo perfectamente ${lead.name}.
-
-Pero mira, el acceso cuesta ${business.price || "46 USD"}. 
-
-Eso es lo que te gastas en una cena o un par de salidas un fin de semana. La diferencia es que esto te va a dar resultados reales si aplicas lo que te enseñamos.
-
-¿Prefieres gastarlo o ${moneyAction}?`;
-    }
-
-    options = [
-      { label: "🔥 Invertir hoy", value: "push_close" },
-      { label: "🤔 Aún dudo", value: "objection_doubt_alt1" }
-    ];
-
-    return { reply, options, showInput: false };
-  }
-
-  else if (message === "objection_time") {
-
-    reply = `No es tiempo…
-
-es prioridad.
-
-¿quieres intentarlo ahora que el sistema está listo para ti?`;
-
-    options = [
-      { label: "💖 Sí", value: "push_close" },
-      { label: "🤔 No sé", value: "objection_doubt_alt2" }
-    ];
-
-    return { reply, options, showInput: false };
-  }
-
   // ==========================================
-  // 🔥 CIERRE & MICRO-VALIDACIÓN (ACTUALIZADO)
+  // 🔥 MAIN
   // ==========================================
-  if (message === "push_close") {
 
-    let closeText = "";
-    if (lead.user_goal === "money") {
-      closeText = "lograr esa estabilidad y libertad económica que te mereces";
-    } else if (lead.user_goal === "hobby") {
-      closeText = "disfrutar de este hobby y desconectarte del mundo haciendo lo que te gusta";
-    } else {
-      closeText = "dominar esta nueva habilidad y aprender paso a paso";
-    }
+  if (lead.stage === "main") {
 
-    reply = `Bien.
+    // ==========================================
+    // 🔥 COTIZAR / AGENDAR
+    // ==========================================
 
-Imagina esto 👇 ya dentro, avanzando, viendo cómo los resultados empiezan a llegar.
+    if (
+      message === "cotizar" ||
+      message === "agendar"
+    ) {
 
-¿Te hace sentido que para ${closeText} necesitas una herramienta profesional como esta?`;
-
-    options = [
-      { label: "😍 Sí, totalmente", value: "emotion_happy" },
-      { label: "🤩 Sí, es lo que necesito", value: "emotion_motivated" },
-      { label: "💖 Sí, vamos con todo", value: "emotion_proud" }
-    ];
-
-    // FIX: Actualizamos el stage para que el bot escuche los "emotion_"
-    lead.stage = "awaiting_emotion"; 
-
-    return { reply, options, showInput: false };
-  }
-
-  // ==========================================
-  // 🔥 MENSAJES DE DESEO (HYPE) (ACTUALIZADO)
-  // ==========================================
-  else if (lead.stage === "awaiting_emotion" && (message || "").startsWith("emotion_")) {
-
-    let hypeText = "";
-    if (lead.user_goal === "money") {
-      hypeText = "Despertar y ver notificaciones de ingresos en tu celular, sentir la paz de tener un sistema trabajando para ti y decir: 'Valió la pena tomar la decisión'.";
-    } else if (lead.user_goal === "hobby") {
-      hypeText = "Ese momento de paz donde estás creando algo con tus propias manos y te sientes feliz con el resultado.";
-    } else {
-      hypeText = "Sentir la satisfacción de que ahora sabes algo que antes parecía imposible y ver tu progreso real.";
-    }
-
-    reply = `¡Exacto! Esa visión es la que vamos a construir juntos ✨
-
-Esto ya no es una posibilidad, es el plan de acción para tu nueva realidad. ${hypeText}
-
-No vas a estar solo, Laura y todo el equipo te llevaremos de la mano.
-
-¿Estás listo para dar el paso que va a marcar un antes y un después en tu vida?`;
-
-    options = [
-      { label: "🚀 ¡SÍ, ESTOY LISTO!", value: "confirm_hype" },
-      { label: "🤔 Cuéntame un poco más", value: "more_hype" }
-    ];
-
-    lead.stage = "hype_desire";
-
-    return {
-      reply,
-      options,
-      showInput: false
-    };
-  }
-
-  else if (lead.stage === "hype_desire") {
-
-    if (message === "confirm_hype" || message === "more_hype") {
-
-      let finalBenefit = "";
-      if (lead.user_goal === "money") {
-        finalBenefit = "empezar a construir tu libertad económica hoy mismo ✨";
-      } else if (lead.user_goal === "hobby") {
-        finalBenefit = "empezar a disfrutar de tu nuevo hobby hoy mismo ✨";
-      } else {
-        finalBenefit = "convertirte en un experto en este tema paso a paso ✨";
-      }
-
-      reply = `Brutal 🔥
-
-Entonces no perdamos ni un segundo más. Mi compañera Laura ya tiene todo preparado para darte la bienvenida oficial. 
-
-Vas a recibir el acceso inmediato, los bonos exclusivos de acción rápida y el acompañamiento VIP.
-
-¿Tienes WhatsApp a la mano? Te enviaré un REGALO ESPECIAL si tomas acción en este momento. 
-
-⚠️ ATENCIÓN: Solo quedan 3 cupos con el bono de regalo y solo es válido por las próximas 2 horas. 
-
-Dime tu número para asegurar tu lugar y ${finalBenefit}`;
-
-      lead.stage = "capture_whatsapp";
+      lead.stage = "capture_phone";
 
       return {
-        reply,
+
+        reply:
+`Perfecto ${lead.name} 💖
+
+Antes de mostrarte nuestros tratamientos y beneficios especiales ✨
+
+¿A qué número de WhatsApp te podemos enviar promociones VIP, prioridad de agenda y seguimiento personalizado? 🌸`,
+
         options: [],
+
         showInput: true,
+
         inputType: "phone"
       };
     }
-  }
 
-  // =========================
-  // 🔥 FIX CRÍTICO WHATSAPP & RETARGETING
-  // =========================
-  else if (lead.stage === "capture_whatsapp") {
+    // ==========================================
+    // 🔥 PROMOS
+    // ==========================================
 
-    if (/\d{7,}/.test(message)) {
+    if (message === "promo") {
 
-      lead.phone = message;
+      let promoText = "";
 
-      lead.stage = "action";
+      if (
+        business.promotions &&
+        business.promotions.length > 0
+      ) {
 
-      reply = `Listo.
+        promoText =
+          business.promotions
+            .map(p => `🔥 ${p}`)
+            .join("\n");
 
-${business.productInfo}
+      } else {
 
-💰 ${business.price || "46 USD"}
-
-👉 ${business.productLink}
-
-🔥 ENVÍA TU COMPROBANTE AHORA MISMO POR WHATSAPP
-
-mi compañera Laura activará tu acceso inmediato
-
-🎁 además recibirás un SUPER BONO exclusivo
-
-⚠️ IMPORTANTE:
-Solo quedan 3 cupos para el bono de hoy. Si no envías el comprobante en las próximas 2 horas… pierdes el regalo especial.`;
+        promoText =
+`🔥 Beneficios especiales activos
+🔥 Agenda VIP prioritaria
+🔥 Cupos limitados hoy`;
+      }
 
       return {
-        reply,
-        options: [],
-        showInput: false,
-        showWhatsApp: true,
-        whatsappNumber: business.whatsappNumber
+
+        reply:
+`🔥 PROMOCIONES ESPECIALES ✨
+
+${promoText}
+
+⚠️ Algunos espacios ya fueron reservados hoy.
+
+💖 Queremos ayudarte a sentirte más hermosa, segura y feliz contigo misma ✨`,
+
+        options: [
+
+          {
+            label: "💆 Ver tratamientos",
+            value: "go_categories"
+          },
+
+          {
+            label: "📅 Quiero agendar",
+            value: "agendar"
+          }
+        ],
+
+        showInput: false
       };
     }
 
-    // Mensaje de rescate si el input no es válido
+    // ==========================================
+    // 🔥 TOP SERVICIOS
+    // ==========================================
+
+    if (message === "top_servicios") {
+
+      let topServices = [];
+
+      if (
+        business.categories &&
+        business.categories.length > 0
+      ) {
+
+        business.categories.forEach(cat => {
+
+          if (
+            cat.services &&
+            cat.services.length > 0
+          ) {
+
+            cat.services.forEach(service => {
+
+              if (service.top) {
+
+                topServices.push(
+                  `✨ ${service.name}`
+                );
+              }
+            });
+          }
+        });
+      }
+
+      if (topServices.length <= 0) {
+
+        topServices = [
+
+          "✨ Hollywood Peel",
+          "✨ Dermapen",
+          "✨ Limpieza facial",
+          "✨ Pestañas premium"
+        ];
+      }
+
+      return {
+
+        reply:
+`✨ Estos son algunos de los tratamientos más deseados por nuestras chicas 💖
+
+${topServices.join("\n")}
+
+Muchas llegan buscando verse más lindas…
+y terminan sintiéndose muchísimo más seguras y felices consigo mismas ✨`,
+
+        options: [
+
+          {
+            label: "💆 Ver categorías",
+            value: "go_categories"
+          },
+
+          {
+            label: "📅 Quiero agendar",
+            value: "agendar"
+          }
+        ],
+
+        showInput: false
+      };
+    }
+
+    // ==========================================
+    // 🔥 UBICACIÓN
+    // ==========================================
+
+    if (message === "ubicacion") {
+
+      return {
+
+        reply:
+`📍 Estamos ubicadas en una zona cómoda, segura y súper agradable ✨
+
+💖 Nuestro espacio fue diseñado para que te sientas relajada, consentida y especial desde el primer momento 🌸
+
+👇 Aquí puedes ver nuestra ubicación:`,
+
+        options: [
+
+          {
+            label: "📍 Ver ubicación",
+            type: "url",
+            url:
+              business.productLink ||
+              "https://maps.google.com"
+          }
+        ],
+
+        showInput: false
+      };
+    }
+
+    // ==========================================
+    // 🔥 IR CATEGORÍAS
+    // ==========================================
+
+    if (
+      message === "go_categories"
+    ) {
+
+      lead.stage = "categories";
+
+      let dynamicCategories = [];
+
+      if (
+        business.categories &&
+        business.categories.length > 0
+      ) {
+
+        dynamicCategories =
+          business.categories.map((cat, index) => {
+
+            return {
+
+              label:
+                `${cat.icon || "✨"} ${cat.name}`,
+
+              value:
+                `category_${index}`
+            };
+          });
+      }
+
+      if (dynamicCategories.length <= 0) {
+
+        dynamicCategories = [
+
+          {
+            label: "💆 Facial",
+            value: "category_0"
+          }
+        ];
+      }
+
+      return {
+
+        reply:
+`Perfecto hermosa 💖
+
+Cuéntame…
+
+¿Qué categoría te gustaría ver primero? ✨`,
+
+        options: dynamicCategories,
+
+        showInput: false
+      };
+    }
+  }
+
+  // ==========================================
+  // 🔥 CAPTURAR WHATSAPP
+  // ==========================================
+
+  if (lead.stage === "capture_phone") {
+
+    if (!/\d{7,}/.test(message)) {
+
+      return {
+
+        reply:
+`${lead.name || "Hermosa"} 💖
+
+Necesito un número válido para poder enviarte los beneficios VIP y ayudarte con prioridad ✨`,
+
+        options: [],
+
+        showInput: true,
+
+        inputType: "phone"
+      };
+    }
+
+    lead.phone = message;
+
+    lead.stage = "categories";
+
+    let dynamicCategories = [];
+
+    if (
+      business.categories &&
+      business.categories.length > 0
+    ) {
+
+      dynamicCategories =
+        business.categories.map((cat, index) => {
+
+          return {
+
+            label:
+              `${cat.icon || "✨"} ${cat.name}`,
+
+            value:
+              `category_${index}`
+          };
+        });
+    }
+
+    if (dynamicCategories.length <= 0) {
+
+      dynamicCategories = [
+
+        {
+          label: "💆 Facial",
+          value: "category_0"
+        }
+      ];
+    }
+
     return {
-      reply: `${lead.name || "Hola"}, ¿tuviste algún problema con el número? No quiero que pierdas tu cupo y el bono de regalo. Necesito tu número para enviarte los accesos ahora mismo.`,
-      options: [],
-      showInput: true,
-      inputType: "phone",
-      showWhatsApp: false
+
+      reply:
+`Perfecto hermosa 💖
+
+Tu acceso VIP quedó activado ✨
+
+A partir de ahora podrás recibir:
+• promociones privadas
+• prioridad de agenda
+• beneficios especiales
+• seguimiento personalizado 🌸
+
+Y recuerda…
+
+Aquí no queremos que te sientas como una clienta más 🤍
+
+queremos que te sientas escuchada, consentida y súper especial ✨
+
+¿Qué categoría te gustaría ver primero? 💖`,
+
+      options: dynamicCategories,
+
+      showInput: false
     };
   }
 
+  // ==========================================
+  // 🔥 CATEGORÍAS
+  // ==========================================
+
+  if (
+    lead.stage === "categories" &&
+    message.startsWith("category_")
+  ) {
+
+    const index =
+      Number(
+        message.replace(
+          "category_",
+          ""
+        )
+      );
+
+    const category =
+      business.categories[index];
+
+    if (!category) {
+
+      return {
+
+        reply:
+`No encontramos esa categoría hermosa 💖`,
+
+        options: [],
+
+        showInput: false
+      };
+    }
+
+    lead.selectedCategory = index;
+
+    lead.stage = "services";
+
+    let services = [];
+
+    if (
+      category.services &&
+      category.services.length > 0
+    ) {
+
+      services =
+        category.services.map((service, i) => {
+
+          return {
+
+            label:
+              `${service.icon || "✨"} ${service.name}`,
+
+            value:
+              `service_${index}_${i}`
+          };
+        });
+    }
+
+    return {
+
+      reply:
+`${category.name} ✨
+
+${category.description || "Tenemos tratamientos hermosos para ayudarte a sentirte todavía más increíble 💖"}
+
+⚠️ Hoy algunos tratamientos tienen beneficios especiales activos.`,
+
+      options: services,
+
+      showInput: false
+    };
+  }
+
+  // ==========================================
+  // 🔥 SERVICIOS
+  // ==========================================
+
+  if (
+    lead.stage === "services" &&
+    message.startsWith("service_")
+  ) {
+
+    const parts =
+      message.split("_");
+
+    const categoryIndex =
+      Number(parts[1]);
+
+    const serviceIndex =
+      Number(parts[2]);
+
+    const category =
+      business.categories[categoryIndex];
+
+    if (!category) {
+
+      return {
+
+        reply:
+`No encontramos la categoría 💖`,
+
+        options: [],
+
+        showInput: false
+      };
+    }
+
+    const service =
+      category.services[serviceIndex];
+
+    if (!service) {
+
+      return {
+
+        reply:
+`No encontramos el tratamiento 💖`,
+
+        options: [],
+
+        showInput: false
+      };
+    }
+
+    lead.selectedService =
+      service.name;
+
+    lead.stage = "pre_close";
+
+    let benefits = "";
+
+    if (
+      service.benefits &&
+      service.benefits.length > 0
+    ) {
+
+      benefits =
+        service.benefits
+          .map(b => `• ${b}`)
+          .join("\n");
+    }
+
+    let testimonials = "";
+
+    if (
+      service.testimonials &&
+      service.testimonials.length > 0
+    ) {
+
+      testimonials =
+`\n\n🔥 Mira algunos resultados reales:\n\n` +
+        service.testimonials.join("\n");
+    }
+
+    return {
+
+      reply:
+`${service.icon || "✨"} ${service.name} ✨
+
+${service.description || ""}
+
+${benefits}
+
+💖 Muchas chicas aman este procedimiento porque ayuda a verse mucho más lindas, seguras y radiantes ✨
+
+🔥 Más de ${
+  service.clients || "320"
+} chicas felices con sus resultados.
+
+⚠️ Hoy quedan pocos espacios con beneficio especial.${testimonials}
+
+💖 Imagínate viéndote así hermosa…
+
+✨ ¿Te gustaría agendar tu valoración?`,
+
+      options: [
+
+        {
+          label: "📅 Sí, quiero agendar",
+          value: "push_close"
+        },
+
+        {
+          label: "🔥 Quiero mi beneficio",
+          value: "push_close"
+        },
+
+        {
+          label: "🤔 Tengo dudas",
+          value: "objection_doubt"
+        }
+      ],
+
+      showInput: false
+    };
+  }
+
+  // ==========================================
+  // 🔥 PUSH CLOSE
+  // ==========================================
+
+  if (message === "push_close") {
+
+    lead.stage = "capture_whatsapp";
+
+    return {
+
+      reply:
+`Perfecto hermosa 💖
+
+Tu beneficio VIP puede quedar reservado hoy mismo ✨
+
+⚠️ Estamos priorizando a las chicas que toman acción inmediata porque quedan muy pocos espacios disponibles.
+
+Laura te ayudará personalmente a elegir la mejor opción para ti 🌸
+
+Déjame tu WhatsApp y te enviaremos toda la información ahora mismo ✨`,
+
+      options: [],
+
+      showInput: true,
+
+      inputType: "phone"
+    };
+  }
+
+  // ==========================================
+  // 🔥 CAPTURE WHATSAPP FINAL
+  // ==========================================
+
+  if (
+    lead.stage === "capture_whatsapp"
+  ) {
+
+    if (!/\d{7,}/.test(message)) {
+
+      return {
+
+        reply:
+`${lead.name || "Hermosa"} 💖
+
+Necesito un número válido para reservar tu beneficio especial ✨`,
+
+        options: [],
+
+        showInput: true,
+
+        inputType: "phone"
+      };
+    }
+
+    lead.phone = message;
+
+    lead.stage = "done";
+
+    return {
+
+      reply:
+`🔥 Perfecto hermosa 💖
+
+Tu beneficio VIP quedó reservado exitosamente ✨
+
+En unos minutos una asesora especializada te escribirá personalmente para ayudarte con todo 🌸
+
+⚠️ IMPORTANTE:
+Tu beneficio especial quedará reservado únicamente por hoy.`,
+
+      options: [],
+
+      showInput: false,
+
+      showWhatsApp: true,
+
+      whatsappNumber:
+        business.whatsappNumber
+    };
+  }
+
+  // ==========================================
+  // 🔥 FALLBACK
+  // ==========================================
+
   return {
-    reply,
-    options,
+
+    reply:
+`Estoy aquí para ayudarte hermosa 💖
+
+Cuéntame qué tratamiento te llama más la atención ✨`,
+
+    options: [
+
+      {
+        label: "💆 Ver tratamientos",
+        value: "go_categories"
+      },
+
+      {
+        label: "🔥 Ver promociones",
+        value: "promo"
+      },
+
+      {
+        label: "📅 Quiero agendar",
+        value: "agendar"
+      }
+    ],
+
     showInput: false
   };
 }
