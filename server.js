@@ -94,188 +94,32 @@ function closerBot(message, business, lead) {
 
   if (!lead) lead = {};
 
-  // ==========================================
-  // 🔥 DOBLE BLINDAJE
-  // ==========================================
-
-  if (
-    !lead.notes ||
-    typeof lead.notes !== "object" ||
-    lead.notes === null
-  ) {
+  // 🔥 blindaje
+  if (!lead.notes || typeof lead.notes !== "object" || lead.notes === null) {
     lead.notes = {};
   }
 
   if (!message) message = "";
 
   // ==========================================
-  // 🔥 CATEGORÍAS LOCALES
-  // ==========================================
-
-  const localCategories = [
-
-    {
-      name: "Faciales",
-      icon: "💆",
-
-      description:
-`Tratamientos diseñados para ayudarte a verte más fresca, luminosa y radiante ✨`,
-
-      services: [
-
-        {
-          name: "Hollywood Peel",
-          icon: "✨",
-
-          description:
-`Un tratamiento facial premium que ayuda a iluminar la piel, mejorar textura y dar un efecto glow increíble ✨`,
-
-          benefits: [
-
-            "Piel más luminosa",
-            "Efecto glow inmediato",
-            "Ayuda con manchas y poros"
-          ],
-
-          testimonials: [
-
-            "😍 Mi piel quedó divina",
-            "✨ Me sentí muchísimo más segura",
-            "💖 Lo volvería a hacer mil veces"
-          ],
-
-          clients: "520"
-        },
-
-        {
-          name: "Limpieza Facial",
-          icon: "🫧",
-
-          description:
-`Ideal para limpiar profundamente la piel y devolverle frescura y suavidad ✨`,
-
-          benefits: [
-
-            "Elimina impurezas",
-            "Ayuda con puntos negros",
-            "Piel más suave"
-          ],
-
-          testimonials: [
-
-            "💖 Sentí mi piel súper limpia",
-            "✨ Me encantó el resultado"
-          ],
-
-          clients: "430"
-        }
-      ]
-    },
-
-    {
-      name: "Pestañas",
-      icon: "👁️",
-
-      description:
-`Realza tu mirada y siéntete todavía más hermosa ✨`,
-
-      services: [
-
-        {
-          name: "Pestañas Premium",
-          icon: "✨",
-
-          description:
-`Diseño de pestañas elegante y natural para una mirada más impactante 💖`,
-
-          benefits: [
-
-            "Mirada más intensa",
-            "Acabado natural",
-            "Mayor volumen"
-          ],
-
-          testimonials: [
-
-            "😍 Me veo divina",
-            "💖 Súper naturales"
-          ],
-
-          clients: "610"
-        }
-      ]
-    },
-
-    {
-      name: "Corporales",
-      icon: "🌸",
-
-      description:
-`Tratamientos corporales pensados para ayudarte a sentirte más segura y hermosa ✨`,
-
-      services: [
-
-        {
-          name: "Moldeo Corporal",
-          icon: "🔥",
-
-          description:
-`Ayuda a moldear zonas específicas y mejorar la apariencia corporal ✨`,
-
-          benefits: [
-
-            "Mejora visual",
-            "Resultados progresivos",
-            "Mayor seguridad"
-          ],
-
-          testimonials: [
-
-            "💖 Me sentí más segura",
-            "🔥 Noté cambios muy rápido"
-          ],
-
-          clients: "370"
-        }
-      ]
-    }
-  ];
-
-  // ==========================================
   // 🔥 TESTIMONIOS
   // ==========================================
-
   const formatTestimonials = () => {
-
-    if (
-      !business.testimonials ||
-      !business.testimonials.length
-    ) return "";
+    if (!business.testimonials || !business.testimonials.length) return "";
 
     return business.testimonials.map(t => {
 
-      if (typeof t === "string") {
-        return t.trim();
-      }
+      if (typeof t === "string") return t.trim();
 
       if (t.type === "text") {
-
-        if (
-          t.content.trim().startsWith("http")
-        ) {
+        if (t.content.trim().startsWith("http")) {
           return t.content.trim();
         }
-
         return `💬 ${t.content}`;
       }
 
-      if (t.type === "image") {
-        return t.content.trim();
-      }
-
-      if (t.type === "video") {
-        return t.content.trim();
-      }
+      if (t.type === "image") return t.content.trim();
+      if (t.type === "video") return t.content.trim();
 
       return "";
 
@@ -285,484 +129,516 @@ function closerBot(message, business, lead) {
   // ==========================================
   // 🔥 WAIT GLOBAL
   // ==========================================
-
   if (message === "wait") {
 
-    reply =
-`Pensarlo demasiado no cambia nada hermosa 💖
+    reply = `Entiendo 💖
 
-A veces el mayor cambio empieza simplemente tomando una decisión ✨
+pero déjame decirte algo...
 
-¿Vas a seguir postergándote o vas a darte el gusto de sentirte todavía más hermosa hoy?`;
+muchas personas aplazan empezar con la resina epóxica durante meses...
+
+y cuando finalmente comienzan...
+
+se arrepienten de no haber empezado antes 😔
+
+Porque descubren que podían:
+
+✨ crear piezas hermosas
+✨ relajarse haciendo algo creativo
+✨ vender sus creaciones
+✨ generar ingresos desde casa
+
+La pregunta es...
+
+¿vas a seguir postergándolo o vas a darte la oportunidad hoy?`;
 
     options = [
-
-      {
-        label: "🔥 Quiero mi cambio",
-        value: "push_close"
-      },
-
-      {
-        label: "🤔 Tengo dudas",
-        value: "objection_doubt"
-      }
+      { label: "🔥 Quiero empezar", value: "push_close" },
+      { label: "🤔 Tengo dudas", value: "objection_doubt" }
     ];
 
-    return {
-      reply,
-      options,
-      showInput: false
-    };
+    return { reply, options, showInput: false };
   }
 
   // ==========================================
-  // 🔥 DUDAS
+  // 🔥 DUDAS GLOBAL
   // ==========================================
-
   if (
     message === "objection_doubt" ||
     message === "objection_doubt_alt1" ||
-    message === "objection_doubt_alt2"
+    message === "objection_doubt_alt2" ||
+    message === "action_doubt"
   ) {
 
-    reply =
-`Es completamente normal tener dudas hermosa 💖
+    reply = `Es completamente normal tener dudas 💖
 
-Muchas chicas llegaron igual que tú…
+La mayoría de alumnas también las tenían antes de empezar...
 
-con miedo,
-inseguridad
-o pensando demasiado.
+pero mira lo que pasó cuando decidieron actuar ✨
 
-Pero mira lo felices que terminaron después de decidir darse ese regalo ✨
+${formatTestimonials() || "Nuestras alumnas ya están creando piezas increíbles y muchas ya venden sus creaciones."}
 
-${formatTestimonials() || "🔥 Muchísimas chicas ya vivieron su transformación."}
+La verdadera pregunta es:
 
-✨ A veces el cambio que necesitas empieza con una sola decisión.`;
+¿qué pasa si esto sí funciona para ti y hoy decides no intentarlo?`;
 
     options = [
-
-      {
-        label: "💖 Quiero intentarlo",
-        value: "push_close"
-      },
-
-      {
-        label: "😕 Prefiero esperar",
-        value: "wait"
-      }
+      { label: "🔥 Quiero avanzar", value: "push_close" },
+      { label: "😕 Prefiero esperar", value: "wait" }
     ];
 
-    return {
-      reply,
-      options,
-      showInput: false
-    };
+    return { reply, options, showInput: false };
   }
 
   // ==========================================
   // 🔥 START
   // ==========================================
-
   if (message === "start") {
+
+    reply = `Hola hermosa 💖
+
+bienvenida ✨
+
+antes de empezar...
+
+¿cómo te llamas?`;
 
     lead.stage = "ask_name";
 
     return {
-
-      reply:
-`Hola hermosa 💖
-
-Bienvenida a ${business.name || "nuestro centro"} ✨
-
-Qué alegría tenerte aquí 🌸
-
-¿Cómo te gustaría que te llamemos? 💖`,
-
+      reply,
       options: [],
-
       showInput: true,
-
       inputType: "name"
     };
   }
 
   // ==========================================
-  // 🔥 CAPTURAR NOMBRE
+  // 🔥 CAPTURA NOMBRE
   // ==========================================
-
-  if (lead.stage === "ask_name") {
+  else if (lead.stage === "ask_name") {
 
     lead.name = message;
 
-    lead.stage = "main";
+    reply = `Mucho gusto ${lead.name} 💖
+
+quiero conocerte un poquito mejor 👇
+
+¿qué es lo que más te gustaría lograr aprendiendo resina epóxica?`;
+
+    options = [
+      { label: "💰 Ganar dinero", value: "money" },
+      { label: "🎨 Hobby y relajación", value: "hobby" },
+      { label: "🧠 Aprender algo nuevo", value: "learn" }
+    ];
+
+    lead.stage = "interest";
 
     return {
-
-      reply:
-`${lead.name} 💖
-
-Qué lindo tenerte aquí ✨
-
-¿Qué te gustaría hacer hoy? 🌸`,
-
-      options: [
-
-        {
-          label: "💅 Cotizar servicio",
-          value: "cotizar"
-        },
-
-        {
-          label: "📅 Agendar cita",
-          value: "agendar"
-        },
-
-        {
-          label: "🔥 Ver promociones",
-          value: "promo"
-        },
-
-        {
-          label: "✨ Ver tratamientos",
-          value: "go_categories"
-        },
-
-        {
-          label: "📍 Ver ubicación",
-          value: "ubicacion"
-        }
-      ],
-
+      reply,
+      options,
       showInput: false
     };
   }
 
   // ==========================================
-  // 🔥 MAIN
+  // 🔥 INTERESES
   // ==========================================
+  else if (lead.stage === "interest") {
 
-  if (lead.stage === "main") {
+    const testimonialsText = formatTestimonials()
+      ? "\n\n🔥 Mira resultados reales:\n\n" + formatTestimonials()
+      : "";
 
-    if (
-      message === "cotizar" ||
-      message === "agendar"
-    ) {
+    // ==========================================
+    // 💰 DINERO
+    // ==========================================
+    if (message === "money") {
 
-      lead.stage = "capture_phone";
+      lead.user_goal = "money";
+
+      reply = `Brutal ${lead.name} 💰
+
+La resina epóxica se ha convertido en una de las manualidades más rentables actualmente ✨
+
+muchas alumnas empiezan desde cero...
+
+y terminan vendiendo:
+
+✨ tablas decorativas
+✨ joyería
+✨ mesas
+✨ llaveros
+✨ vasos personalizados
+✨ bandejas elegantes
+
+Incluso desde casa 💖
+
+No necesitas experiencia previa.
+
+Solo aprender el paso a paso correcto.${testimonialsText}
+
+dime algo 👇
+
+¿ya has intentado vender algo antes?`;
+
+      options = [
+        { label: "Sí", value: "money_sold_before" },
+        { label: "No", value: "money_first_time" }
+      ];
+
+      lead.stage = "money_flow";
 
       return {
-
-        reply:
-`Perfecto ${lead.name} 💖
-
-¿A qué número de WhatsApp te podemos enviar promociones VIP y prioridad de agenda? ✨`,
-
-        options: [],
-
-        showInput: true,
-
-        inputType: "phone"
-      };
-    }
-
-    if (message === "promo") {
-
-      return {
-
-        reply:
-`🔥 PROMOCIONES ESPECIALES ✨
-
-🔥 Beneficios especiales activos
-🔥 Agenda VIP prioritaria
-🔥 Cupos limitados hoy
-
-💖 Queremos ayudarte a sentirte más hermosa y segura ✨`,
-
-        options: [
-
-          {
-            label: "💆 Ver tratamientos",
-            value: "go_categories"
-          }
-        ],
-
+        reply,
+        options,
         showInput: false
       };
     }
 
-    if (message === "ubicacion") {
+    // ==========================================
+    // 🎨 HOBBY
+    // ==========================================
+    if (message === "hobby") {
+
+      lead.user_goal = "hobby";
+
+      reply = `Me encanta eso ${lead.name} 💖
+
+La resina epóxica es terapéutica ✨
+
+muchas personas empiezan solo para relajarse...
+
+y terminan enamoradas del proceso 😍
+
+Imagínate creando piezas hermosas con tus propias manos mientras desconectas del estrés del día a día.${testimonialsText}
+
+¿te gustaría vivir eso?`;
+
+      options = [
+        { label: "😍 Sí, me encantaría", value: "hobby_yes" },
+        { label: "🤔 No estoy segura", value: "hobby_doubt" }
+      ];
+
+      lead.stage = "hobby_flow";
 
       return {
-
-        reply:
-`📍 Estamos ubicadas en una zona cómoda y segura ✨
-
-👇 Aquí puedes ver nuestra ubicación:`,
-
-        options: [
-
-          {
-            label: "📍 Ver ubicación",
-            type: "url",
-            url:
-              business.productLink ||
-              "https://maps.google.com"
-          }
-        ],
-
+        reply,
+        options,
         showInput: false
       };
     }
 
-    if (
-      message === "go_categories"
-    ) {
+    // ==========================================
+    // 🧠 APRENDER
+    // ==========================================
+    if (message === "learn") {
 
-      lead.stage = "categories";
+      lead.user_goal = "learn";
+
+      reply = `Excelente decisión ${lead.name} 🧠
+
+La resina epóxica parece difícil...
+
+hasta que alguien te enseña correctamente ✨
+
+En este curso aprenderás paso a paso:
+
+✨ materiales
+✨ mezclas correctas
+✨ técnicas profesionales
+✨ acabados brillantes
+✨ moldes
+✨ pigmentos
+✨ errores que debes evitar
+
+Aunque empieces completamente desde cero.${testimonialsText}
+
+¿te gustaría aprender así?`;
+
+      options = [
+        { label: "💖 Sí, desde cero", value: "learn_yes" },
+        { label: "🤔 Tengo dudas", value: "learn_doubt" }
+      ];
+
+      lead.stage = "learn_flow";
 
       return {
-
-        reply:
-`Perfecto hermosa 💖
-
-¿Qué categoría te gustaría ver primero? ✨`,
-
-        options:
-
-          localCategories.map((cat, index) => {
-
-            return {
-
-              label:
-                `${cat.icon} ${cat.name}`,
-
-              value:
-                `category_${index}`
-            };
-          }),
-
+        reply,
+        options,
         showInput: false
       };
     }
   }
 
   // ==========================================
-  // 🔥 CAPTURAR PHONE
+  // 💰 FLUJO DINERO
   // ==========================================
+  else if (lead.stage === "money_flow") {
 
-  if (lead.stage === "capture_phone") {
+    if (message === "money_sold_before") {
 
-    if (!/\d{7,}/.test(message)) {
+      reply = `Perfecto ${lead.name} 💰
+
+Entonces ya sabes lo poderoso que es tener una habilidad rentable ✨
+
+La diferencia aquí...
+
+es que la resina epóxica tiene muchísimo mercado porque las personas aman los productos personalizados y artesanales 😍
+
+🔥 Mira lo que ya están logrando nuestras alumnas:
+${formatTestimonials() || "Nuestras alumnas ya están vendiendo sus creaciones."}
+
+¿te imaginas generar ingresos haciendo algo creativo que además disfrutas?`;
+
+      options = [
+        { label: "🚀 Sí, quiero eso", value: "push_close" },
+        { label: "🤔 Tengo dudas", value: "action_doubt" }
+      ];
+
+      lead.stage = "pre_action";
 
       return {
-
-        reply:
-`${lead.name || "Hermosa"} 💖
-
-Necesito un número válido ✨`,
-
-        options: [],
-
-        showInput: true,
-
-        inputType: "phone"
+        reply,
+        options,
+        showInput: false
       };
     }
 
-    lead.phone = message;
+    if (message === "money_first_time") {
 
-    lead.stage = "categories";
+      reply = `Y eso es perfecto ${lead.name} 💖
+
+porque aprenderás correctamente desde el inicio ✨
+
+No necesitas experiencia en ventas.
+
+Muchas alumnas comenzaron literalmente desde cero...
+
+y hoy ya venden sus primeras creaciones por Instagram, WhatsApp y Facebook 😍
+
+🔥 Mira esto:
+${formatTestimonials() || "Alumnas desde cero ya están obteniendo resultados."}
+
+¿te gustaría que este sea el comienzo de algo grande para ti?`;
+
+      options = [
+        { label: "🚀 Sí, quiero empezar", value: "push_close" },
+        { label: "🤔 Tengo dudas", value: "action_doubt" }
+      ];
+
+      lead.stage = "pre_action";
+
+      return {
+        reply,
+        options,
+        showInput: false
+      };
+    }
+  }
+
+  // ==========================================
+  // 🎨 HOBBY FLOW
+  // ==========================================
+  else if (lead.stage === "hobby_flow") {
+
+    if (message === "hobby_yes") {
+
+      reply = `Es una sensación hermosa 💖
+
+crear algo con tus propias manos...
+
+ver el resultado terminado...
+
+y decir:
+
+"wow... yo hice esto" ✨
+
+🔥 mira algunas experiencias:
+${formatTestimonials() || ""}
+
+¿te gustaría aprender paso a paso aunque nunca hayas usado resina antes?`;
+
+      options = [
+        { label: "💖 Sí", value: "hobby_start" },
+        { label: "🤔 Tengo dudas", value: "hobby_doubt" }
+      ];
+
+      return {
+        reply,
+        options,
+        showInput: false
+      };
+    }
+
+    if (message === "hobby_doubt") {
+
+      reply = `Es normal sentir dudas 💖
+
+pero recuerda algo...
+
+nadie nace sabiendo.
+
+Todas empezaron desde cero ✨
+
+🔥 Mira esto:
+${formatTestimonials() || ""}
+
+¿te gustaría intentarlo?`;
+
+      options = [
+        { label: "💖 Sí, quiero", value: "hobby_start" },
+        { label: "😕 Prefiero esperar", value: "wait" }
+      ];
+
+      return {
+        reply,
+        options,
+        showInput: false
+      };
+    }
+
+    if (message === "hobby_start") {
+
+      reply = `Perfecto 💖
+
+imagina tu primera pieza terminada...
+
+brillante...
+elegante...
+hecha por ti ✨
+
+¿quieres empezar hoy?`;
+
+      options = [
+        { label: "🔥 Sí, quiero entrar", value: "push_close" },
+        { label: "🤔 Aún no", value: "wait" }
+      ];
+
+      lead.stage = "pre_action";
+
+      return {
+        reply,
+        options,
+        showInput: false
+      };
+    }
+  }
+
+  // ==========================================
+  // 🧠 LEARN FLOW
+  // ==========================================
+  else if (lead.stage === "learn_flow") {
+
+    if (message === "learn_yes") {
+
+      reply = `Perfecto ${lead.name} 🧠
+
+vas a sorprenderte de lo rápido que puedes aprender cuando alguien te guía correctamente ✨
+
+No necesitas experiencia previa.
+
+Solo seguir el paso a paso.
+
+🔥 Mira resultados reales:
+${formatTestimonials() || ""}
+
+¿quieres empezar hoy mismo?`;
+
+      options = [
+        { label: "🔥 Sí, quiero entrar", value: "push_close" },
+        { label: "🤔 Tengo dudas", value: "wait" }
+      ];
+
+      lead.stage = "pre_action";
+
+      return {
+        reply,
+        options,
+        showInput: false
+      };
+    }
+
+    if (message === "learn_doubt") {
+
+      reply = `Las dudas son normales 💖
+
+pero recuerda...
+
+el único error real sería no darte la oportunidad de aprender algo que puede cambiar tu vida ✨
+
+🔥 otras alumnas ya comenzaron:
+${formatTestimonials() || ""}
+
+¿quieres intentarlo?`;
+
+      options = [
+        { label: "💖 Sí, quiero", value: "push_close" },
+        { label: "😕 Prefiero esperar", value: "wait" }
+      ];
+
+      lead.stage = "pre_action";
+
+      return {
+        reply,
+        options,
+        showInput: false
+      };
+    }
+  }
+
+  // ==========================================
+  // 🔥 OBJECIONES
+  // ==========================================
+  else if (message === "objection_money") {
+
+    reply = `Te entiendo perfectamente ${lead.name} 💖
+
+pero piensa esto...
+
+el acceso cuesta ${business.price || "47 USD"}.
+
+Eso es menos de lo que muchas personas gastan en salidas o compras impulsivas.
+
+La diferencia es que esto puede darte:
+
+✨ una nueva habilidad
+✨ ingresos
+✨ creatividad
+✨ una posible fuente de negocio
+
+¿prefieres gastarlo o invertirlo en ti?`;
+
+    options = [
+      { label: "🔥 Invertir en mí", value: "push_close" },
+      { label: "🤔 Aún tengo dudas", value: "objection_doubt_alt1" }
+    ];
 
     return {
-
-      reply:
-`Perfecto hermosa 💖
-
-Tu acceso VIP quedó activado ✨
-
-¿Qué categoría te gustaría ver primero? 💖`,
-
-      options:
-
-        localCategories.map((cat, index) => {
-
-          return {
-
-            label:
-              `${cat.icon} ${cat.name}`,
-
-            value:
-              `category_${index}`
-          };
-        }),
-
+      reply,
+      options,
       showInput: false
     };
   }
 
-  // ==========================================
-  // 🔥 CATEGORÍAS
-  // ==========================================
+  else if (message === "objection_time") {
 
-  if (
-    message.startsWith("category_")
-  ) {
+    reply = `No necesitas tener "mucho tiempo" 💖
 
-    const index =
-      Number(
-        message.replace(
-          "category_",
-          ""
-        )
-      );
+muchas alumnas empiezan dedicando solo unos minutos al día ✨
 
-    const category =
-      localCategories[index];
+lo importante no es cuánto tiempo tienes...
 
-    if (!category) {
+sino empezar.`;
 
-      return {
-
-        reply:
-`No encontramos esa categoría hermosa 💖`,
-
-        options: [],
-
-        showInput: false
-      };
-    }
-
-    lead.selectedCategory = index;
-
-    lead.stage = "services";
-
-    let services =
-      category.services.map((service, i) => {
-
-        return {
-
-          label:
-            `${service.icon} ${service.name}`,
-
-          value:
-            `service_${index}_${i}`
-        };
-      });
+    options = [
+      { label: "💖 Quiero empezar", value: "push_close" },
+      { label: "🤔 Tengo dudas", value: "objection_doubt_alt2" }
+    ];
 
     return {
-
-      reply:
-`${category.name} ✨
-
-${category.description}
-
-⚠️ Hoy algunos tratamientos tienen beneficios especiales activos.`,
-
-      options: services,
-
-      showInput: false
-    };
-  }
-
-  // ==========================================
-  // 🔥 SERVICIOS
-  // ==========================================
-
-  if (
-    message.startsWith("service_")
-  ) {
-
-    const parts =
-      message.split("_");
-
-    const categoryIndex =
-      Number(parts[1]);
-
-    const serviceIndex =
-      Number(parts[2]);
-
-    const category =
-      localCategories[categoryIndex];
-
-    if (!category) {
-
-      return {
-
-        reply:
-`No encontramos la categoría 💖`,
-
-        options: [],
-
-        showInput: false
-      };
-    }
-
-    const service =
-      category.services[serviceIndex];
-
-    if (!service) {
-
-      return {
-
-        reply:
-`No encontramos el tratamiento 💖`,
-
-        options: [],
-
-        showInput: false
-      };
-    }
-
-    lead.selectedService =
-      service.name;
-
-    lead.stage = "pre_close";
-
-    let benefits =
-      service.benefits
-        .map(b => `• ${b}`)
-        .join("\n");
-
-    let testimonials =
-`\n\n🔥 Mira algunos resultados reales:\n\n` +
-      service.testimonials.join("\n");
-
-    return {
-
-      reply:
-`${service.icon} ${service.name} ✨
-
-${service.description}
-
-${benefits}
-
-💖 Muchas chicas aman este procedimiento ✨
-
-🔥 Más de ${
-  service.clients
-} chicas felices.${testimonials}
-
-✨ ¿Te gustaría agendar tu valoración?`,
-
-      options: [
-
-        {
-          label: "📅 Sí, quiero agendar",
-          value: "push_close"
-        },
-
-        {
-          label: "🔥 Quiero mi beneficio",
-          value: "push_close"
-        },
-
-        {
-          label: "🤔 Tengo dudas",
-          value: "objection_doubt"
-        }
-      ],
-
+      reply,
+      options,
       showInput: false
     };
   }
@@ -770,104 +646,139 @@ ${benefits}
   // ==========================================
   // 🔥 PUSH CLOSE
   // ==========================================
-
   if (message === "push_close") {
 
-    lead.stage = "capture_whatsapp";
+    reply = `Imagínate dentro del curso ✨
+
+aprendiendo paso a paso...
+
+creando piezas increíbles...
+
+y viendo cómo cada vez te salen mejor 😍
+
+¿sientes que esto podría ser algo muy bonito para ti?`;
+
+    options = [
+      { label: "😍 Sí, totalmente", value: "emotion_happy" },
+      { label: "🤩 Sí, lo necesito", value: "emotion_motivated" },
+      { label: "💖 Sí, vamos con todo", value: "emotion_proud" }
+    ];
+
+    lead.stage = "awaiting_emotion";
 
     return {
+      reply,
+      options,
+      showInput: false
+    };
+  }
 
-      reply:
-`Perfecto hermosa 💖
+  // ==========================================
+  // 🔥 EMOCIÓN
+  // ==========================================
+  else if (
+    lead.stage === "awaiting_emotion" &&
+    (message || "").startsWith("emotion_")
+  ) {
 
-Tu beneficio VIP puede quedar reservado hoy mismo ✨
+    reply = `Esooo 💖✨
 
-Déjame tu WhatsApp y te enviaremos toda la información ahora mismo ✨`,
+y créeme...
 
+vas a sentir muchísimo orgullo cuando veas tus primeras creaciones terminadas 😍
+
+Además tendrás acompañamiento, guía paso a paso y acceso inmediato al contenido.
+
+¿estás lista para empezar esta nueva etapa?`;
+
+    options = [
+      { label: "🚀 Sí, estoy lista", value: "confirm_hype" },
+      { label: "🤔 Quiero saber más", value: "more_hype" }
+    ];
+
+    lead.stage = "hype_desire";
+
+    return {
+      reply,
+      options,
+      showInput: false
+    };
+  }
+
+  // ==========================================
+  // 🔥 CIERRE FINAL
+  // ==========================================
+  else if (lead.stage === "hype_desire") {
+
+    if (message === "confirm_hype" || message === "more_hype") {
+
+      reply = `Perfecto 💖
+
+mi compañera Laura ya tiene todo preparado para darte acceso inmediato ✨
+
+🎁 además hoy recibirás BONOS especiales exclusivos por acción rápida.
+
+⚠️ IMPORTANTE:
+Los bonos solo estarán disponibles por tiempo limitado.
+
+Déjame tu WhatsApp y te enviaré toda la información ahora mismo 👇`;
+
+      lead.stage = "capture_whatsapp";
+
+      return {
+        reply,
+        options: [],
+        showInput: true,
+        inputType: "phone"
+      };
+    }
+  }
+
+  // ==========================================
+  // 🔥 CAPTURA WHATSAPP
+  // ==========================================
+  else if (lead.stage === "capture_whatsapp") {
+
+    if (/\d{7,}/.test(message)) {
+
+      lead.phone = message;
+
+      lead.stage = "action";
+
+      reply = `Perfecto 💖
+
+${business.productInfo}
+
+💰 ${business.price || "47 USD"}
+
+👉 ${business.productLink}
+
+🔥 ENVÍA TU COMPROBANTE POR WHATSAPP
+
+y activaremos tu acceso inmediato ✨
+
+🎁 además recibirás los BONOS exclusivos de hoy.`;
+
+      return {
+        reply,
+        options: [],
+        showInput: false,
+        showWhatsApp: true,
+        whatsappNumber: business.whatsappNumber
+      };
+    }
+
+    return {
+      reply: `Necesito tu número para enviarte toda la información y asegurar tu cupo 💖`,
       options: [],
-
       showInput: true,
-
       inputType: "phone"
     };
   }
 
-  // ==========================================
-  // 🔥 CAPTURE FINAL
-  // ==========================================
-
-  if (
-    lead.stage === "capture_whatsapp"
-  ) {
-
-    if (!/\d{7,}/.test(message)) {
-
-      return {
-
-        reply:
-`${lead.name || "Hermosa"} 💖
-
-Necesito un número válido ✨`,
-
-        options: [],
-
-        showInput: true,
-
-        inputType: "phone"
-      };
-    }
-
-    lead.phone = message;
-
-    lead.stage = "done";
-
-    return {
-
-      reply:
-`🔥 Perfecto hermosa 💖
-
-Tu beneficio VIP quedó reservado exitosamente ✨
-
-En unos minutos una asesora especializada te escribirá personalmente 🌸`,
-
-      options: [],
-
-      showInput: false,
-
-      showWhatsApp: true,
-
-      whatsappNumber:
-        business.whatsappNumber
-    };
-  }
-
-  // ==========================================
-  // 🔥 FALLBACK
-  // ==========================================
-
   return {
-
-    reply:
-`Estoy aquí para ayudarte hermosa 💖`,
-
-    options: [
-
-      {
-        label: "💆 Ver tratamientos",
-        value: "go_categories"
-      },
-
-      {
-        label: "🔥 Ver promociones",
-        value: "promo"
-      },
-
-      {
-        label: "📅 Quiero agendar",
-        value: "agendar"
-      }
-    ],
-
+    reply,
+    options,
     showInput: false
   };
 }
