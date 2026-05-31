@@ -29,7 +29,30 @@ const businessSchema = new mongoose.Schema({
   // 🔥 EXTRA (NO ROMPE NADA - SOLO AGREGA)
   logoSize: Number, // para controlar peso del base64
   visits: { type: Number, default: 0 }, // analytics simple
-  lastVisit: Date // última interacción
+  lastVisit: Date, // última interacción
+
+  // 🗺️ EXTENSIÓN PARA MAPA CONCEPTUAL (AÑADIDO SIN ALTERAR LO ANTERIOR)
+  nodes: [{
+    id: { type: String, required: true },          // ID único del nodo generado por el canvas (ej: "node_1")
+    type: { 
+      type: String, 
+      enum: ['message', 'input', 'whatsapp_trigger'], 
+      default: 'message' 
+    },
+    content: { type: String, default: '' },        // El mensaje que dirá el bot en este punto
+    inputType: { 
+      type: String, 
+      enum: ['text', 'phone', 'name', 'none'], 
+      default: 'none' 
+    }
+  }],
+  
+  connections: [{
+    id: { type: String, required: true },          // ID único de la conexión/cable
+    sourceNodeId: { type: String, required: true }, // ID del nodo desde donde sale el cable
+    targetNodeId: { type: String, required: true }, // ID del nodo a donde llega el cable
+    conditionValue: { type: String, default: '' }   // El texto del botón/respuesta que activa esta ruta
+  }]
 
 }, { timestamps: true });
 
