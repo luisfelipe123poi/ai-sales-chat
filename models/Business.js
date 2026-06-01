@@ -44,7 +44,9 @@ const businessSchema = new mongoose.Schema({
       type: String, 
       enum: ['text', 'phone', 'name', 'none'], 
       default: 'none' 
-    }
+    },
+    // 🎛️ GUARDADO DEL ARREGLO DE TEXTOS PARA LOS BOTONES DEL FLUJO CONTROLADO
+    options: [String]                              // Lista de botones interactivos ["Opción 1", "Opción 2"]
   }],
   
   connections: [{
