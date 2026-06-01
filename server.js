@@ -114,20 +114,32 @@ function closerBot(message, business, lead) {
   }
 
   // ==========================================
-  // 🔥 MOTOR DINÁMICO DE CLIPSY (MAPA CONCEPTUAL ÚNICO)
+  // 🔥 MOTOR DINÁMICO DE CLIPSY CORREGIDO
   // ==========================================
   let currentNode = null;
 
   // 1. Determinar el nodo actual o el inicio del grafo
   if (!lead.stage || lead.stage === "" || message.toLowerCase() === "start" || message.toLowerCase() === "hola") {
-    // Busca el nodo con id o customId "start", si no existe toma el primero disponible en el array
-    currentNode = business.nodes.find(n => n.id === "start" || (n.data && n.data.customId === "start")) || business.nodes[0];
-    lead.stage = currentNode.id;
+    
+    // 🔥 FIX BÚSQUEDA INICIAL: Evaluamos id, customId o la existencia en texto del nodo de partida
+    currentNode = business.nodes.find(n => 
+      String(n.id) === "start" || 
+      (n.data && String(n.data.customId) === "start") ||
+      String(n.id) === "node_start"
+    );
+
+    // Salvaguarda: si no hay un nodo explícito llamado 'start', forzamos el primer nodo del canvas
+    if (!currentNode && business.nodes.length > 0) {
+      currentNode = business.nodes[0];
+    }
+    
+    lead.stage = currentNode ? currentNode.id : "";
   } else {
-    currentNode = business.nodes.find(n => n.id === lead.stage);
+    // 🔥 FIX COMPARACIÓN TOLERANTE: Comparamos convirtiendo a String para evitar fallos número/texto
+    currentNode = business.nodes.find(n => String(n.id) === String(lead.stage));
     if (!currentNode) {
       currentNode = business.nodes[0];
-      lead.stage = currentNode.id;
+      lead.stage = currentNode ? currentNode.id : "";
     }
   }
 
@@ -147,14 +159,14 @@ function closerBot(message, business, lead) {
     // Aseguramos que exista un array de conexiones válido para evaluar
     const connections = business.connections || [];
 
-    // Buscar una conexión que coincida con el valor del botón pulsado
+    // 🔥 FIX TRANSICIONES: Emparejamiento tolerante al prefijo "node_" en conexiones y nodos
     const connection = connections.find(c => 
-      c.sourceNodeId === currentNode.id && 
+      (String(c.sourceNodeId) === String(currentNode.id) || String(c.sourceNodeId) === `node_${currentNode.id}`) && 
       c.conditionValue && c.conditionValue.toLowerCase().trim() === message.toLowerCase().trim()
     );
 
     if (connection) {
-      const nextNode = business.nodes.find(n => n.id === connection.targetNodeId);
+      const nextNode = business.nodes.find(n => String(n.id) === String(connection.targetNodeId));
       if (nextNode) {
         currentNode = nextNode;
         lead.stage = nextNode.id;
@@ -166,9 +178,11 @@ function closerBot(message, business, lead) {
         if (currentNode.inputType === "name") lead.name = message;
         if (currentNode.inputType === "phone") lead.phone = message;
 
-        const linearConnection = connections.find(c => c.sourceNodeId === currentNode.id);
+        const linearConnection = connections.find(c => 
+          String(c.sourceNodeId) === String(currentNode.id) || String(c.sourceNodeId) === `node_${currentNode.id}`
+        );
         if (linearConnection) {
-          const nextNode = business.nodes.find(n => n.id === linearConnection.targetNodeId);
+          const nextNode = business.nodes.find(n => String(n.id) === String(linearConnection.targetNodeId));
           if (nextNode) {
             currentNode = nextNode;
             lead.stage = nextNode.id;
@@ -177,7 +191,7 @@ function closerBot(message, business, lead) {
       } else {
         // Fallback interactivo si el mensaje no coincide con los botones disponibles
         const currentOptions = connections
-          .filter(c => c.sourceNodeId === currentNode.id && c.conditionValue && c.conditionValue !== '')
+          .filter(c => (String(c.sourceNodeId) === String(currentNode.id) || String(c.sourceNodeId) === `node_${currentNode.id}`) && c.conditionValue && c.conditionValue !== '')
           .map(c => ({ label: c.conditionValue, value: c.conditionValue }));
 
         return {
@@ -196,10 +210,13 @@ function closerBot(message, business, lead) {
     dynamicReply = dynamicReply.replace(/{name}/g, lead.name).replace(/\${lead.name}/g, lead.name);
   }
 
-  // Extraer las opciones de salida de este nodo de forma segura
+  // 🔥 FIX MAPEADO DE OPCIONES: Filtro inteligente para recolectar botones de salida sin importar el formato del ID
   const safeConnections = business.connections || [];
   const nextOptions = safeConnections
-    .filter(c => c.sourceNodeId === currentNode.id && c.conditionValue && c.conditionValue !== '')
+    .filter(c => 
+      (String(c.sourceNodeId) === String(currentNode.id) || String(c.sourceNodeId) === `node_${currentNode.id}`) && 
+      c.conditionValue && c.conditionValue !== ''
+    )
     .map(c => ({
       label: c.conditionValue,
       value: c.conditionValue
