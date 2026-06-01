@@ -101,6 +101,18 @@ function closerBot(message, business, lead) {
 
   if (!message) message = "";
 
+  // =========================================================================
+  // 🔥 CRÍTICO: CONTINGENCIA PARA FLUJOS VACÍOS (Evita el Status 500 de Render)
+  // =========================================================================
+  if (!business.nodes || business.nodes.length === 0) {
+    return {
+      reply: business.welcomeMessage || "¡Hola! Bienvenido. En este momento estamos configurando nuestro sistema de atención automatizado. Por favor, vuelve a intentar en unos minutos.",
+      options: [],
+      showInput: false,
+      inputType: "none"
+    };
+  }
+
   // ==========================================
   // 🔥 MOTOR DINÁMICO DE CLIPSY (MAPA CONCEPTUAL ÚNICO)
   // ==========================================
@@ -108,7 +120,8 @@ function closerBot(message, business, lead) {
 
   // 1. Determinar el nodo actual o el inicio del grafo
   if (!lead.stage || lead.stage === "" || message.toLowerCase() === "start" || message.toLowerCase() === "hola") {
-    currentNode = business.nodes.find(n => n.id === "start") || business.nodes[0];
+    // Busca el nodo con id o customId "start", si no existe toma el primero disponible en el array
+    currentNode = business.nodes.find(n => n.id === "start" || (n.data && n.data.customId === "start")) || business.nodes[0];
     lead.stage = currentNode.id;
   } else {
     currentNode = business.nodes.find(n => n.id === lead.stage);
@@ -118,12 +131,26 @@ function closerBot(message, business, lead) {
     }
   }
 
+  // Doble verificación de seguridad en caso de que las búsquedas fallen catastróficamente
+  if (!currentNode) {
+    return {
+      reply: business.welcomeMessage || "¡Hola! Por favor escribe 'hola' para reiniciar el menú de opciones.",
+      options: [],
+      showInput: false,
+      inputType: "none"
+    };
+  }
+
   // 2. Procesar transiciones basadas en la interacción del usuario
   if (lead.stage && message.toLowerCase() !== "start" && message.toLowerCase() !== "hola") {
+    
+    // Aseguramos que exista un array de conexiones válido para evaluar
+    const connections = business.connections || [];
+
     // Buscar una conexión que coincida con el valor del botón pulsado
-    const connection = business.connections.find(c => 
+    const connection = connections.find(c => 
       c.sourceNodeId === currentNode.id && 
-      c.conditionValue.toLowerCase().trim() === message.toLowerCase().trim()
+      c.conditionValue && c.conditionValue.toLowerCase().trim() === message.toLowerCase().trim()
     );
 
     if (connection) {
@@ -139,7 +166,7 @@ function closerBot(message, business, lead) {
         if (currentNode.inputType === "name") lead.name = message;
         if (currentNode.inputType === "phone") lead.phone = message;
 
-        const linearConnection = business.connections.find(c => c.sourceNodeId === currentNode.id);
+        const linearConnection = connections.find(c => c.sourceNodeId === currentNode.id);
         if (linearConnection) {
           const nextNode = business.nodes.find(n => n.id === linearConnection.targetNodeId);
           if (nextNode) {
@@ -149,8 +176,8 @@ function closerBot(message, business, lead) {
         }
       } else {
         // Fallback interactivo si el mensaje no coincide con los botones disponibles
-        const currentOptions = business.connections
-          .filter(c => c.sourceNodeId === currentNode.id && c.conditionValue !== '')
+        const currentOptions = connections
+          .filter(c => c.sourceNodeId === currentNode.id && c.conditionValue && c.conditionValue !== '')
           .map(c => ({ label: c.conditionValue, value: c.conditionValue }));
 
         return {
@@ -169,9 +196,10 @@ function closerBot(message, business, lead) {
     dynamicReply = dynamicReply.replace(/{name}/g, lead.name).replace(/\${lead.name}/g, lead.name);
   }
 
-  // Extraer las opciones de salida de este nodo
-  const nextOptions = business.connections
-    .filter(c => c.sourceNodeId === currentNode.id && c.conditionValue !== '')
+  // Extraer las opciones de salida de este nodo de forma segura
+  const safeConnections = business.connections || [];
+  const nextOptions = safeConnections
+    .filter(c => c.sourceNodeId === currentNode.id && c.conditionValue && c.conditionValue !== '')
     .map(c => ({
       label: c.conditionValue,
       value: c.conditionValue
