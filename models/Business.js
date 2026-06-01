@@ -36,7 +36,6 @@ const businessSchema = new mongoose.Schema({
     id: { type: String, required: true },          // ID único del nodo generado por el canvas (ej: "node_1")
     type: { 
       type: String, 
-      enum: ['message', 'input', 'whatsapp_trigger'], 
       default: 'message' 
     },
     content: { type: String, default: '' },        // El mensaje que dirá el bot en este punto
