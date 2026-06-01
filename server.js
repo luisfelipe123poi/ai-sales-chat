@@ -121,9 +121,9 @@ function closerBot(message, business, lead) {
     
     // Buscamos el nodo de inicio de forma flexible
     currentNode = business.nodes.find(n => 
-      String(n.id) === "start" || 
+      String(n.id || n._id) === "start" || 
       (n.data && String(n.data.customId) === "start") ||
-      String(n.id) === "node_start"
+      String(n.id || n._id) === "node_start"
     );
 
     // Si no encuentra un nodo explícito "start", tomamos el primero del canvas
@@ -131,13 +131,13 @@ function closerBot(message, business, lead) {
       currentNode = business.nodes[0];
     }
     
-    lead.stage = currentNode ? currentNode.id : "";
+    lead.stage = currentNode ? String(currentNode.id || currentNode._id) : "";
   } else {
     // Búsqueda tolerante del nodo actual convirtiendo a String
-    currentNode = business.nodes.find(n => String(n.id) === String(lead.stage));
+    currentNode = business.nodes.find(n => String(n.id || n._id) === String(lead.stage));
     if (!currentNode) {
       currentNode = business.nodes[0];
-      lead.stage = currentNode ? currentNode.id : "";
+      lead.stage = currentNode ? String(currentNode.id || currentNode._id) : "";
     }
   }
 
@@ -158,7 +158,7 @@ function closerBot(message, business, lead) {
     // 🔥 FIX CRÍTICO: Comparamos limpiando el prefijo "node_" si existe en cualquiera de los dos lados
     const connection = connections.find(c => {
       const cleanSourceId = String(c.sourceNodeId).replace("node_", "");
-      const cleanCurrentId = String(currentNode.id).replace("node_", "");
+      const cleanCurrentId = String(currentNode.id || currentNode._id).replace("node_", "");
       
       return cleanSourceId === cleanCurrentId && 
              c.conditionValue && 
@@ -168,13 +168,13 @@ function closerBot(message, business, lead) {
     if (connection) {
       const nextNode = business.nodes.find(n => {
         const cleanTargetId = String(connection.targetNodeId).replace("node_", "");
-        const cleanNodeId = String(n.id).replace("node_", "");
+        const cleanNodeId = String(n.id || n._id).replace("node_", "");
         return cleanTargetId === cleanNodeId;
       });
 
       if (nextNode) {
         currentNode = nextNode;
-        lead.stage = nextNode.id;
+        lead.stage = String(nextNode.id || nextNode._id);
       }
     } else {
       // Si el nodo actual requería entrada de texto libre (Name, Phone, etc)
@@ -185,20 +185,20 @@ function closerBot(message, business, lead) {
         // Buscamos la conexión lineal de salida limpiando los prefijos "node_"
         const linearConnection = connections.find(c => {
           const cleanSourceId = String(c.sourceNodeId).replace("node_", "");
-          const cleanCurrentId = String(currentNode.id).replace("node_", "");
+          const cleanCurrentId = String(currentNode.id || currentNode._id).replace("node_", "");
           return cleanSourceId === cleanCurrentId;
         });
 
         if (linearConnection) {
           const nextNode = business.nodes.find(n => {
             const cleanTargetId = String(linearConnection.targetNodeId).replace("node_", "");
-            const cleanNodeId = String(n.id).replace("node_", "");
+            const cleanNodeId = String(n.id || n._id).replace("node_", "");
             return cleanTargetId === cleanNodeId;
           });
 
           if (nextNode) {
             currentNode = nextNode;
-            lead.stage = nextNode.id;
+            lead.stage = String(nextNode.id || nextNode._id);
           }
         }
       } else {
@@ -206,7 +206,7 @@ function closerBot(message, business, lead) {
         const currentOptions = connections
           .filter(c => {
             const cleanSourceId = String(c.sourceNodeId).replace("node_", "");
-            const cleanCurrentId = String(currentNode.id).replace("node_", "");
+            const cleanCurrentId = String(currentNode.id || currentNode._id).replace("node_", "");
             return cleanSourceId === cleanCurrentId && c.conditionValue && c.conditionValue !== '';
           })
           .map(c => ({ label: c.conditionValue, value: c.conditionValue }));
@@ -221,7 +221,7 @@ function closerBot(message, business, lead) {
     }
   }
 
-  // Reemplazo dinámico de variables en el texto
+  // Reemplazar la variable del nombre del lead de forma dinámica si ya existe en memoria
   let dynamicReply = currentNode.content || "";
   if (lead.name) {
     dynamicReply = dynamicReply.replace(/{name}/g, lead.name).replace(/\${lead.name}/g, lead.name);
@@ -232,7 +232,7 @@ function closerBot(message, business, lead) {
   const nextOptions = safeConnections
     .filter(c => {
       const cleanSourceId = String(c.sourceNodeId).replace("node_", "");
-      const cleanCurrentId = String(currentNode.id).replace("node_", "");
+      const cleanCurrentId = String(currentNode.id || currentNode._id).replace("node_", "");
       
       return cleanSourceId === cleanCurrentId && 
              c.conditionValue && 
