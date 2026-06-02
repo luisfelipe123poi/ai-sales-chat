@@ -395,10 +395,14 @@ app.post("/business", auth, async (req, res) => {
       productLink,
       whatsappNumber,
       waMessage,
-      testimonials: testimonialsRaw // Capturamos "testimonials" del front
+      testimonials: testimonialsRaw,
+
+      // 🔥 AGREGAR ESTO
+      nodes = [],
+      connections = []
+
     } = req.body;
 
-    // 🔥 FIX CRÍTICO: LIMPIAR SLUG
     let cleanSlug = (slug || "")
       .toLowerCase()
       .replace(/[^a-z0-9-]/g, "-")
@@ -406,35 +410,45 @@ app.post("/business", auth, async (req, res) => {
       .replace(/^-|-$/g, "");
 
     const exists = await Business.findOne({ slug: cleanSlug });
+
     if (exists) {
       return res.json({ error: "Slug ya existe" });
     }
 
     let processedTestimonials = [];
 
-    // Verificamos si llegaron testimonios
     if (testimonialsRaw && Array.isArray(testimonialsRaw)) {
-      // Si el frontend ya mandó los objetos listos {type, content}
-      if (typeof testimonialsRaw[0] === 'object') {
+      if (
+        testimonialsRaw.length > 0 &&
+        typeof testimonialsRaw[0] === "object"
+      ) {
         processedTestimonials = testimonialsRaw;
-      } 
-      // Si mandó solo texto (por si acaso), lo procesamos
-      else {
+      } else {
         processedTestimonials = testimonialsRaw
           .map(line => line.trim())
           .filter(line => line !== "")
           .map(content => {
             let type = "text";
-            if (content.match(/\.(mp4|mov|webm|mkv|youtube|youtu)/i)) type = "video";
-            else if (content.match(/\.(jpg|jpeg|png|gif|webp|imgur|cloudinary)/i)) type = "image";
-            return { type, content };
+
+            if (content.match(/\.(mp4|mov|webm|mkv|youtube|youtu)/i)) {
+              type = "video";
+            } else if (
+              content.match(/\.(jpg|jpeg|png|gif|webp|imgur|cloudinary)/i)
+            ) {
+              type = "image";
+            }
+
+            return {
+              type,
+              content
+            };
           });
       }
     }
 
     const business = await Business.create({
       name,
-      slug: cleanSlug, // 🔥 USAMOS EL SLUG LIMPIO
+      slug: cleanSlug,
       logo,
       primaryColor,
       welcomeMessage,
@@ -443,13 +457,19 @@ app.post("/business", auth, async (req, res) => {
       whatsappNumber,
       userId: req.user.id,
       waMessage,
-      testimonials: processedTestimonials // Guardamos el array procesado
+      testimonials: processedTestimonials,
+
+      // 🔥 ESTO ES LO QUE FALTABA
+      nodes,
+      connections
     });
 
-    console.log("🔥 TESTIMONIOS GUARDADOS:", business.testimonials);
+    console.log("🔥 NODES GUARDADOS:", business.nodes?.length || 0);
+    console.log("🔥 CONNECTIONS GUARDADAS:", business.connections?.length || 0);
 
-    // 🔥 NUEVO: detectar dominio automáticamente
-    const protocol = req.headers["x-forwarded-proto"] || req.protocol;
+    const protocol =
+      req.headers["x-forwarded-proto"] || req.protocol;
+
     const host = req.get("host");
 
     res.json({
@@ -460,10 +480,11 @@ app.post("/business", auth, async (req, res) => {
 
   } catch (error) {
     console.error("BUSINESS ERROR:", error);
-    res.status(500).json({ error: "Error al crear negocio" });
+    res.status(500).json({
+      error: "Error al crear negocio"
+    });
   }
 });
-
 // =========================
 // 📦 CLONAR TEMPLATE
 // =========================
@@ -485,7 +506,10 @@ app.post("/clone-template/:id", auth, async (req, res) => {
       productLink: template.productLink,
       whatsappNumber: template.whatsappNumber,
       userId: req.user.id,
-      isTemplate: false
+      isTemplate: false,
+
+      nodes: template.nodes || [],
+      connections: template.connections || []
     });
 
     res.json({
@@ -763,7 +787,12 @@ app.put("/business/:id", auth, async (req, res) => {
 
     const updated = await Business.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      {
+        ...req.body,
+
+        nodes: req.body.nodes || business.nodes || [],
+        connections: req.body.connections || business.connections || []
+      },
       { new: true }
     );
 
