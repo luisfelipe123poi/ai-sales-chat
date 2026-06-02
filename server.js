@@ -578,6 +578,38 @@ app.get("/business/:slug", async (req, res) => {
 });
 
 // =========================
+// 🏢 GET BUSINESS BY ID (EDITAR NEGOCIO)
+// =========================
+app.get("/business-edit/:id", auth, async (req, res) => {
+  try {
+
+    const business = await Business.findById(req.params.id);
+
+    if (!business) {
+      return res.status(404).json({
+        error: "Negocio no encontrado"
+      });
+    }
+
+    if (business.userId !== req.user.id) {
+      return res.status(403).json({
+        error: "No autorizado"
+      });
+    }
+
+    res.json(business);
+
+  } catch (error) {
+
+    console.error("GET BUSINESS BY ID ERROR:", error);
+
+    res.status(500).json({
+      error: "Error obteniendo negocio"
+    });
+  }
+});
+
+// =========================
 // 🏢 MIS NEGOCIOS
 // =========================
 app.get("/my-businesses", auth, async (req, res) => {
