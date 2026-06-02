@@ -17,9 +17,9 @@ const businessSchema = new mongoose.Schema({
       type: { type: String, enum: ["text", "image", "video"], default: "text" },
       content: String
     }
-  ], // textos, links o imágenes (puedes guardar URLs)
-  bonuses: [String], // lista de bonos
-  price: String, // ejemplo: "46 USD"
+  ],
+  bonuses: [String],
+  price: String,
 
   // 🔥 NUEVO
   userId: String,
@@ -27,33 +27,44 @@ const businessSchema = new mongoose.Schema({
   templateName: String,
 
   // 🔥 EXTRA (NO ROMPE NADA - SOLO AGREGA)
-  logoSize: Number, // para controlar peso del base64
-  visits: { type: Number, default: 0 }, // analytics simple
-  lastVisit: Date, // última interacción
+  logoSize: Number,
+  visits: { type: Number, default: 0 },
+  lastVisit: Date,
 
-  // 🗺️ EXTENSIÓN PARA MAPA CONCEPTUAL (AÑADIDO SIN ALTERAR LO ANTERIOR)
+  // 🗺️ EXTENSIÓN PARA MAPA CONCEPTUAL
   nodes: [{
-    id: { type: String, required: true },          // ID único del nodo generado por el canvas (ej: "node_1")
-    type: { 
-      type: String, 
-      default: 'message' 
+    id: { type: String, required: true },
+    type: {
+      type: String,
+      default: "message"
     },
-    content: { type: String, default: '' },        // El mensaje que dirá el bot en este punto
-    inputType: { 
-      type: String, 
-      enum: ['text', 'phone', 'name', 'none'], 
-      default: 'none' 
+    content: { type: String, default: "" },
+    inputType: {
+      type: String,
+      enum: ["text", "phone", "name", "none"],
+      default: "none"
     },
-    // 🎛️ GUARDADO DEL ARREGLO DE TEXTOS PARA LOS BOTONES DEL FLUJO CONTROLADO
-    options: [String]                              // Lista de botones interactivos ["Opción 1", "Opción 2"]
+    options: [String]
   }],
-  
+
   connections: [{
-    id: { type: String, required: true },          // ID único de la conexión/cable
-    sourceNodeId: { type: String, required: true }, // ID del nodo desde donde sale el cable
-    targetNodeId: { type: String, required: true }, // ID del nodo a donde llega el cable
-    conditionValue: { type: String, default: '' }   // El texto del botón/respuesta que activa esta ruta
-  }]
+    id: { type: String, required: true },
+    sourceNodeId: { type: String, required: true },
+    targetNodeId: { type: String, required: true },
+    conditionValue: { type: String, default: "" }
+  }],
+
+  // 🔥 COMPATIBILIDAD EXTRA PARA EDITOR VISUAL
+  flow: {
+    nodes: {
+      type: Array,
+      default: []
+    },
+    edges: {
+      type: Array,
+      default: []
+    }
+  }
 
 }, { timestamps: true });
 
