@@ -399,7 +399,8 @@ app.post("/business", auth, async (req, res) => {
 
       // 🔥 AGREGAR ESTO
       nodes = [],
-      connections = []
+      connections = [],
+      flow = {}
 
     } = req.body;
 
@@ -461,11 +462,16 @@ app.post("/business", auth, async (req, res) => {
 
       // 🔥 ESTO ES LO QUE FALTABA
       nodes,
-      connections
+      connections,
+      flow
     });
 
     console.log("🔥 NODES GUARDADOS:", business.nodes?.length || 0);
     console.log("🔥 CONNECTIONS GUARDADAS:", business.connections?.length || 0);
+    console.log(
+      "🔥 FLOW GUARDADO:",
+      Object.keys(business.flow || {}).length
+    );
 
     const protocol =
       req.headers["x-forwarded-proto"] || req.protocol;
