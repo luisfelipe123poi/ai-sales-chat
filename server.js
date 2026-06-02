@@ -614,7 +614,10 @@ app.post("/chat", async (req, res) => {
 
     let lead = leadId
       ? await Lead.findById(leadId)
-      : await Lead.create({ businessId, stage: "attention" });
+      : await Lead.create({
+          businessId,
+          stage: "attention"
+        });
 
     if (!lead.stage) {
       lead.stage = "attention";
@@ -637,6 +640,44 @@ app.post("/chat", async (req, res) => {
       content: message
     });
 
+    // =========================
+    // START NODE
+    // =========================
+    if (message === "start") {
+      const startNode =
+        business.nodes?.find(
+          n =>
+            n.type === "start" ||
+            n.id === "start"
+        );
+
+      if (startNode) {
+        await Message.create({
+          conversationId: conversation._id,
+          role: "assistant",
+          content: startNode.content || ""
+        });
+
+        return res.json({
+          reply: startNode.content || "",
+          options: (startNode.options || []).map(opt => ({
+            label: opt,
+            value: opt
+          })),
+          leadId: lead._id,
+          conversationId: conversation._id,
+          showWhatsApp: false,
+          whatsappNumber: business.whatsappNumber,
+          showInput:
+            startNode.inputType &&
+            startNode.inputType !== "none",
+          inputType:
+            startNode.inputType || "text",
+          testimonials: business.testimonials
+        });
+      }
+    }
+
     if (lead.stage === "action") {
       if (!lead.name && message.length < 30 && !message.includes("@")) {
         lead.name = message;
@@ -651,7 +692,7 @@ app.post("/chat", async (req, res) => {
       }
     }
 
-    // 🔥 AQUI LLAMAS TU BOT (NUEVO)
+    // 🔥 AQUI LLAMAS TU BOT
     const result = closerBot(message, business, lead);
 
     console.log("🔥 RESULT BOT:", result);
@@ -686,11 +727,8 @@ app.post("/chat", async (req, res) => {
       conversationId: conversation._id,
       showWhatsApp,
       whatsappNumber: business.whatsappNumber,
-
       showInput,
       inputType,
-
-      // 🔥 DEBUG EXTRA (NO ROMPE NADA)
       testimonials: business.testimonials
     });
 
