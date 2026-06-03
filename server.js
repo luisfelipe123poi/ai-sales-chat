@@ -155,6 +155,13 @@ function closerBot(message, business, lead) {
     
     const connections = business.connections || [];
 
+    console.log("================================");
+    console.log("MENSAJE:", message);
+    console.log("LEAD STAGE:", lead.stage);
+    console.log("CURRENT NODE:", currentNode);
+    console.log("CONNECTIONS:", connections);
+    console.log("================================");
+
     // 🔥 FIX CRÍTICO: Comparamos limpiando el prefijo "node_" si existe en cualquiera de los dos lados
     const connection = connections.find(c => {
       const cleanSourceId = String(c.sourceNodeId).replace("node_", "");
@@ -167,6 +174,25 @@ function closerBot(message, business, lead) {
 
     if (connection) {
       const nextNode = business.nodes.find(n => {
+        connections.forEach(c => {
+
+          const cleanSourceId =
+            String(c.sourceNodeId).replace("node_", "");
+
+          const cleanCurrentId =
+            String(currentNode.id || currentNode._id)
+              .replace("node_", "");
+
+          console.log({
+            sourceNodeId: c.sourceNodeId,
+            currentNodeId: currentNode.id || currentNode._id,
+            cleanSourceId,
+            cleanCurrentId,
+            conditionValue: c.conditionValue,
+            message
+          });
+
+        });
         const cleanTargetId = String(connection.targetNodeId).replace("node_", "");
         const cleanNodeId = String(n.id || n._id).replace("node_", "");
         return cleanTargetId === cleanNodeId;
