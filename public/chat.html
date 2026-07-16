@@ -1,953 +1,704 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Chat</title>
-
-<style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: "Inter", sans-serif;
-}
-
-body {
-  background: linear-gradient(135deg, #0f172a, #1e293b);
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* CONTENEDOR */
-#chat {
-  width: 400px;
-  height: 650px;
-  background: #fff;
-  border-radius: 20px;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-}
-
-/* HEADER */
-#header {
-  padding: 15px;
-  color: white;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  z-index: 10;
-}
-
-#header img {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-}
-
-/* MENSAJES */
-#messages {
-  flex: 1;
-  padding: 15px;
-  overflow-y: auto;
-  background: #f9fafb;
-  display: flex;
-  flex-direction: column;
-}
-
-.msg {
-  max-width: 85%;
-  padding: 12px 16px;
-  border-radius: 15px;
-  margin: 8px 0;
-  font-size: 14px;
-  line-height: 1.5;
-  animation: fadeIn 0.2s ease;
-  word-wrap: break-word;
-  white-space: pre-line;
-  flex-shrink: 0;
-}
-
-.user {
-  background: #25D366;
-  color: white;
-  margin-left: auto;
-  border-bottom-right-radius: 5px;
-}
-
-.bot {
-  background: #e5e7eb;
-  color: #111;
-  border-bottom-left-radius: 5px;
-}
-
-/* INPUT */
-#input-area {
-  display: none;
-  border-top: 1px solid #eee;
-}
-
-#input {
-  flex: 1;
-  padding: 15px;
-  border: none;
-  outline: none;
-}
-
-#sendBtn {
-  padding: 0 20px;
-  border: none;
-  background: #25D366;
-  color: white;
-  cursor: pointer;
-}
-
-/* BOTÓN WHATSAPP */
-#waBtn {
-  display: none;
-  margin: 10px;
-  padding: 12px;
-  background: #25D366;
-  color: white;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  font-weight: bold;
-}
-
-/* BOTONES OPCIONES */
-#options {
-  padding: 10px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  background: #f9fafb;
-}
-
-.option-btn {
-  padding: 10px 14px;
-  border: none;
-  border-radius: 12px;
-  background: #25D366;
-  color: white;
-  cursor: pointer;
-  font-weight: 500;
-  font-size: 14px;
-  animation: fadeIn 0.3s ease;
-}
-
-.option-btn:hover {
-  filter: brightness(0.9);
-}
-
-/* ANIMACIÓN */
-@keyframes fadeIn {
-  from {opacity:0; transform: translateY(5px);}
-  to {opacity:1; transform: translateY(0);}
-}
-
-/* SCROLL */
-#messages::-webkit-scrollbar {
-  width: 5px;
-}
-
-#messages::-webkit-scrollbar-thumb {
-  background: #ccc;
-  border-radius: 10px;
-}
-
-/* ===================================== */
-/* ⌨️ TYPING INDICATOR */
-/* ===================================== */
-
-.typing {
-  min-width: 70px;
-}
-
-.typing-dots {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  height: 12px;
-}
-
-.typing-dots span {
-  width: 8px;
-  height: 8px;
-  background: #6b7280;
-  border-radius: 50%;
-  display: block;
-  animation: typingBounce 1.4s infinite ease-in-out;
-}
-
-.typing-dots span:nth-child(1) {
-  animation-delay: 0s;
-}
-
-.typing-dots span:nth-child(2) {
-  animation-delay: .2s;
-}
-
-.typing-dots span:nth-child(3) {
-  animation-delay: .4s;
-}
-
-@keyframes typingBounce {
-
-  0%, 80%, 100% {
-    transform: translateY(0);
-    opacity: .3;
-  }
-
-  40% {
-    transform: translateY(-5px);
-    opacity: 1;
-  }
-}
-
-.typing-dots {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.typing-dots span {
-  width: 8px;
-  height: 8px;
-  background: #6b7280;
-  border-radius: 50%;
-  animation: blink 1.4s infinite both;
-}
-
-.typing-dots span:nth-child(2) {
-  animation-delay: .2s;
-}
-
-.typing-dots span:nth-child(3) {
-  animation-delay: .4s;
-}
-
-@keyframes blink {
-
-  0% {
-    opacity: .2;
-    transform: translateY(0px);
-  }
-
-  20% {
-    opacity: 1;
-    transform: translateY(-2px);
-  }
-
-  100% {
-    opacity: .2;
-    transform: translateY(0px);
-  }
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vitrina Premium & AI Sales Bot</title>
+    <!-- Tailwind CSS v4 -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Iconos Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Transición suave para modales y chats */
+        .transition-all-300 {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        /* Ocultar barra de scroll de forma elegante */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
 </head>
-
-<body>
-
-<div id="chat">
-
-  <div id="header"></div>
-
-  <div id="messages"></div>
-
-  <div id="options"></div>
-
-  <button id="waBtn">
-    Continuar por WhatsApp
-  </button>
-
-  <div id="input-area">
-
-    <input
-      id="input"
-      placeholder="Escribe tu mensaje..."
-    />
-
-    <button
-      id="sendBtn"
-      onclick="sendMessage()"
-    >
-      Enviar
-    </button>
-
-  </div>
-
-</div>
-
-<script>
-
-const API = "https://ai-sales-chat.onrender.com";
-
-let leadId = null;
-let conversationId = null;
-let business = null;
-let whatsappNumber = null;
-let inputLocked = false;
-let typingDiv = null;
-
-// =====================================
-// 🔥 SLUG FIX DEFINITIVO
-// =====================================
-
-const slug = window.location.pathname
-  .replace("/chat/", "")
-  .replace("/", "");
-
-console.log("🔥 URL:", window.location.href);
-console.log("🔥 PATHNAME:", window.location.pathname);
-console.log("🔥 SLUG:", slug);
-
-// =====================================
-// VALIDAR SLUG
-// =====================================
-
-if(!slug){
-
-  alert("Slug no encontrado");
-
-  throw new Error("Slug no encontrado");
-}
-
-// =====================================
-// LOAD BUSINESS
-// =====================================
-
-async function loadBusiness() {
-
-  try{
-
-    console.log("🔥 CARGANDO NEGOCIO");
-
-    console.log(`${API}/business/${slug}`);
-
-    const res = await fetch(`${API}/business/${slug}`);
-
-    console.log("🔥 STATUS:", res.status);
-
-    if(!res.ok){
-
-      const errText = await res.text();
-
-      console.log("❌ ERROR:", errText);
-
-      throw new Error("Negocio no encontrado");
-    }
-
-    const data = await res.json();
-
-    console.log("🔥 BUSINESS:", data);
-
-    business = data;
-
-    document.getElementById("header").style.background =
-      business.primaryColor || "#25D366";
-
-    document.getElementById("header").innerHTML = `
-      <img src="${business.logo || 'https://placehold.co/100'}" />
-      <div>
-        <strong>${business.name || "Chat"}</strong><br/>
-        <small>En línea</small>
-      </div>
-    `;
-
-    // =====================================
-    // 🔥 INICIAR CHAT AUTOMÁTICAMENTE
-    // =====================================
-
-    setInputState(false);
-
-    setTimeout(() => {
-      sendOption("start");
-    }, 500);
-
-  }catch(err){
-
-    console.error("❌ LOAD BUSINESS ERROR:", err);
-
-    addMessage(
-      "❌ Negocio no encontrado o backend caído",
-      "bot"
-    );
-  }
-}
-
-// =====================================
-// 💬 AGREGAR MENSAJE
-// =====================================
-
-function addMessage(text, type) {
-
-  const messages = document.getElementById("messages");
-
-  const div = document.createElement("div");
-
-  div.className = "msg " + type;
-
-  const lines = String(text || "").split("\n");
-
-  lines.forEach(line => {
-
-    let cleanLine = line.trim();
-
-    if (!cleanLine) return;
-
-    // =====================================
-    // 🔥 GOOGLE DRIVE FIX
-    // =====================================
-
-    if (cleanLine.includes("drive.google.com")) {
-
-      const match =
-        cleanLine.match(/\/d\/(.+?)\//) ||
-        cleanLine.match(/id=(.+?)(&|$)/);
-
-      if (match && match[1]) {
-
-        const fileId = match[1];
-
-        cleanLine =
-          `https://lh3.googleusercontent.com/d/${fileId}`;
-      }
-    }
-
-    // =====================================
-    // 🖼️ IMÁGENES
-    // =====================================
-
-    if (
-      cleanLine.match(/\.(jpeg|jpg|gif|png|webp)$/i) ||
-      cleanLine.includes("googleusercontent.com")
-    ) {
-
-      const img = document.createElement("img");
-
-      img.src = cleanLine;
-
-      img.style.maxWidth = "100%";
-      img.style.borderRadius = "10px";
-      img.style.marginTop = "5px";
-      img.style.display = "block";
-
-      img.onerror = function() {
-
-        this.style.display = "none";
-
-        const a = document.createElement("a");
-
-        a.href = line;
-        a.innerText = "Ver testimonio 🔗";
-        a.target = "_blank";
-
-        a.style.display = "block";
-        a.style.marginTop = "5px";
-        a.style.color = "#2563eb";
-        a.style.fontWeight = "bold";
-
-        div.appendChild(a);
-      };
-
-      div.appendChild(img);
-    }
-
-    // =====================================
-    // 🎥 VIDEOS
-    // =====================================
-
-    else if (
-      cleanLine.match(/\.(mp4|webm|ogg)$/i)
-    ) {
-
-      const video = document.createElement("video");
-
-      video.src = cleanLine;
-
-      video.controls = true;
-
-      video.style.maxWidth = "100%";
-      video.style.borderRadius = "10px";
-      video.style.marginTop = "5px";
-      video.style.display = "block";
-
-      div.appendChild(video);
-    }
-
-    // =====================================
-    // 🔗 LINKS
-    // =====================================
-
-    else if (
-      cleanLine.startsWith("http")
-    ) {
-
-      const a = document.createElement("a");
-
-      a.href = cleanLine;
-
-      a.innerText = "Ver testimonio 🔗";
-
-      a.target = "_blank";
-
-      a.style.display = "block";
-      a.style.marginTop = "5px";
-      a.style.color = "#2563eb";
-      a.style.fontWeight = "bold";
-
-      div.appendChild(a);
-    }
-
-    // =====================================
-    // 🧾 TEXTO
-    // =====================================
-
-    else {
-
-      const p = document.createElement("div");
-
-      p.innerText = line;
-
-      div.appendChild(p);
-    }
-
-  });
-
-  messages.appendChild(div);
-
-  setTimeout(() => {
-
-    messages.scrollTo({
-      top: messages.scrollHeight,
-      behavior: "smooth"
-    });
-
-  }, 50);
-}
-
-// =====================================
-// ⌨️ MOSTRAR ESCRIBIENDO
-// =====================================
-
-function showTyping() {
-
-  hideTyping();
-
-  const messages = document.getElementById("messages");
-
-  typingDiv = document.createElement("div");
-
-  // 🔥 IMPORTANTE
-  typingDiv.className = "msg bot typing";
-
-  typingDiv.innerHTML = `
-
-    <div style="
-      font-size:12px;
-      color:#6b7280;
-      margin-bottom:6px;
-      font-weight:600;
-    ">
-      Escribiendo...
+<body class="bg-slate-50 text-slate-900 font-sans antialiased pb-28">
+
+    <!-- 1. ENCABEZADO (Estilo Bio Link Premium) -->
+    <header class="max-w-md mx-auto pt-8 px-4 text-center">
+        <div class="relative w-24 h-24 mx-auto mb-4">
+            <div class="w-full h-full bg-slate-200 rounded-full border-4 border-white shadow-lg overflow-hidden">
+                <img id="business-logo" src="https://images.unsplash.com/photo-1527853787696-f7be74f2e39a?w=150" alt="Logo Tienda" class="w-full h-full object-cover">
+            </div>
+            <span class="absolute bottom-1 right-1 w-5 h-5 bg-emerald-500 border-2 border-white rounded-full flex items-center justify-center shadow-xs" title="Tienda Activa">
+                <span class="w-2.5 h-2.5 bg-white rounded-full animate-pulse"></span>
+            </span>
+        </div>
+        <h1 id="business-name" class="text-xl font-extrabold tracking-tight">Cargando...</h1>
+        <p id="business-description" class="text-sm text-slate-500 mt-1.5 max-w-xs mx-auto">Conectando con tu vitrina virtual...</p>
+        
+        <!-- Badges de confianza -->
+        <div class="flex justify-center gap-3 mt-4">
+            <span class="flex items-center gap-1.5 text-[11px] font-semibold text-slate-600 bg-white px-3 py-1.5 rounded-full border border-slate-100 shadow-xs">
+                <i data-lucide="truck" class="w-3.5 h-3.5 text-emerald-600"></i> Envío rápido
+            </span>
+            <span class="flex items-center gap-1.5 text-[11px] font-semibold text-slate-600 bg-white px-3 py-1.5 rounded-full border border-slate-100 shadow-xs">
+                <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-600"></i> Garantía 100%
+            </span>
+        </div>
+    </header>
+
+    <!-- 2. CATEGORÍAS (Horizontal Scroll Dinámico) -->
+    <nav class="max-w-md mx-auto mt-6 px-4">
+        <div id="categorias-container" class="flex gap-2 overflow-x-auto no-scrollbar pb-2">
+            <button onclick="filtrarCategoria('Todos')" class="cat-btn px-4 py-2 bg-slate-900 text-white rounded-full text-xs font-bold shadow-sm shrink-0 cursor-pointer transition-colors">🔥 Todos</button>
+            <!-- Aquí se inyectarán las categorías dinámicas de tus productos -->
+        </div>
+    </nav>
+
+    <!-- 3. VITRINA DE PRODUCTOS DINÁMICA -->
+    <main class="max-w-md mx-auto px-4 mt-4">
+        <div id="vitrina-productos" class="grid grid-cols-2 gap-4">
+            <!-- Los productos creados en el formulario se inyectarán dinámicamente aquí -->
+            <div class="col-span-2 text-center py-12 text-slate-400 text-xs">
+                <span class="animate-pulse">Cargando catálogo premium...</span>
+            </div>
+        </div>
+    </main>
+
+    <!-- 4. MODAL DETALLE DE PRODUCTO (Quick View) -->
+    <div id="product-modal" class="opacity-0 pointer-events-none fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-end justify-center p-0 md:p-4 transition-all-300">
+        <div class="bg-white w-full max-w-md rounded-t-3xl md:rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh] translate-y-10 transition-all-300 transform" id="modal-container">
+            <div class="relative">
+                <img id="modal-img" src="" alt="Producto" class="w-full h-72 object-cover">
+                <button onclick="closeModal()" class="absolute top-4 right-4 bg-white/90 hover:bg-white text-slate-800 p-2 rounded-full shadow-md backdrop-blur-xs transition-transform active:scale-90 cursor-pointer">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto space-y-4">
+                <div>
+                    <h2 id="modal-title" class="text-lg font-extrabold text-slate-900">Nombre del Producto</h2>
+                    <p id="modal-price" class="text-emerald-600 font-black text-xl mt-1">$0.000</p>
+                </div>
+
+                <p id="modal-desc" class="text-xs text-slate-500 leading-relaxed">
+                    Descripción del producto...
+                </p>
+
+                <!-- Tallas simuladas -->
+                <div>
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Selecciona tu talla</span>
+                    <div class="flex gap-2">
+                        <button class="w-9 h-9 bg-slate-900 text-white rounded-xl text-xs font-bold flex items-center justify-center cursor-pointer active:scale-95 transition-transform">S</button>
+                        <button class="w-9 h-9 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold flex items-center justify-center cursor-pointer active:scale-95 transition-transform">M</button>
+                        <button class="w-9 h-9 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold flex items-center justify-center cursor-pointer active:scale-95 transition-transform">L</button>
+                    </div>
+                </div>
+
+                <button id="modal-btn-ask" class="w-full py-3.5 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl text-sm font-bold flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-[0.98]">
+                    <i data-lucide="message-square" class="w-4 h-4"></i> Preguntar detalles al Bot
+                </button>
+            </div>
+        </div>
     </div>
 
-    <div class="typing-dots">
-      <span></span>
-      <span></span>
-      <span></span>
+    <!-- 5. INTERFAZ DEL BOT FLOTANTE -->
+    <div class="fixed bottom-6 right-6 z-50 max-w-[calc(100vw-32px)] w-96">
+        
+        <!-- Ventana del Chat -->
+        <div id="chat-window" class="opacity-0 pointer-events-none translate-y-10 scale-95 transition-all-300 bg-white rounded-3xl shadow-2xl border border-slate-100 flex flex-col h-[520px] mb-4 overflow-hidden transform">
+            <!-- Encabezado del Chat -->
+            <div class="bg-slate-950 p-4 text-white flex items-center justify-between shadow-sm">
+                <div class="flex items-center gap-3">
+                    <div class="relative w-9 h-9 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center font-black text-xs text-white shadow-md">
+                        AI
+                    </div>
+                    <div>
+                        <p class="text-sm font-extrabold tracking-wide">Asistente Virtual Premium ✨</p>
+                        <p class="text-[10px] text-emerald-400 flex items-center gap-1 font-medium">
+                            <span class="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping"></span> En línea para ayudarte
+                        </p>
+                    </div>
+                </div>
+                <button onclick="toggleChat()" class="text-slate-400 hover:text-white transition-colors cursor-pointer p-1">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Contenedor de Mensajes -->
+            <div id="messages" class="flex-1 p-4 overflow-y-auto space-y-4 bg-slate-50/50 text-xs scroll-smooth">
+                <!-- Inyección dinámica de mensajes -->
+            </div>
+
+            <!-- Botones de Respuestas Rápidas -->
+            <div id="options-container" class="px-4 py-2 bg-slate-50/50 flex flex-wrap gap-1.5 max-h-24 overflow-y-auto no-scrollbar"></div>
+
+            <!-- Botón WhatsApp Dinámico -->
+            <div class="px-4 pb-2 bg-white">
+                <button id="waBtn" style="display: none;" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer active:scale-95">
+                    <i data-lucide="phone" class="w-4 h-4"></i> Contactar por WhatsApp
+                </button>
+            </div>
+
+            <!-- Input de Texto -->
+            <div id="input-area" class="p-3 bg-white border-t border-slate-100 flex gap-2">
+                <input type="text" id="input" placeholder="Pregúntale al bot..." class="flex-1 bg-slate-100 rounded-2xl px-4 py-3 text-xs focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all text-slate-800">
+                <button onclick="sendMessage()" id="send-btn" class="bg-slate-950 hover:bg-slate-900 text-white p-3 rounded-2xl transition-all cursor-pointer active:scale-90 flex items-center justify-center">
+                    <i data-lucide="send" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Botón Disparador Flotante con Badge -->
+        <button onclick="toggleChat()" class="ml-auto flex items-center justify-center w-14 h-14 bg-slate-950 hover:bg-slate-900 text-white rounded-full shadow-2xl transition-transform active:scale-95 cursor-pointer group relative">
+            <i data-lucide="message-circle" class="w-6 h-6 group-hover:rotate-12 transition-transform"></i>
+            <span id="chat-badge" class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white animate-bounce">1</span>
+        </button>
     </div>
 
-  `;
-
-  messages.appendChild(typingDiv);
-
-  // 🔥 FORZAR REPAINT
-  typingDiv.offsetHeight;
-
-  messages.scrollTo({
-    top: messages.scrollHeight,
-    behavior: "smooth"
-  });
-}
-
-// =====================================
-// ❌ OCULTAR ESCRIBIENDO
-// =====================================
-
-function hideTyping() {
-
-  if (typingDiv) {
-
-    typingDiv.remove();
-
-    typingDiv = null;
-  }
-}
-
-// =====================================
-// 🔥 MOSTRAR OPCIONES
-// =====================================
-
-function showOptions(options) {
-
-  const container = document.getElementById("options");
-
-  container.innerHTML = "";
-
-  if (!options || options.length === 0) return;
-
-  options.forEach(opt => {
-
-    const btn = document.createElement("button");
-
-    btn.className = "option-btn";
-
-    btn.innerText = opt.label;
-
-    btn.onclick = () => {
-
-      if (opt.type === "url" && opt.url) {
-
-        container.innerHTML = "";
-
-        window.open(opt.url, "_blank");
-
-        return;
-      }
-
-      addMessage(opt.label, "user");
-
-      container.innerHTML = "";
-
-      sendOption(opt.value);
-    };
-
-    container.appendChild(btn);
-  });
-
-  setTimeout(() => {
-
-    const messages = document.getElementById("messages");
-
-    messages.scrollTo({
-      top: messages.scrollHeight,
-      behavior: "smooth"
-    });
-
-  }, 100);
-}
-
-// =====================================
-// 🚀 ENVIAR MENSAJE INPUT
-// =====================================
-
-async function sendMessage() {
-
-  if (inputLocked) return;
-
-  const input = document.getElementById("input");
-
-  const message = input.value.trim();
-
-  if (!message) return;
-
-  inputLocked = true;
-
-  input.disabled = true;
-
-  addMessage(message, "user");
-
-  input.value = "";
-
-  try{
-
-    const res = await fetch(`${API}/chat`, {
-
-      method: "POST",
-
-      headers: {
-        "Content-Type": "application/json"
-      },
-
-      body: JSON.stringify({
-        message,
-        leadId,
-        conversationId,
-        businessId: business._id
-      })
-    });
-
-    const data = await res.json();
-
-    // 🔥 MOSTRAR ESCRIBIENDO APENAS LLEGA RESPUESTA
-    showTyping();
-
-    // 🔥 FORZAR RENDER VISUAL
-    await new Promise(resolve =>
-      setTimeout(resolve, 50)
-    );
-
-    // =====================================
-    // 🔥 DELAY REALISTA WHATSAPP
-    // =====================================
-
-    await new Promise(resolve =>
-      setTimeout(resolve, 6000)
-    );
-
-    // 🔥 OCULTAR ESCRIBIENDO
-    hideTyping();
-
-    console.log("🔥 CHAT:", data);
-
-    leadId = data.leadId;
-
-    conversationId = data.conversationId;
-
-    addMessage(data.reply, "bot");
-
-    if (data.options) {
-      showOptions(data.options);
-    }
-
-    if (data.showWhatsApp) {
-
-      const btn = document.getElementById("waBtn");
-
-      btn.style.display = "block";
-
-      whatsappNumber = data.whatsappNumber;
-    }
-
-    setInputState(data.showInput, data.inputType);
-
-    if (data.showInput) {
-
-      inputLocked = false;
-
-      input.disabled = false;
-    }
-
-  }catch(err){
-
-    hideTyping();
-
-    console.error("❌ SEND ERROR:", err);
-
-    addMessage(
-      "❌ Error conectando al backend",
-      "bot"
-    );
-  }
-}
-
-// =====================================
-// 🚀 ENVIAR OPCIÓN
-// =====================================
-
-async function sendOption(value) {
-
-  if (typeof inputLocked !== "undefined") {
-    inputLocked = true;
-  }
-
-  const input = document.getElementById("input");
-
-  if (input) input.disabled = true;
-
-  try{
-
-    const res = await fetch(`${API}/chat`, {
-
-      method: "POST",
-
-      headers: {
-        "Content-Type": "application/json"
-      },
-
-      body: JSON.stringify({
-        message: value,
-        leadId,
-        conversationId,
-        businessId: business._id
-      })
-    });
-
-    const data = await res.json();
-
-    // 🔥 MOSTRAR ESCRIBIENDO APENAS LLEGA RESPUESTA
-    showTyping();
-
-    // 🔥 FORZAR RENDER VISUAL
-    await new Promise(resolve =>
-      setTimeout(resolve, 50)
-    );
-
-    // =====================================
-    // 🔥 DELAY REALISTA WHATSAPP
-    // =====================================
-
-    await new Promise(resolve =>
-      setTimeout(resolve, 6000)
-    );
-
-    // 🔥 OCULTAR ESCRIBIENDO
-    hideTyping();
-
-    console.log("🔥 OPTION DATA:", data);
-
-    leadId = data.leadId;
-
-    conversationId = data.conversationId;
-
-    addMessage(data.reply, "bot");
-
-    if (data.options) {
-      showOptions(data.options);
-    }
-
-    if (data.showWhatsApp) {
-
-      const btn = document.getElementById("waBtn");
-
-      btn.style.display = "block";
-
-      whatsappNumber = data.whatsappNumber;
-    }
-
-    setInputState(data.showInput, data.inputType);
-
-    if (data.showInput) {
-
-      if (typeof inputLocked !== "undefined") {
-        inputLocked = false;
-      }
-
-      if (input) {
-        input.disabled = false;
-      }
-    }
-
-  }catch(err){
-
-    hideTyping();
-
-    console.error("❌ OPTION ERROR:", err);
-
-    addMessage(
-      "❌ Error conectando al backend",
-      "bot"
-    );
-  }
-}
-
-// =====================================
-// INPUT STATE
-// =====================================
-
-function setInputState(show, type = "text") {
-
-  const inputArea = document.getElementById("input-area");
-
-  const input = document.getElementById("input");
-
-  if (show) {
-
-    inputArea.style.display = "flex";
-
-    if (type === "phone") {
-
-      input.placeholder =
-        "Escribe tu número de WhatsApp...";
-
-      input.type = "tel";
-
-    } else if (type === "name") {
-
-      input.placeholder =
-        "Escribe tu nombre...";
-
-      input.type = "text";
-
-    } else {
-
-      input.placeholder =
-        "Escribe tu mensaje...";
-
-      input.type = "text";
-    }
-
-  } else {
-
-    inputArea.style.display = "none";
-  }
-
-  setTimeout(() => {
-
-    const messages =
-      document.getElementById("messages");
-
-    messages.scrollTo({
-      top: messages.scrollHeight,
-      behavior: "smooth"
-    });
-
-  }, 50);
-}
-
-// =====================================
-// 📲 CLICK WHATSAPP
-// =====================================
-
-document.getElementById("waBtn").onclick = () => {
-
-  let message =
-    business?.waMessage ||
-    "Hola 👋 quiero más información";
-
-  const product =
-    business?.productInfo || "";
-
-  message = message
-    .replace("{{product}}", product);
-
-  const text = encodeURIComponent(message);
-
-  const phone =
-    business?.whatsappNumber || "";
-
-  window.open(
-    `https://wa.me/${phone}?text=${text}`,
-    "_blank"
-  );
-};
-
-// =====================================
-// ⌨️ ENTER
-// =====================================
-
-document
-.getElementById("input")
-.addEventListener("keypress", function(e) {
-
-  if (e.key === "Enter") {
-    sendMessage();
-  }
-});
-
-// =====================================
-// 🚀 START
-// =====================================
-
-loadBusiness();
-
-</script>
-
+    <!-- 6. LÓGICA DE INTERACCIÓN INTEGRADA -->
+    <script>
+        // Inicializar iconos
+        lucide.createIcons();
+
+        // Configuración de Prestige Closer[cite: 1]
+        const API = "https://api.prestigecloser.com"; //[cite: 1]
+        const params = new URLSearchParams(window.location.search);
+        const slug = params.get("slug") || "default";
+
+        let business = null;
+        let listaProductos = []; // Guardará el catálogo parseado localmente
+        let categoriaActiva = "Todos";
+
+        let leadId = null;
+        let conversationId = null;
+        let inputLocked = false;
+        let clientName = "";
+        let whatsappNumber = "";
+
+        const chatWindow = document.getElementById('chat-window');
+        const productModal = document.getElementById('product-modal');
+        const modalContainer = document.getElementById('modal-container');
+        const chatBadge = document.getElementById('chat-badge');
+
+        // Control de apertura y cierre del chat
+        function toggleChat() {
+            if (chatWindow.classList.contains('opacity-0')) {
+                chatWindow.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-10', 'scale-95');
+                chatWindow.classList.add('opacity-100', 'pointer-events-auto', 'translate-y-0', 'scale-100');
+                if (chatBadge) chatBadge.classList.add('hidden');
+            } else {
+                chatWindow.classList.add('opacity-0', 'pointer-events-none', 'translate-y-10', 'scale-95');
+                chatWindow.classList.remove('opacity-100', 'pointer-events-auto', 'translate-y-0', 'scale-100');
+            }
+        }
+
+        // Control de Modal Quick View con transiciones puras
+        function openModal(title, price, imgUrl, description) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-price').innerText = price;
+            document.getElementById('modal-img').src = imgUrl || "https://images.unsplash.com/photo-1527853787696-f7be74f2e39a?w=500";
+            document.getElementById('modal-desc').innerText = description || "Sin descripción disponible.";
+            
+            document.getElementById('modal-btn-ask').onclick = function() {
+                closeModal();
+                preguntarAlBot(title, price);
+            };
+
+            productModal.classList.remove('opacity-0', 'pointer-events-none');
+            modalContainer.classList.remove('translate-y-10');
+        }
+
+        function closeModal() {
+            productModal.classList.add('opacity-0', 'pointer-events-none');
+            modalContainer.classList.add('translate-y-10');
+        }
+
+        productModal.addEventListener('click', function(e) {
+            if (e.target === productModal) {
+                closeModal();
+            }
+        });
+
+        // Integración con el chat real
+        function preguntarAlBot(nombre, precio) {
+            if (chatWindow.classList.contains('opacity-0')) {
+                toggleChat();
+            }
+            const mensajeContexto = `Me interesa saber más sobre la *${nombre}* que cuesta ${precio}.`;
+            
+            const input = document.getElementById("input");
+            if (input) {
+                input.value = mensajeContexto;
+                sendMessage();
+            }
+        }
+
+        // ==========================================
+        // 🛍️ RENDERIZADO DINÁMICO DEL CATÁLOGO
+        // ==========================================
+
+        function renderizarCatalogo() {
+            const vitrina = document.getElementById("vitrina-productos");
+            const navCategorias = document.getElementById("categorias-container");
+            if (!vitrina) return;
+
+            vitrina.innerHTML = "";
+
+            // 1. Filtrar productos por categoría seleccionada
+            const productosFiltrados = listaProductos.filter(prod => {
+                if (categoriaActiva === "Todos") return true;
+                return prod.categoria.toLowerCase() === categoriaActiva.toLowerCase();
+            });
+
+            if (productosFiltrados.length === 0) {
+                vitrina.innerHTML = `
+                    <div class="col-span-2 text-center py-12 text-slate-400 text-xs">
+                        No hay productos disponibles en esta categoría.
+                    </div>
+                `;
+                return;
+            }
+
+            // 2. Inyectar productos en el HTML
+            productosFiltrados.forEach(prod => {
+                const imgUrl = prod.imagen || "https://images.unsplash.com/photo-1527853787696-f7be74f2e39a?w=400";
+                
+                const productCard = document.createElement("div");
+                productCard.className = "bg-white rounded-2xl overflow-hidden shadow-xs border border-slate-100 flex flex-col justify-between group transition-transform duration-200 hover:scale-[1.01]";
+                
+                // Sanitizar strings para pasar como parámetros JS de manera segura
+                const escapedName = prod.nombre.replace(/'/g, "\\'");
+                const escapedPrice = prod.precio.replace(/'/g, "\\'");
+                const escapedImg = imgUrl.replace(/'/g, "\\'");
+                const escapedDesc = prod.descripcion.replace(/'/g, "\\'").replace(/\n/g, " ");
+
+                productCard.innerHTML = `
+                    <div class="relative aspect-[4/5] bg-slate-100 cursor-pointer overflow-hidden" 
+                         onclick="openModal('${escapedName}', '${escapedPrice}', '${escapedImg}', '${escapedDesc}')">
+                        <img src="${imgUrl}" alt="${escapedName}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                    </div>
+                    <div class="p-3">
+                        <h3 class="font-bold text-xs text-slate-800 line-clamp-1">${prod.nombre}</h3>
+                        <p class="text-emerald-600 font-extrabold text-sm mt-0.5">${prod.precio}</p>
+                        <button onclick="preguntarAlBot('${escapedName}', '${escapedPrice}')" class="w-full mt-2.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95">
+                            <i data-lucide="message-square" class="w-3.5 h-3.5"></i> Preguntar al Bot
+                        </button>
+                    </div>
+                `;
+                vitrina.appendChild(productCard);
+            });
+
+            // Re-renderizar iconos inyectados dinámicamente
+            lucide.createIcons();
+        }
+
+        // Función para cambiar de categoría de manera interactiva
+        window.filtrarCategoria = function(categoria) {
+            categoriaActiva = categoria;
+            
+            // Actualizar diseño de botones activos
+            document.querySelectorAll(".cat-btn").forEach(btn => {
+                if (btn.innerText.includes(categoria)) {
+                    btn.className = "cat-btn px-4 py-2 bg-slate-900 text-white rounded-full text-xs font-bold shadow-sm shrink-0 cursor-pointer transition-colors";
+                } else {
+                    btn.className = "cat-btn px-4 py-2 bg-white text-slate-600 hover:bg-slate-100 rounded-full text-xs font-semibold border border-slate-100 shrink-0 cursor-pointer transition-colors";
+                }
+            });
+
+            renderizarCatalogo();
+        }
+
+        // Carga Inicial del negocio y formateo de nodos a productos reales
+        async function loadBusiness() {
+            try {
+                const res = await fetch(`${API}/business/slug/${slug}`);
+                business = await res.json();
+
+                if (business) {
+                    document.getElementById("business-name").innerText = `@${business.name || 'PrestigeStyle'}`;
+                    document.getElementById("business-description").innerText = business.description || '';
+                    if (business.logo) {
+                        document.getElementById("business-logo").src = business.logo;
+                    }
+
+                    // --- PARSEO DE PRODUCTOS DESDE LOS NODOS CONFIGURADOS EN EL FORMULARIO ---
+                    if (business.nodes && Array.isArray(business.nodes)) {
+                        const productNodes = business.nodes.filter(n => n.type === "product_showcase");
+                        
+                        listaProductos = productNodes.map(node => {
+                            const [nombre, precio, categoria, imagen] = node.options || [];
+                            return {
+                                nombre: nombre || "Producto sin nombre",
+                                precio: precio || "$0.00",
+                                categoria: categoria || "General",
+                                imagen: imagen || "",
+                                descripcion: node.content || ""
+                            };
+                        });
+
+                        // Generar botones de categoría únicos
+                        const categoriasUnicas = ["Todos", ...new Set(listaProductos.map(p => p.categoria))];
+                        const navCategorias = document.getElementById("categorias-container");
+                        
+                        if (navCategorias && categoriasUnicas.length > 1) {
+                            navCategorias.innerHTML = "";
+                            categoriasUnicas.forEach(cat => {
+                                const btn = document.createElement("button");
+                                btn.innerText = cat === "Todos" ? "🔥 Todos" : cat;
+                                btn.onclick = () => filtrarCategoria(cat);
+                                if (cat === "Todos") {
+                                    btn.className = "cat-btn px-4 py-2 bg-slate-900 text-white rounded-full text-xs font-bold shadow-sm shrink-0 cursor-pointer transition-colors";
+                                } else {
+                                    btn.className = "cat-btn px-4 py-2 bg-white text-slate-600 hover:bg-slate-100 rounded-full text-xs font-semibold border border-slate-100 shrink-0 cursor-pointer transition-colors";
+                                }
+                                navCategorias.appendChild(btn);
+                            });
+                        }
+                    }
+
+                    // Renderizar catálogo dinámicamente
+                    renderizarCatalogo();
+
+                    // Mensaje inicial del Chatbot
+                    if (business.welcomeMessage) {
+                        addMessage(business.welcomeMessage, "bot");
+                    } else {
+                        addMessage("¡Hola! 👋 Bienvenido. ¿En qué puedo ayudarte hoy?", "bot");
+                    }
+
+                    if (business.options && business.options.length > 0) {
+                        showOptions(business.options);
+                    }
+                }
+            } catch (err) {
+                console.error("❌ ERROR LOADING BUSINESS:", err);
+                addMessage("¡Hola! 👋 Bienvenido. ¿En qué puedo ayudarte hoy?", "bot");
+                document.getElementById("vitrina-productos").innerHTML = `
+                    <div class="col-span-2 text-center py-12 text-slate-400 text-xs">
+                        Error al cargar el catálogo de productos.
+                    </div>
+                `;
+            }
+        }
+
+        // Parseador de enlaces de Google Drive e Imágenes
+        function parseDriveUrl(url) {
+            if (!url) return null;
+            const videoRegex = /\.(mp4|webm|ogg)$/i;
+            const imgRegex = /\.(jpeg|jpg|gif|png|webp|svg)$/i;
+
+            if (url.includes("drive.google.com")) {
+                let id = "";
+                if (url.includes("id=")) {
+                    id = url.split("id=")[1].split("&")[0];
+                } else if (url.includes("/file/d/")) {
+                    id = url.split("/file/d/")[1].split("/")[0];
+                }
+                if (id) {
+                    return {
+                        src: `${API}/drive/stream/${id}`,
+                        isDrive: true
+                    };
+                }
+            }
+            return {
+                src: url,
+                isImage: imgRegex.test(url),
+                isVideo: videoRegex.test(url)
+            };
+        }
+
+        // Renderizado Dinámico de Mensajes
+        function addMessage(text, sender) {
+            const messagesContainer = document.getElementById("messages");
+            if (!messagesContainer) return;
+
+            const msgDiv = document.createElement("div");
+
+            if (sender === "user") {
+                msgDiv.className = "bg-slate-950 text-white p-3.5 rounded-2xl rounded-tr-none max-w-[85%] ml-auto shadow-sm leading-relaxed break-words";
+            } else {
+                msgDiv.className = "bg-white p-3.5 rounded-2xl rounded-tl-none border border-slate-100 max-w-[85%] mr-auto shadow-2xs leading-relaxed text-slate-700 break-words";
+            }
+
+            let formattedText = text.replace(/\*(.*?)\*/g, "<strong>$1</strong>");
+            const urlRegex = /(https?:\/\/[^\s]+)/g;
+            const matches = text.match(urlRegex);
+
+            if (matches) {
+                matches.forEach(url => {
+                    const media = parseDriveUrl(url);
+                    if (media && media.isDrive) {
+                        formattedText = formattedText.replace(url, "");
+                        const mediaWrapper = document.createElement("div");
+                        mediaWrapper.className = "mt-2 rounded-xl overflow-hidden shadow-xs max-w-full";
+
+                        fetch(media.src, { method: "HEAD" })
+                            .then(res => {
+                                const contentType = res.headers.get("Content-Type") || "";
+                                if (contentType.startsWith("video/")) {
+                                    mediaWrapper.innerHTML = `<video src="${media.src}" controls class="w-full h-auto rounded-xl"></video>`;
+                                } else {
+                                    mediaWrapper.innerHTML = `<img src="${media.src}" class="w-full h-auto object-cover rounded-xl" alt="Media"/>`;
+                                }
+                                msgDiv.appendChild(mediaWrapper);
+                            })
+                            .catch(() => {
+                                mediaWrapper.innerHTML = `<video src="${media.src}" controls class="w-full h-auto rounded-xl"></video>`;
+                                msgDiv.appendChild(mediaWrapper);
+                            });
+                    } else if (media && (media.isImage || media.isVideo)) {
+                        formattedText = formattedText.replace(url, "");
+                        const mediaWrapper = document.createElement("div");
+                        mediaWrapper.className = "mt-2 rounded-xl overflow-hidden shadow-xs max-w-full";
+                        if (media.isImage) {
+                            mediaWrapper.innerHTML = `<img src="${media.src}" class="w-full h-auto object-cover rounded-xl" alt="Product Image"/>`;
+                        } else {
+                            mediaWrapper.innerHTML = `<video src="${media.src}" controls class="w-full h-auto rounded-xl"></video>`;
+                        }
+                        msgDiv.appendChild(mediaWrapper);
+                    } else {
+                        formattedText = formattedText.replace(url, `<a href="${url}" target="_blank" class="text-emerald-600 underline font-semibold break-all">${url}</a>`);
+                    }
+                });
+            }
+
+            const textSpan = document.createElement("span");
+            textSpan.innerHTML = formattedText;
+            msgDiv.insertBefore(textSpan, msgDiv.firstChild);
+
+            messagesContainer.appendChild(msgDiv);
+
+            setTimeout(() => {
+                messagesContainer.scrollTo({
+                    top: messagesContainer.scrollHeight,
+                    behavior: "smooth"
+                });
+            }, 50);
+        }
+
+        // Renderizado de Opciones de Respuestas Rápidas
+        function showOptions(options) {
+            const container = document.getElementById("options-container");
+            if (!container) return;
+            container.innerHTML = "";
+
+            options.forEach(opt => {
+                const btn = document.createElement("button");
+                btn.className = "px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-800 rounded-xl text-xs font-semibold border border-slate-200 transition-all cursor-pointer shadow-2xs hover:border-slate-300 shrink-0 mb-1 active:scale-95";
+                btn.innerText = opt;
+                btn.onclick = () => {
+                    container.innerHTML = "";
+                    addMessage(opt, "user");
+                    sendOption(opt);
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        // Efecto Escribiendo (Typing Indicator)
+        function showTyping() {
+            const messagesContainer = document.getElementById("messages");
+            if (!messagesContainer || document.getElementById("typing-indicator")) return;
+
+            const typingDiv = document.createElement("div");
+            typingDiv.id = "typing-indicator";
+            typingDiv.className = "bg-white p-3.5 rounded-2xl rounded-tl-none border border-slate-100 w-16 mr-auto shadow-2xs flex items-center justify-center gap-1";
+            typingDiv.innerHTML = `
+                <span class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style="animation-delay: 0ms"></span>
+                <span class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style="animation-delay: 150ms"></span>
+                <span class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style="animation-delay: 300ms"></span>
+            `;
+            messagesContainer.appendChild(typingDiv);
+            messagesContainer.scrollTo({ top: messagesContainer.scrollHeight, behavior: "smooth" });
+        }
+
+        function hideTyping() {
+            const indicator = document.getElementById("typing-indicator");
+            if (indicator) indicator.remove();
+        }
+
+        // Enviar Mensaje
+        async function sendMessage() {
+            if (inputLocked) return;
+
+            const input = document.getElementById("input");
+            if (!input) return;
+
+            const val = input.value.trim();
+            if (!val) return;
+
+            if (input.placeholder.includes("tu nombre")) {
+                clientName = val;
+            }
+
+            addMessage(val, "user");
+            input.value = "";
+
+            inputLocked = true;
+            input.disabled = true;
+
+            const container = document.getElementById("options-container");
+            if (container) container.innerHTML = "";
+
+            try {
+                showTyping();
+
+                const res = await fetch(`${API}/chat`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        message: val,
+                        leadId,
+                        conversationId,
+                        businessId: business?._id,
+                        clientName: clientName || undefined
+                    })
+                });
+
+                const data = await res.json();
+
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                hideTyping();
+
+                leadId = data.leadId;
+                conversationId = data.conversationId;
+
+                addMessage(data.reply, "bot");
+
+                if (data.options) {
+                    showOptions(data.options);
+                }
+
+                if (data.showWhatsApp) {
+                    const btn = document.getElementById("waBtn");
+                    if (btn) btn.style.display = "flex";
+                    whatsappNumber = data.whatsappNumber;
+                }
+
+                setInputState(data.showInput, data.inputType);
+
+            } catch (err) {
+                hideTyping();
+                console.error("❌ CHAT ERROR:", err);
+                addMessage("❌ Ocurrió un error al enviar tu consulta. Inténtalo de nuevo.", "bot");
+            } finally {
+                inputLocked = false;
+                input.disabled = false;
+                input.focus();
+            }
+        }
+
+        // Enviar Opción Rápida
+        async function sendOption(value) {
+            inputLocked = true;
+            const input = document.getElementById("input");
+            if (input) input.disabled = true;
+
+            try {
+                showTyping();
+
+                const res = await fetch(`${API}/chat`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        message: value,
+                        leadId,
+                        conversationId,
+                        businessId: business._id
+                    })
+                });
+
+                const data = await res.json();
+
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                hideTyping();
+
+                leadId = data.leadId;
+                conversationId = data.conversationId;
+
+                addMessage(data.reply, "bot");
+
+                if (data.options) {
+                    showOptions(data.options);
+                }
+
+                if (data.showWhatsApp) {
+                    const btn = document.getElementById("waBtn");
+                    if (btn) btn.style.display = "flex";
+                    whatsappNumber = data.whatsappNumber;
+                }
+
+                setInputState(data.showInput, data.inputType);
+
+            } catch (err) {
+                hideTyping();
+                console.error("❌ OPTION ERROR:", err);
+                addMessage("❌ Error de comunicación con la plataforma.", "bot");
+            } finally {
+                inputLocked = false;
+                if (input) {
+                    input.disabled = false;
+                    input.focus();
+                }
+            }
+        }
+
+        // Manejo de Estados del Input
+        function setInputState(show, type = "text") {
+            const inputArea = document.getElementById("input-area");
+            const input = document.getElementById("input");
+
+            if (show) {
+                inputArea.style.display = "flex";
+
+                if (type === "phone") {
+                    input.placeholder = "Escribe tu número de WhatsApp...";
+                    input.type = "tel";
+                } else if (type === "name") {
+                    input.placeholder = "Escribe tu nombre...";
+                    input.type = "text";
+                } else {
+                    input.placeholder = "Escribe tu mensaje...";
+                    input.type = "text";
+                }
+            } else {
+                inputArea.style.display = "none";
+            }
+
+            setTimeout(() => {
+                const messages = document.getElementById("messages");
+                messages.scrollTo({
+                    top: messages.scrollHeight,
+                    behavior: "smooth"
+                });
+            }, 50);
+        }
+
+        // Redirección Real a WhatsApp
+        document.getElementById("waBtn").onclick = () => {
+            let message = business?.waMessage || "Hola 👋 quiero más información";
+            const product = business?.productInfo || "";
+
+            message = message.replace("{{product}}", product);
+            const text = encodeURIComponent(message);
+            const phone = whatsappNumber || business?.whatsappNumber || "";
+
+            window.open(`https://wa.me/${phone}?text=${text}`, "_blank");
+        };
+
+        // Enviar con tecla Enter
+        document.getElementById("input").addEventListener("keypress", function(e) {
+            if (e.key === "Enter") {
+                sendMessage();
+            }
+        });
+
+        // Inicialización
+        loadBusiness();
+    </script>
 </body>
 </html>
