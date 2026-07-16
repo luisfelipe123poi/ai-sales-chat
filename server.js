@@ -1499,23 +1499,15 @@ app.post("/upload-testimonial", upload.single("file"), async (req, res) => {
 
 
 
-// =========================
-// 🚀 SERVER
-// =========================
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  console.log(`🔥 Servidor corriendo en puerto ${PORT}`);
-});
-
 // ========================================================
-// 🔌 ENDPOINTS DE LA API (DEBEN IR ARRIBA DE LAS PÁGINAS)
+// 🔌 ENDPOINTS DE LA API (SIEMPRE ARRIBA DE LAS PÁGINAS)
 // ========================================================
 
 // Endpoint para obtener los datos del negocio por su slug (ej: "default")
 app.get("/business/slug/:slug", async (req, res) => {
   try {
     const { slug } = req.params;
+    console.log(`🔍 Buscando negocio para el slug: "${slug}"`);
     
     // Buscamos el negocio en la base de datos usando tu modelo 'Business'
     const business = await Business.findOne({ slug });
@@ -1534,23 +1526,33 @@ app.get("/business/slug/:slug", async (req, res) => {
 });
 
 // =========================
-// 🌐 PÁGINAS
+// 🌐 PÁGINAS (ABAJO DE LA API)
 // =========================
 
 app.use(express.static("public"));
 
-// CRM
+// CRM (Gestión interna)
 app.get("/crm/:slug", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "crm.html"));
 });
 
-// CHAT
+// CHAT (Para ver el chat clásico en /chat/slug)
 app.get("/chat/:slug", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "chat.html"));
 });
 
-// 🔥 IMPORTANTE: esto SIEMPRE de último
+// 🔥 VITRINA VIRTUAL PREMIUM (Acceso directo por Slug)
+// Al ser un comodín (/:slug), intercepta cualquier ruta no registrada antes.
+// DEBE ser la última ruta definida en tu servidor.
 app.get("/:slug", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "chat.html"));
+  res.sendFile(path.join(__dirname, "public", "vitrina.html")); // 👈 ¡Carga la vitrina aquí!
 });
 
+// ========================================================
+// 🚀 SERVER (DEBE IR AL FINAL ABSOLUTO DEL ARCHIVO)
+// ========================================================
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`🔥 Servidor corriendo en puerto ${PORT}`);
+});
