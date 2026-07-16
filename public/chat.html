@@ -165,8 +165,12 @@
 
         // Configuración de Prestige Closer[cite: 1]
         const API = "https://ai-sales-chat.onrender.com"; //[cite: 1]
-        const params = new URLSearchParams(window.location.search);
-        const slug = params.get("slug") || "default";
+        // SOLUCIÓN PARA RUTAS LIMPIAS (Ej: /22222)
+        // Dividimos la ruta por "/" y eliminamos los elementos vacíos
+        const pathSegments = window.location.pathname.split('/').filter(segment => segment.trim() !== "");
+
+        // Tomamos el primer segmento de la ruta como el slug, o "default" si está vacío
+        const slug = pathSegments[0] || "default";
 
         let business = null;
         let listaProductos = []; // Guardará el catálogo parseado localmente
