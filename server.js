@@ -48,7 +48,32 @@ const upload = multer({ storage: multer.memoryStorage() });
 // =========================
 // 🧱 MIDDLEWARES
 // =========================
-app.use(cors());
+
+// Configuración de CORS Ultra Compatible (Evita bloqueos entre onrender.com y prestigecloser.com)
+const allowedOrigins = [
+  "https://ai-sales-chat.onrender.com",
+  "https://chat.prestigecloser.com",
+  "https://prestigecloser.com",
+  "https://e4c90577.prestigecloser.pages.dev"
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin) || origin.startsWith("http://localhost") || origin.startsWith("http://127.0.0.1")) {
+      return callback(null, true);
+    } else {
+      console.log("⚠️ CORS Bloqueó origen no registrado:", origin);
+      return callback(new Error("Bloqueado por políticas de CORS de Prestige Closer"));
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
+}));
+
+// Responder de manera exitosa e inmediata a las peticiones preflight (OPTIONS)
+app.options("*", cors());
 
 // 🔥 FIX 413 ERROR
 app.use(express.json({ limit: "10mb" }));
@@ -56,11 +81,47 @@ app.use(express.urlencoded({ limit: "10mb", extended: true }));
 
 app.use(express.static("public"));
 
+
 // =========================
-// 🔌 CONEXIÓN A MONGODB
+// 🔌 CONEXIÓN A MONGODB & AUTO-CREACIÓN
 // =========================
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("✅ MongoDB conectado"))
+  .then(async () => {
+    console.log("✅ MongoDB conectado");
+
+    try {
+      // Intentamos buscar si ya existe el negocio con el slug "default"
+      const defaultBusiness = await Business.findOne({ slug: "default" });
+      
+      if (!defaultBusiness) {
+        console.log("✏️ No se encontró el negocio 'default'. Creando uno de prueba en la base de datos...");
+        
+        await Business.create({
+          name: "Prestige Closer Demo",
+          slug: "default",
+          primaryColor: "#007bff",
+          welcomeMessage: "¡Hola! Bienvenido a nuestra vitrina virtual de demostración.",
+          whatsappNumber: "573000000000",
+          aiInstructions: "Eres un vendedor amable y persuasivo para la vitrina de demostración.",
+          products: [
+            {
+              name: "Producto de Prueba Premium",
+              price: "$99.900",
+              description: "Este es un producto autogenerado para verificar que tu vitrina virtual funciona de maravilla.",
+              category: "General",
+              isTopSeller: true
+            }
+          ]
+        });
+        
+        console.log("✅ Registro 'default' creado exitosamente en MongoDB.");
+      } else {
+        console.log("ℹ️ El negocio 'default' ya existe en la base de datos. Listo para usarse.");
+      }
+    } catch (dbError) {
+      console.error("❌ Error al verificar/crear el negocio por defecto:", dbError);
+    }
+  })
   .catch(err => console.log("❌ Error MongoDB:", err));
 
 // =========================
