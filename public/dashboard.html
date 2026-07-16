@@ -268,18 +268,95 @@
 
   }
 
-  #chatMessages{
-    padding-top: 70px; /* altura del header */
+</style> <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jerosoler/Drawflow/dist/drawflow.min.css">
+<style>
+  .drawflow {
+    background-size: 25px 25px;
+    background-image: linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px),
+                      linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px);
+    background-color: #0b0f19;
   }
-
+  .drawflow .drawflow-node {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    color: #f8fafc;
+    width: 260px;
+    padding: 12px;
+  }
+  .drawflow .drawflow-node.selected {
+    border-color: #3b82f6;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+  }
+  .drawflow .connection .main-path {
+    stroke: #3b82f6;
+    stroke-width: 3px;
+  }
+  .drawflow .point {
+    background: #64748b;
+    border: 2px solid #1e293b;
+  }
+  .drawflow .point:hover {
+    background: #3b82f6;
+  }
 </style>
-</head>
+<script src="https://cdn.jsdelivr.net/gh/jerosoler/Drawflow/dist/drawflow.min.js"></script>
+
+</head> <body class="text-white min-h-screen overflow-x-hidden">
 
 <body class="text-white min-h-screen overflow-x-hidden">
 
 <div id="app"></div>
 
 <script>
+
+  // =========================================
+// 📸 PROCESADOR DE IMÁGENES A BASE64 (Ámbito Global)
+// =========================================
+window.convertirImagenABase64 = function(input, itemID) {
+  const file = input.files[0];
+  const label = document.getElementById(`label_${itemID}`);
+  const base64Input = document.getElementById(`base64_${itemID}`);
+  const preview = document.getElementById(`preview_${itemID}`);
+  const placeholder = document.getElementById(`placeholder_${itemID}`);
+
+  if (file) {
+    // Validar que no supere los 2MB para no sobrecargar el payload del servidor
+    if (file.size > 2 * 1024 * 1024) {
+      alert("La imagen es demasiado pesada. Elige una de menos de 2MB.");
+      input.value = "";
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const base64String = e.target.result;
+      
+      // Guardar el string Base64 en el input oculto que createBusiness va a escanear
+      if (base64Input) {
+        base64Input.value = base64String;
+      }
+      
+      // Actualizar la interfaz visual
+      if (label) {
+        label.innerText = file.name.length > 18 ? file.name.substring(0, 15) + "..." : file.name;
+      }
+      if (preview) {
+        preview.src = base64String;
+        preview.classList.remove("hidden");
+      }
+      if (placeholder) {
+        placeholder.classList.add("hidden");
+      }
+    };
+    
+    reader.onerror = function(err) {
+      console.error("❌ Error al leer el archivo:", err);
+    };
+
+    reader.readAsDataURL(file);
+  }
+};
 
 // =========================================
 // 🔥 CONFIG
@@ -313,6 +390,293 @@ const app = document.getElementById("app");
 
 render();
 
+// ==========================================
+// 🗺️ CONFIGURACIÓN GLOBAL DE DRAWFLOW
+// ==========================================
+let editor;
+
+// Modifica o añade a tu función existente que abre el modal para inicializar Drawflow una sola vez
+const _oldOpenCreateBusinessModal = window.openCreateBusinessModal;
+window.openCreateBusinessModal = function() {
+  if (typeof _oldOpenCreateBusinessModal === 'function') _oldOpenCreateBusinessModal();
+  
+  // Inicializar Drawflow si no se ha creado
+  setTimeout(() => {
+    const container = document.getElementById('drawflow');
+    if (container && !editor) {
+      editor = new Drawflow(container);
+      editor.start();
+      
+      // Crear un nodo inicial por defecto 'start' de manera automática
+      addNodeToCanvas('message', 'start');
+    }
+  }, 200);
+};
+
+// 🔥 FUNCIÓN QUE RESUELVE TU ERROR (Estructura original intacta)
+function addNodeToCanvas(type, customId = null) {
+  if (!editor) return;
+
+  const id = customId || 'node_' + Date.now();
+  let htmlContent = '';
+  
+  // Determinamos las salidas iniciales. El nodo 'start' o mensajes base inician con 1 salida por defecto
+  let outputsCount = 0;
+
+  if (type === 'message') {
+    htmlContent = `
+      <div class="p-2 bg-slate-900/90 rounded-xl border border-indigo-500/30" data-node-id="${id}">
+        <div class="text-xs font-bold text-indigo-400 mb-1 flex justify-between items-center">
+          <span>💬 Bloque Mensaje / Pregunta</span>
+          <button type="button" class="btn-delete-node text-red-400 hover:text-red-300 font-bold px-1">✕</button>
+        </div>
+        <textarea placeholder="Escribe el mensaje o pregunta del bot..." class="node-content w-full bg-slate-950 border border-slate-800 rounded-lg p-1.5 text-xs text-white resize-none focus:border-indigo-500 outline-none" rows="2"></textarea>
+        
+        <div class="mt-2 pt-2 border-t border-slate-800/60">
+          <div class="text-[10px] font-bold text-slate-400 mb-1">🎛️ Botones Opciones de Respuesta:</div>
+          <div class="options-container space-y-1">
+            </div>
+          <button type="button" class="btn-add-option w-full mt-1.5 bg-indigo-950/60 hover:bg-indigo-900 border border-indigo-500/40 text-[10px] text-indigo-300 py-1 rounded font-medium transition">
+            ➕ Añadir Botón de Opción
+          </button>
+        </div>
+      </div>
+    `;
+  } else if (type === 'input') {
+    htmlContent = `
+      <div class="p-2 bg-slate-900/90 rounded-xl border border-amber-500/30" data-node-id="${id}">
+        <div class="text-xs font-bold text-amber-400 mb-1 flex justify-between items-center">
+          <span>📥 Bloque Captura Dato Abierto</span>
+          <button type="button" class="btn-delete-node text-red-400 hover:text-red-300 font-bold px-1">✕</button>
+        </div>
+        <select class="node-input-type w-full bg-slate-950 border border-slate-800 rounded-lg p-1 text-xs text-white mb-2 outline-none">
+          <option value="text">Texto Libre (Cualquier Respuesta)</option>
+          <option value="name">Capturar Nombre (name)</option>
+          <option value="phone">Capturar Teléfono (phone)</option>
+        </select>
+        <textarea placeholder="Mensaje/Pregunta antes de capturar dato libre..." class="node-content w-full bg-slate-950 border border-slate-800 rounded-lg p-1.5 text-xs text-white resize-none focus:border-amber-500 outline-none" rows="2"></textarea>
+      </div>
+    `;
+  } else if (type === 'whatsapp_trigger') {
+    htmlContent = `
+      <div class="p-2 bg-slate-900/90 rounded-xl border border-emerald-500/30" data-node-id="${id}">
+        <div class="text-xs font-bold text-emerald-400 mb-1 flex justify-between items-center">
+          <span>📲 Acción Redirección WhatsApp</span>
+          <button type="button" class="btn-delete-node text-red-400 hover:text-red-300 font-bold px-1">✕</button>
+        </div>
+        <textarea placeholder="Mensaje final de cierre antes de redirigir..." class="node-content w-full bg-slate-950 border border-slate-800 rounded-lg p-1.5 text-xs text-white resize-none focus:border-emerald-500 outline-none" rows="2"></textarea>
+      </div>
+    `;
+    outputsCount = 0; // Final del flujo conversacional físico
+  }
+
+  // Posicionamiento escalonado en el lienzo central
+  const posX = customId === 'start' ? 50 : 150 + (Math.random() * 100);
+  const posY = customId === 'start' ? 150 : 100 + (Math.random() * 100);
+
+  // Agrega el nodo físico con su respectivo número de entradas y salidas iniciales
+  // 🔥 CORRECCIÓN: Almacenamos el ID de ejecución secuencial real que genera el motor de Drawflow
+  const drawflowId = editor.addNode(id, customId === 'start' ? 0 : 1, outputsCount, posX, posY, type, { type, customId: id }, htmlContent);
+
+  // 🔥 SOLUCIÓN DEL CLICK: Mapeamos los botones usando el ID real indexado en el DOM por Drawflow
+  const addedNodeEl = document.getElementById(`node-${drawflowId}`);
+  if (addedNodeEl) {
+    const btnAdd = addedNodeEl.querySelector('.btn-add-option');
+    if (btnAdd) {
+      btnAdd.setAttribute('onclick', `addOptionToNode('${drawflowId}')`);
+    }
+    const btnDel = addedNodeEl.querySelector('.btn-delete-node');
+    if (btnDel) {
+      btnDel.setAttribute('onclick', `deleteNode('${drawflowId}')`);
+    }
+  }
+}
+
+// 🔥 FUNCIÓN PARA AGREGAR OPCIONES Y CREAR CONECTORES EXTRA (OUTPUTS) DINÁMICAMENTE
+function addOptionToNode(nodeId) {
+  // Buscar el contenedor del nodo físico en el DOM de Drawflow
+  const nodeEl = document.getElementById(`node-${nodeId}`);
+  if (!nodeEl) return;
+
+  const container = nodeEl.querySelector('.options-container');
+  if (!container) return;
+
+  const currentOptions = container.querySelectorAll('.option-item').length;
+  const optionIndex = currentOptions + 1;
+
+  // Creamos el Input del botón de respuesta controlada
+  const optionDiv = document.createElement('div');
+  optionDiv.className = 'option-item flex items-center gap-1';
+  optionDiv.innerHTML = `
+    <span class="text-[9px] text-slate-500 font-bold min-w-[14px]">#${optionIndex}</span>
+    <input type="text" placeholder="Texto del Botón..." class="node-option-text w-full bg-slate-950 border border-slate-800 rounded px-1.5 py-0.5 text-[11px] text-white focus:border-indigo-400 outline-none" />
+    <button type="button" onclick="removeOptionFromNode('${nodeId}', this)" class="text-red-500 hover:text-red-400 text-xs px-0.5">✕</button>
+  `;
+  
+  container.appendChild(optionDiv);
+
+  // 🔌 CRÍTICO: Le agregamos una salida (Output conector) extra a la derecha de la cajita en Drawflow
+  editor.addNodeOutput(nodeId);
+}
+
+// 🔥 FUNCIÓN PARA REMOVER OPCIONES Y RETIRAR EL CONECTOR EXTRA DE DRAWFLOW
+function removeOptionFromNode(nodeId, buttonEl) {
+  const optionItem = buttonEl.parentElement;
+  const container = optionItem.parentElement;
+  
+  optionItem.remove();
+
+  // Removemos el último conector de salida físico del editor para mantener sincronía
+  editor.removeNodeOutput(nodeId, 'output_' + (container.querySelectorAll('.option-item').length + 1));
+  
+  // Re-indexar los números de las opciones visuales restantes
+  container.querySelectorAll('.option-item').forEach((item, idx) => {
+    item.querySelector('span').innerText = `#${idx + 1}`;
+  });
+}
+
+// Función auxiliar por si quieres borrar cajitas completas mediante la "✕" superior
+function deleteNode(id) {
+  if (!id) {
+    console.warn("deleteNode: id inválido", id);
+    return;
+  }
+
+  const nodeData = editor.getNodeFromId(id);
+
+  if (!nodeData) {
+    console.warn("deleteNode: nodo no encontrado", id);
+    return;
+  }
+
+  // No permitir borrar el start
+  if (
+    nodeData.data &&
+    nodeData.data.customId === "start"
+  ) {
+    alert("No puedes eliminar el nodo de inicio");
+    return;
+  }
+
+  editor.removeNodeId(id);
+}
+
+// Función auxiliar para empaquetar y formatear la data de Drawflow para la Base de Datos
+function exportCanvasData() {
+  if (!editor) return { nodes: [], connections: [], flow: {} };
+
+  const rawData = editor.export();
+  const nodes = [];
+  const connections = [];
+
+  // Recorremos los nodos dibujados en pantalla
+  Object.keys(rawData.drawflow.Home.data).forEach(key => {
+    const node = rawData.drawflow.Home.data[key];
+    
+    // 🔥 FIX SEGURO DE SELECTOR: Busca por el ID nativo numérico de Drawflow que es el estándar en el DOM (#node-1, #node-2)
+    let nodeElement = document.querySelector(`#node-${node.id}`);
+    
+    // Fallback por si tu frontend inyecta el customId directamente en el atributo id del DOM
+    if (!nodeElement && node.data && node.data.customId) {
+      nodeElement = document.querySelector(`#node-${node.data.customId}`) || document.getElementById(node.data.customId);
+    }
+    
+    // 🔥 FALLBACK COGNITIVO: Leemos primero del objeto en memoria de Drawflow para evitar DOMs fríos en creación
+    let content = node.data?.content || '';
+    let inputType = node.data?.inputType || 'none';
+    let options = (node.data && Array.isArray(node.data.options)) ? [...node.data.options] : [];
+
+    if (nodeElement) {
+      const textarea = nodeElement.querySelector('.node-content');
+      const select = nodeElement.querySelector('.node-input-type');
+      
+      // Si el usuario ya escribió en el DOM, actualizamos con el valor del input en vivo
+      if (textarea && textarea.value !== undefined && textarea.value !== '') content = textarea.value;
+      if (select && select.value !== undefined) inputType = select.value;
+
+      // 🔥 Extraer todos los textos de los botones de opciones controladas rellenados en orden
+      const optionInputs = nodeElement.querySelectorAll('.node-option-text');
+      if (optionInputs && optionInputs.length > 0) {
+        options = [];
+        optionInputs.forEach(input => {
+          options.push(input.value.trim());
+        });
+      }
+    } else {
+      console.warn(`⚠️ No se encontró el elemento HTML en el DOM para el nodo ID: ${node.id}`);
+    }
+
+    // Identificador final unificado que guardaremos en Base de Datos para este nodo
+    const finalNodeId = (node.data && node.data.customId)
+      ? node.data.customId
+      : `node_${node.id}`;
+
+    // Empaquetamos la data del nodo con su arreglo de botones de opción estructurados
+    nodes.push({
+      id: finalNodeId,
+      drawflowId: String(node.id),
+      type: node.name,
+      name: node.name,
+      content: content,
+      inputType: inputType,
+      options: options,
+      pos_x: Number(node.pos_x || 0),
+      pos_y: Number(node.pos_y || 0),
+      data: {
+        ...(node.data || {}),
+        customId: finalNodeId,
+        content,
+        inputType,
+        options
+      },
+      inputs: node.inputs || {},
+      outputs: node.outputs || {},
+      class: node.class || '',
+      html: node.html || ''
+    });
+
+    // Mapear uniones y cables ("Connections") asignándole la condición del texto del botón correspondiente
+    Object.keys(node.outputs || {}).forEach(outputKey => {
+      const outputIndex = parseInt(outputKey.replace('output_', '')) - 1;
+      
+      let conditionValue =
+        (options[outputIndex] !== undefined &&
+         options[outputIndex] !== "")
+          ? options[outputIndex]
+          : "Continuar";
+
+      if (node.outputs[outputKey] && node.outputs[outputKey].connections) {
+        node.outputs[outputKey].connections.forEach(conn => {
+          const targetNodeData = rawData.drawflow.Home.data[conn.node];
+          
+          if (targetNodeData) {
+            const finalTargetId =
+              (targetNodeData.data && targetNodeData.data.customId)
+                ? targetNodeData.data.customId
+                : `node_${conn.node}`;
+
+            connections.push({
+              id: `conn_${node.id}_${outputKey}_to_${conn.node}`,
+              sourceNodeId: finalNodeId,
+              targetNodeId: finalTargetId,
+              sourceDrawflowId: String(node.id),
+              targetDrawflowId: String(conn.node),
+              sourceOutput: outputKey,
+              targetInput: conn.output,
+              conditionValue: conditionValue
+            });
+          }
+        });
+      }
+    });
+  });
+
+  return {
+    nodes,
+    connections,
+    flow: rawData
+  };
+}
 // =========================================
 // 🔥 RENDER
 // =========================================
@@ -476,95 +840,18 @@ async function register(){
 // 🏢 DASHBOARD
 // =========================================
 
-async function renderDashboard(){
-
+async function renderDashboard() {
   app.innerHTML = `
-
-  <style>
-
-    /* ========================================= */
-    /* 🔥 SCROLL MODERNO VERDE */
-    /* ========================================= */
-
-    .sidebar-scroll::-webkit-scrollbar,
-    #chatMessages::-webkit-scrollbar {
-      width: 10px;
-    }
-
-    .sidebar-scroll::-webkit-scrollbar-track,
-    #chatMessages::-webkit-scrollbar-track {
-      background: rgba(255,255,255,0.04);
-      border-radius: 999px;
-    }
-
-    .sidebar-scroll::-webkit-scrollbar-thumb,
-    #chatMessages::-webkit-scrollbar-thumb {
-      background: linear-gradient(
-        to bottom,
-        #22c55e,
-        #16a34a
-      );
-      border-radius: 999px;
-      border: 2px solid transparent;
-      background-clip: padding-box;
-    }
-
-    .sidebar-scroll::-webkit-scrollbar-thumb:hover,
-    #chatMessages::-webkit-scrollbar-thumb:hover {
-      background: linear-gradient(
-        to bottom,
-        #4ade80,
-        #22c55e
-      );
-    }
-
-    .sidebar-scroll,
-    #chatMessages {
-      scrollbar-width: thin;
-      scrollbar-color: #22c55e rgba(255,255,255,0.05);
-    }
-
-    /* ========================================= */
-    /* 🔥 HERO EFECTO SCROLL */
-    /* ========================================= */
-
-    #chatHero {
-      transition:
-        background 0.35s ease,
-        backdrop-filter 0.35s ease,
-        border-color 0.35s ease,
-        opacity 0.35s ease,
-        box-shadow 0.35s ease;
-    }
-
-    #chatHero.scrolled {
-
-      background: rgba(0,0,0,0.70);
-
-      backdrop-filter: blur(20px);
-
-      -webkit-backdrop-filter: blur(20px);
-
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-
-      box-shadow:
-        0 10px 40px rgba(0,0,0,0.35);
-
-      opacity: 0.98;
-    }
-
-  </style>
-
   <div class="
     flex
     flex-col
     lg:flex-row
-    h-screen
+    min-h-screen
     bg-gradient-to-br
     from-[#05070f]
     via-[#0b1220]
     to-[#05070f]
-    overflow-hidden
+    overflow-x-hidden
   ">
 
     <!-- ========================= -->
@@ -573,7 +860,7 @@ async function renderDashboard(){
     <aside class="
       w-full
       lg:w-[340px]
-      h-screen
+      lg:h-screen
       lg:sticky
       top-0
       glass
@@ -585,7 +872,6 @@ async function renderDashboard(){
       flex
       flex-col
       shrink-0
-      overflow-hidden
     ">
 
       <!-- 🔥 LOGO ARRIBA -->
@@ -608,11 +894,8 @@ async function renderDashboard(){
 
       <!-- HEADER -->
       <div class="flex flex-col mb-6 gap-4 shrink-0">
-
         <div class="flex items-center justify-between flex-wrap gap-3">
-
           <div class="min-w-0">
-
             <h2 class="
               text-xl
               sm:text-2xl
@@ -627,13 +910,10 @@ async function renderDashboard(){
             ">
               Panel de Control
             </h2>
-
             <p class="text-slate-400 text-xs mt-1">
               Prestige Closer • 24/7
             </p>
-
           </div>
-
         </div>
 
         <!-- BOTÓN SALIR -->
@@ -654,12 +934,10 @@ async function renderDashboard(){
         >
           Salir
         </button>
-
       </div>
 
       <!-- BOTÓN CREAR -->
       <div class="mb-4 shrink-0">
-
         <button
           onclick="openCreateBusinessModal()"
           class="
@@ -679,90 +957,14 @@ async function renderDashboard(){
             sm:text-base
           "
         >
-          ➕ Crear Nuevo Negocio
+          ➕ Crear Vitrina / Negocio
         </button>
-
-      </div>
-
-      <!-- ================================= -->
-      <!-- 🔥 FILTRO LEADS -->
-      <!-- ================================= -->
-      <div class="mb-4 shrink-0">
-
-        <div class="
-          glass
-          rounded-2xl
-          border
-          border-white/10
-          p-3
-          backdrop-blur-xl
-        ">
-
-          <div class="
-            text-xs
-            font-bold
-            text-slate-400
-            mb-3
-            uppercase
-            tracking-widest
-          ">
-            Filtrar Leads
-          </div>
-
-          <div class="grid grid-cols-2 gap-2">
-
-            <button
-              id="openLeadsBtn"
-              onclick="filterLeadType('open')"
-              class="
-                bg-gradient-to-r
-                from-emerald-500
-                to-green-500
-                hover:from-emerald-400
-                hover:to-green-400
-                transition
-                px-4
-                py-3
-                rounded-xl
-                text-sm
-                font-bold
-                shadow-lg
-                shadow-green-500/20
-              "
-            >
-              🟢 Abiertos
-            </button>
-
-            <button
-              id="closedLeadsBtn"
-              onclick="filterLeadType('closed')"
-              class="
-                bg-white/5
-                hover:bg-white/10
-                border
-                border-white/10
-                transition
-                px-4
-                py-3
-                rounded-xl
-                text-sm
-                font-bold
-              "
-            >
-              💰 Cerradas
-            </button>
-
-          </div>
-
-        </div>
-
       </div>
 
       <!-- ================================= -->
       <!-- 🔥 ACORDEÓN NEGOCIOS -->
       <!-- ================================= -->
-      <div class="mb-4 shrink-0">
-
+      <div class="mb-4">
         <button
           onclick="toggleBusinessesAccordion()"
           class="
@@ -782,9 +984,7 @@ async function renderDashboard(){
             backdrop-blur-xl
           "
         >
-
           <div class="flex items-center gap-3 min-w-0">
-
             <div class="
               w-10
               h-10
@@ -800,9 +1000,7 @@ async function renderDashboard(){
             ">
               🏢
             </div>
-
             <div class="text-left min-w-0">
-
               <div class="
                 text-sm
                 sm:text-base
@@ -812,15 +1010,11 @@ async function renderDashboard(){
               ">
                 Negocios
               </div>
-
               <div class="text-xs text-slate-400">
                 Mostrar / Ocultar
               </div>
-
             </div>
-
           </div>
-
           <div
             id="businessAccordionIcon"
             class="
@@ -833,9 +1027,7 @@ async function renderDashboard(){
           >
             ▼
           </div>
-
         </button>
-
       </div>
 
       <!-- ================================= -->
@@ -848,69 +1040,47 @@ async function renderDashboard(){
           overflow-hidden
           transition-all
           duration-300
-          min-h-0
         "
       >
-
         <div class="
-          h-full
           overflow-y-auto
           pr-0
           lg:pr-2
           sidebar-scroll
           pb-4
           relative
+          max-h-[500px]
+          lg:max-h-[calc(100vh-340px)]
         ">
-
-          <div
-            id="businessList"
-            class="space-y-3"
-          ></div>
-
+          <div id="businessList" class="space-y-3"></div>
         </div>
-
       </div>
-
     </aside>
 
     <!-- ========================= -->
-    <!-- 🔥 MAIN -->
+    <!-- 🔥 MAIN CONTENT AREA -->
     <!-- ========================= -->
-    <main class="
-      flex-1
-      flex
-      flex-col
-      min-w-0
-      h-screen
-      overflow-hidden
-      relative
-    ">
+    <main class="flex-1 flex flex-col min-w-0">
 
       <!-- HEADER CHAT -->
-      <div
-        id="chatHero"
-        class="
-          shrink-0
-          p-4
-          sm:p-6
-          border-b
-          border-white/10
-          flex
-          flex-col
-          lg:flex-row
-          lg:items-center
-          lg:justify-between
-          gap-4
-          bg-black/20
-          backdrop-blur-xl
-          sticky
-          top-0
-          z-50
-        "
-      >
-
+      <div class="
+        p-4
+        sm:p-6
+        border-b
+        border-white/10
+        flex
+        flex-col
+        lg:flex-row
+        lg:items-center
+        lg:justify-between
+        gap-4
+        bg-black/20
+        backdrop-blur-xl
+        sticky
+        top-0
+        z-50
+      ">
         <div class="min-w-0 w-full">
-
           <h1
             id="chatTitle"
             class="
@@ -928,26 +1098,14 @@ async function renderDashboard(){
           >
             Selecciona negocio
           </h1>
-
           <p class="text-slate-400 text-xs sm:text-sm mt-1 break-words">
             Chat conectado a tu backend • Render API
           </p>
-
         </div>
-
-        <div
-          id="analytics"
-          class="
-            w-full
-            lg:w-auto
-            text-left
-            lg:text-right
-          "
-        ></div>
-
+        <div id="analytics" class="w-full lg:w-auto text-left lg:text-right"></div>
       </div>
 
-      <!-- CHAT -->
+      <!-- CHAT CHANNELS / MESSAGES -->
       <div
         id="chatMessages"
         class="
@@ -956,33 +1114,23 @@ async function renderDashboard(){
           p-3
           sm:p-6
           space-y-4
-          min-h-0
-          relative
-          z-0
+          min-h-[300px]
         "
       ></div>
 
       <!-- INPUT AREA -->
       <div class="
-        shrink-0
         border-t
         border-white/10
         p-3
         sm:p-6
         bg-black/20
         backdrop-blur-xl
-        sticky
-        bottom-0
-        z-40
       ">
-
         <!-- OPTIONS -->
-        <div
-          id="dynamicOptions"
-          class="flex flex-wrap gap-2 mb-4"
-        ></div>
+        <div id="dynamicOptions" class="flex flex-wrap gap-2 mb-4"></div>
 
-        <!-- INPUT -->
+        <!-- INPUT BOX -->
         <div class="
           flex
           flex-col
@@ -991,122 +1139,100 @@ async function renderDashboard(){
           items-stretch
           sm:items-center
         ">
-
-          <input
-            id="messageInput"
-            placeholder="Responder al lead..."
-            class="
-              flex-1
-              w-full
-              p-4
-              rounded-2xl
-              bg-white/5
-              border
-              border-white/10
-              outline-none
-              text-white
-              placeholder-slate-500
-              focus:border-indigo-500/50
-              focus:ring-2
-              focus:ring-indigo-500/20
-              transition
-            "
+          <input 
+            type="text" 
+            id="chatInput" 
+            placeholder="Escribe un mensaje para probar el flujo de la IA..." 
+            class="flex-1 p-4 rounded-2xl bg-white/5 border border-white/10 outline-none text-sm text-white focus:border-emerald-500 transition"
           />
-
-          <button
-            onclick="sendMessage()"
-            class="
-              w-full
-              sm:w-auto
-              bg-gradient-to-r
-              from-blue-500
-              to-indigo-500
-              hover:from-blue-400
-              hover:to-indigo-400
-              transition
-              px-8
-              py-4
-              rounded-2xl
-              font-bold
-              shadow-lg
-              shadow-blue-500/20
-            "
+          <button 
+            onclick="sendMessage()" 
+            class="bg-emerald-600 hover:bg-emerald-500 transition px-6 py-4 rounded-2xl font-bold text-sm shadow-lg flex items-center justify-center gap-2 text-white shrink-0"
           >
-            Enviar
+            Enviar 🚀
           </button>
-
         </div>
-
       </div>
-
     </main>
-
   </div>
 
-  <!-- ========================= -->
-  <!-- 🔥 MODAL CREAR NEGOCIO -->
-  <!-- ========================= -->
+  <!-- ========================================= -->
+  <!-- 🔥 MODAL CREAR NEGOCIO / VITRINA VIRTUAL -->
+  <!-- ========================================= -->
   <div
     id="createBusinessModal"
     class="
       fixed
       inset-0
-      bg-black/80
+      bg-black/90
       backdrop-blur-xl
       hidden
       items-center
       justify-center
       z-50
-      p-3
-      sm:p-6
+      p-4
+      md:p-6
+      overflow-y-auto
     "
   >
-
     <div class="
       glass
       w-full
-      max-w-2xl
-      rounded-3xl
-      p-4
-      sm:p-6
-      max-h-[90vh]
-      overflow-y-auto
+      max-w-6xl
+      rounded-2xl
+      p-6
+      flex
+      flex-col
+      max-h-[95vh]
       border
-      border-white/10
+      border-white/15
       shadow-2xl
     ">
 
-      <!-- HEADER MODAL -->
+      <!-- CABECERA DEL MODAL -->
       <div class="
         flex
         items-center
         justify-between
         gap-4
-        mb-8
+        mb-4
+        border-b
+        border-white/10
+        pb-4
+        shrink-0
       ">
-
-        <div class="min-w-0">
-
-          <h2 class="
-            text-xl
-            sm:text-2xl
-            font-black
-            break-words
-          ">
-            ➕ Crear Negocio
-          </h2>
-
-          <p class="text-slate-400 text-sm mt-1">
-            Configura tu chatbot IA
-          </p>
-
+        <div class="flex items-center gap-4 min-w-0">
+          <div class="min-w-0">
+            <h2 class="
+              text-xl
+              sm:text-2xl
+              font-black
+              break-words
+              text-white
+            ">
+              🏪 Configuración de Tienda & Catálogo Virtual
+            </h2>
+            <p class="text-slate-400 text-xs mt-1">
+              Define los accesos generales de la marca y el inventario de la Vitrina Premium.
+            </p>
+          </div>
+          
+          <button 
+            type="button"
+            onclick="toggleFormPanel()" 
+            class="bg-white/10 hover:bg-white/20 text-slate-200 text-xs font-bold px-4 py-2.5 rounded-xl transition flex items-center gap-2 border border-white/10"
+          >
+            ⚙️ <span id="togglePanelText">Ocultar Campos Secundarios</span>
+          </button>
         </div>
 
         <button
           onclick="closeCreateBusinessModal()"
           class="
-            bg-red-500
-            hover:bg-red-400
+            bg-red-500/20
+            hover:bg-red-500
+            text-red-400
+            hover:text-white
             transition
             w-10
             h-10
@@ -1114,212 +1240,494 @@ async function renderDashboard(){
             font-bold
             shadow-lg
             shrink-0
+            flex
+            items-center
+            justify-center
           "
         >
           ✕
         </button>
-
       </div>
 
-      <!-- FORM -->
-      <div class="space-y-4">
+      <!-- CUERPO DIVIDIDO: FORMULARIO VS INVENTARIO -->
+      <div class="flex flex-col lg:flex-row gap-6 overflow-y-auto pr-1 flex-1 sidebar-scroll">
+        
+        <!-- PANEL IZQUIERDO: Información del Negocio -->
+        <div 
+          id="formFieldsPanel" 
+          class="w-full lg:w-[380px] shrink-0 space-y-4 transition-all duration-300 block"
+        >
+          <div class="text-xs font-bold tracking-wider text-emerald-400 uppercase mb-2">
+            1. Datos Maestros del Negocio
+          </div>
 
-        <input
-          id="bizName"
-          placeholder="Nombre negocio"
-          class="
-            w-full
-            p-4
-            rounded-2xl
-            bg-white/5
-            border
-            border-white/10
-            outline-none
-            focus:border-indigo-500/50
-          "
-        />
+          <input
+            id="bizName"
+            placeholder="Nombre del negocio (Ej: Prestige Style)"
+            class="w-full p-4 rounded-2xl bg-white/5 border border-white/10 outline-none focus:border-emerald-500/50 text-sm text-white"
+          />
 
-        <input
-          id="bizSlug"
-          placeholder="Slug"
-          class="
-            w-full
-            p-4
-            rounded-2xl
-            bg-white/5
-            border
-            border-white/10
-            outline-none
-            focus:border-indigo-500/50
-          "
-        />
+          <input
+            id="bizSlug"
+            placeholder="Slug único identificador (Ej: prestige-style)"
+            class="w-full p-4 rounded-2xl bg-white/5 border border-white/10 outline-none focus:border-emerald-500/50 text-sm text-white"
+          />
+
+          <div class="glass rounded-2xl p-5 border border-white/10">
+            <div class="text-sm font-bold mb-3 text-slate-300">Foto perfil o Logo de marca</div>
+            <input
+              type="file"
+              id="logoFile"
+              accept="image/*"
+              onchange="previewLogo()"
+              class="w-full p-3 rounded-xl bg-white/5 border border-white/10 text-xs text-slate-400"
+            />
+            <img
+              id="logoPreview"
+              class="w-24 h-24 rounded-2xl object-cover mt-4 hidden border border-white/10 shadow-lg"
+            />
+          </div>
+
+          <div class="glass rounded-2xl p-5 border border-white/10">
+            <div class="text-sm font-bold mb-3 text-slate-300">Color de Identidad Premium</div>
+            <input
+              type="color"
+              id="color"
+              value="#10b981"
+              class="w-full h-14 rounded-xl bg-white/5 border border-white/10 cursor-pointer"
+            />
+          </div>
+
+          <textarea
+            id="welcomeMessage"
+            placeholder="Eslogan o Biografía corta de la tienda (Estilo Instagram)... 🇨🇴"
+            class="w-full p-4 rounded-2xl bg-white/5 border border-white/10 h-24 outline-none text-sm resize-none text-white"
+          ></textarea>
+
+          <textarea
+            id="productInfo"
+            placeholder="Información global de envíos, políticas de cambio o garantías..."
+            class="w-full p-4 rounded-2xl bg-white/5 border border-white/10 h-24 outline-none text-sm resize-none text-white"
+          ></textarea>
+
+          <input
+            id="productLink"
+            placeholder="Link alternativo de catálogo externo (opcional)"
+            class="w-full p-4 rounded-2xl bg-white/5 border border-white/10 outline-none text-sm text-white"
+          />
+
+          <div class="grid grid-cols-1 gap-3">
+            <select
+              id="countryCode"
+              class="w-full p-4 rounded-2xl bg-slate-900 border border-white/10 text-sm text-white outline-none"
+            >
+              <option value="57">🇨🇴 Colombia (+57)</option>
+              <option value="52">🇲🇽 México (+52)</option>
+              <option value="1">🇺🇸 Estados Unidos (+1)</option>
+              <option value="34">🇪🇸 España (+34)</option>
+              <option value="58">🇻🇪 Venezuela (+58)</option>
+              <option value="51">🇵🇪 Perú (+51)</option>
+              <option value="56">🇨🇱 Chile (+56)</option>
+            </select>
+
+            <input
+              id="whatsappNumber"
+              placeholder="Número de WhatsApp Ventas (Ej: 3001234567)"
+              class="w-full p-4 rounded-2xl bg-white/5 border border-white/10 outline-none text-sm text-white"
+            />
+          </div>
+
+          <textarea
+            id="waMessage"
+            placeholder="Mensaje predeterminado de cierre en WhatsApp al comprar..."
+            class="w-full p-4 rounded-2xl bg-white/5 border border-white/10 h-24 outline-none text-sm resize-none text-white"
+          ></textarea>
+
+          <div class="glass rounded-2xl p-5 border border-white/10 border-dashed">
+            <label class="text-sm font-bold block mb-3 text-slate-300">Testimonios (Prueba Social)</label>
+            <input
+              type="file"
+              id="testimonialFile"
+              accept="image/*,video/*"
+              multiple
+              onchange="uploadToR2()"
+              class="w-full p-3 rounded-xl bg-white/5 border border-white/10 text-xs text-slate-400"
+            />
+            <div id="testimonialsList" class="flex gap-3 flex-wrap mt-4"></div>
+            <input type="hidden" id="testimonials" />
+          </div>
+
+          <button
+            onclick="createBusiness()"
+            class="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 transition p-4 rounded-2xl font-bold shadow-lg text-sm text-white"
+          >
+            Guardar Tienda Completa
+          </button>
+        </div>
+
+        <!-- PANEL DERECHO: Catálogo e Inventario de Prendas (Vitrina) -->
+        <div class="flex-1 flex flex-col min-w-0 bg-slate-900/40 border border-white/10 rounded-2xl p-4 sm:p-5 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0 pb-3 border-b border-white/10">
+            <div>
+              <label class="text-base font-black block text-slate-200">
+                📦 Catálogo de Artículos (Vitrina Virtual)
+              </label>
+              <span class="text-xs text-slate-400 block">
+                Agrega y configura las prendas o productos que tus clientes podrán examinar de forma interactiva.
+              </span>
+            </div>
+            
+            <button 
+              type="button" 
+              onclick="agregarArticuloVacio()" 
+              class="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-md shrink-0 flex items-center gap-1 cursor-pointer"
+            >
+              ➕ Añadir Prenda
+            </button>
+          </div>
+
+          <!-- Contenedor donde se insertan las prendas dinámicamente -->
+          <div 
+            id="contenedorInventario" 
+            class="space-y-4 overflow-y-auto flex-1 sidebar-scroll pr-1 max-h-[calc(100vh-280px)]"
+          >
+            <!-- Los bloques se autogeneran con la función agregarArticuloVacio() -->
+          </div>
+        </div>
 
       </div>
-
     </div>
-
   </div>
-
   `;
 
   loadBusinesses();
+}
 
-  // =========================================
-  // 🔥 EFECTO HERO AL HACER SCROLL
-  // =========================================
+// Variable global opcional si quieres llevar control de los IDs generados
+function agregarArticuloVacio() {
+  const contenedor = document.getElementById("contenedorInventario");
+  const itemID = 'prod_' + Date.now() + Math.random().toString(36).substr(2, 5);
+  
+  const itemDiv = document.createElement("div");
+  itemDiv.id = itemID;
+  // Usamos 'item-inventario' para que createBusiness lo localice sin problemas
+  itemDiv.className = "item-inventario bg-slate-950/60 p-4 rounded-xl border border-white/5 flex flex-col gap-3 relative animate-fade shadow-inner";
+  
+  itemDiv.innerHTML = `
+    <div class="flex justify-between items-center border-b border-white/5 pb-2">
+      <span class="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1">
+        📦 Datos del Producto
+      </span>
+      <button type="button" onclick="eliminarArticulo('${itemID}')" class="text-red-400 hover:text-red-300 text-xs font-medium transition">✕ Quitar</button>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div>
+        <label class="text-[11px] text-slate-400 block mb-1">Nombre de la Prenda</label>
+        <input type="text" placeholder="Ej: Hoodie Oversize Premium" class="item-nombre w-full p-2.5 bg-slate-900 border border-white/10 rounded-xl text-xs text-white outline-none focus:border-emerald-500" />
+      </div>
+      <div>
+        <label class="text-[11px] text-slate-400 block mb-1">Precio</label>
+        <input type="text" placeholder="Ej: $140.000" class="item-precio w-full p-2.5 bg-slate-900 border border-white/10 rounded-xl text-xs text-white outline-none focus:border-emerald-500" />
+      </div>
+      <div>
+        <label class="text-[11px] text-slate-400 block mb-1">Categoría</label>
+        <input type="text" placeholder="Ej: Chaquetas / Nuevos" class="item-categoria w-full p-2.5 bg-slate-900 border border-white/10 rounded-xl text-xs text-white outline-none focus:border-emerald-500" />
+      </div>
+      
+      <!-- 📸 Campo para ADJUNTAR IMAGEN con Input File y Base64 -->
+      <div>
+        <label class="text-[11px] text-slate-400 block mb-1">Imagen del Producto</label>
+        <div class="flex gap-2 items-center">
+          <!-- Input oculto pero funcional -->
+          <input 
+            type="file" 
+            accept="image/*" 
+            id="file_${itemID}" 
+            onchange="convertirImagenABase64(this, '${itemID}')" 
+            class="hidden" 
+          />
+          <!-- Botón personalizado para disparar la carga -->
+          <button 
+            type="button" 
+            onclick="document.getElementById('file_${itemID}').click()" 
+            class="w-full p-2.5 bg-slate-900 border border-white/10 hover:border-emerald-500/50 rounded-xl text-xs text-slate-300 hover:text-white transition text-left flex items-center justify-between"
+          >
+            <span id="label_${itemID}">📁 Adjuntar Foto...</span>
+            <span class="text-[10px] bg-white/5 px-2 py-1 rounded text-slate-400">Subir</span>
+          </button>
+          
+          <!-- Input oculto que guarda la imagen en string Base64 para que createBusiness lo capture fácilmente -->
+          <input type="hidden" class="item-imagen" id="base64_${itemID}" value="" />
+          
+          <!-- Mini vista previa -->
+          <div class="w-10 h-10 rounded-lg bg-slate-900 border border-white/10 flex items-center justify-center overflow-hidden flex-shrink-0">
+            <img id="preview_${itemID}" src="" class="w-full h-full object-cover hidden" />
+            <span id="placeholder_${itemID}" class="text-[10px] text-slate-600">🚫</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="md:col-span-2">
+        <label class="text-[11px] text-slate-400 block mb-1">Descripción / Detalles</label>
+        <textarea placeholder="Material, tallas disponibles, horma..." class="item-descripcion w-full p-2.5 bg-slate-900 border border-white/10 rounded-xl text-xs text-white h-16 resize-none outline-none focus:border-emerald-500"></textarea>
+      </div>
+    </div>
+  `;
+  contenedor.appendChild(itemDiv);
+}
 
-  setTimeout(() => {
-
-    const chatMessages = document.getElementById("chatMessages");
-
-    const chatHero = document.getElementById("chatHero");
-
-    if (!chatMessages || !chatHero) return;
-
-    chatMessages.addEventListener("scroll", () => {
-
-      if (chatMessages.scrollTop > 20) {
-
-        chatHero.classList.add("scrolled");
-
-      } else {
-
-        chatHero.classList.remove("scrolled");
-      }
-
-    });
-
-  }, 100);
+function eliminarArticulo(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
 }
 
 // =========================================
-// 🔥 FILTRO LEADS
+// ⚙️ TOGGLE FORM PANEL (Campos Secundarios)
 // =========================================
+function toggleFormPanel() {
+  const panel = document.getElementById("formFieldsPanel");
+  const text = document.getElementById("togglePanelText");
+  
+  if (!panel || !text) return;
 
-let currentLeadFilter = "open";
-
-function filterLeadType(type){
-
-  currentLeadFilter = type;
-
-  const openBtn = document.getElementById("openLeadsBtn");
-
-  const closedBtn = document.getElementById("closedLeadsBtn");
-
-  // =========================================
-  // 🔥 BOTONES VISUALES
-  // =========================================
-
-  if(type === "open"){
-
-    openBtn.className = `
-      bg-gradient-to-r
-      from-emerald-500
-      to-green-500
-      hover:from-emerald-400
-      hover:to-green-400
-      transition
-      px-4
-      py-3
-      rounded-xl
-      text-sm
-      font-bold
-      shadow-lg
-      shadow-green-500/20
-    `;
-
-    closedBtn.className = `
-      bg-white/5
-      hover:bg-white/10
-      border
-      border-white/10
-      transition
-      px-4
-      py-3
-      rounded-xl
-      text-sm
-      font-bold
-    `;
-
+  // Intercambia de forma segura las clases de visibilidad de Tailwind
+  const isHidden = panel.classList.toggle("hidden");
+  
+  if (isHidden) {
+    panel.classList.remove("block");
+    text.innerText = "Mostrar Campos Secundarios";
   } else {
+    panel.classList.add("block");
+    text.innerText = "Ocultar Campos Secundarios";
+  }
+}
 
-    closedBtn.className = `
-      bg-gradient-to-r
-      from-emerald-500
-      to-green-500
-      hover:from-emerald-400
-      hover:to-green-400
-      transition
-      px-4
-      py-3
-      rounded-xl
-      text-sm
-      font-bold
-      shadow-lg
-      shadow-green-500/20
-    `;
-
-    openBtn.className = `
-      bg-white/5
-      hover:bg-white/10
-      border
-      border-white/10
-      transition
-      px-4
-      py-3
-      rounded-xl
-      text-sm
-      font-bold
-    `;
+// Inserta esto dentro de la lógica donde renderizas los datos de un negocio existente para editarlo:
+function cargarInventarioExistente(nodes) {
+  const contenedor = document.getElementById("contenedorInventario");
+  contenedor.innerHTML = ""; // Vaciar
+  
+  if (!nodes || nodes.length === 0) {
+    agregarArticuloVacio();
+    return;
   }
 
-  // =========================================
-  // 🔥 FILTRAR CHATS DE LEADS
-  // =========================================
+  nodes.forEach((node, index) => {
+    if (node.type === "product_showcase") {
+      // Usamos el ID existente del nodo o generamos uno limpio si no lo tiene
+      const itemID = node.id || 'prod_' + Date.now() + Math.random().toString(36).substr(2, 5);
+      const [nombre, precio, categoria, imagen] = node.options || ["", "", "", ""];
+      const descripcion = node.content || "";
 
-  const allLeadCards = document.querySelectorAll("[data-lead-status]");
+      const itemDiv = document.createElement("div");
+      itemDiv.id = itemID;
+      // Usamos 'item-inventario' para que createBusiness lo escanee sin problemas
+      itemDiv.className = "item-inventario bg-slate-950/60 p-4 rounded-xl border border-white/5 flex flex-col gap-3 relative animate-fade shadow-inner";
+      
+      // Control de vista previa inicial para imágenes existentes
+      const tieneImagen = imagen && imagen.trim() !== "";
+      const labelText = tieneImagen ? "📷 Imagen cargada" : "📁 Adjuntar Foto...";
 
-  allLeadCards.forEach(card => {
-
-    const status = card.getAttribute("data-lead-status");
-
-    if(type === "open"){
-
-      // 🔥 MOSTRAR SOLO ABIERTOS
-      if(
-        status === "open" ||
-        status === "abierto" ||
-        status === "active"
-      ){
-
-        card.style.display = "";
-
-      } else {
-
-        card.style.display = "none";
-      }
-
-    } else {
-
-      // 🔥 MOSTRAR SOLO CERRADOS
-      if(
-        status === "closed" ||
-        status === "cerrado" ||
-        status === "sale"
-      ){
-
-        card.style.display = "";
-
-      } else {
-
-        card.style.display = "none";
-      }
-
+      itemDiv.innerHTML = `
+        <div class="flex justify-between items-center border-b border-white/5 pb-2">
+          <span class="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1">
+            📦 Datos del Producto
+          </span>
+          <button type="button" onclick="eliminarArticulo('${itemID}')" class="text-red-400 hover:text-red-300 text-xs font-medium transition">✕ Quitar</button>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label class="text-[11px] text-slate-400 block mb-1">Nombre de la Prenda</label>
+            <input type="text" value="${nombre}" class="item-nombre w-full p-2.5 bg-slate-900 border border-white/10 rounded-xl text-xs text-white outline-none focus:border-emerald-500" />
+          </div>
+          <div>
+            <label class="text-[11px] text-slate-400 block mb-1">Precio</label>
+            <input type="text" value="${precio}" class="item-precio w-full p-2.5 bg-slate-900 border border-white/10 rounded-xl text-xs text-white outline-none focus:border-emerald-500" />
+          </div>
+          <div>
+            <label class="text-[11px] text-slate-400 block mb-1">Categoría</label>
+            <input type="text" value="${categoria}" class="item-categoria w-full p-2.5 bg-slate-900 border border-white/10 rounded-xl text-xs text-white outline-none focus:border-emerald-500" />
+          </div>
+          
+          <!-- 📸 Campo para ADJUNTAR IMAGEN (Edición de existentes) -->
+          <div>
+            <label class="text-[11px] text-slate-400 block mb-1">Imagen del Producto</label>
+            <div class="flex gap-2 items-center">
+              <!-- Input oculto para cargar nuevo archivo -->
+              <input 
+                type="file" 
+                accept="image/*" 
+                id="file_${itemID}" 
+                onchange="convertirImagenABase64(this, '${itemID}')" 
+                class="hidden" 
+              />
+              <!-- Botón personalizado -->
+              <button 
+                type="button" 
+                onclick="document.getElementById('file_${itemID}').click()" 
+                class="w-full p-2.5 bg-slate-900 border border-white/10 hover:border-emerald-500/50 rounded-xl text-xs text-slate-300 hover:text-white transition text-left flex items-center justify-between"
+              >
+                <span id="label_${itemID}">${labelText}</span>
+                <span class="text-[10px] bg-white/5 px-2 py-1 rounded text-slate-400">Subir</span>
+              </button>
+              
+              <!-- Input oculto que conserva el valor actual (Base64 o URL remota) -->
+              <input type="hidden" class="item-imagen" id="base64_${itemID}" value="${imagen}" />
+              
+              <!-- Mini vista previa -->
+              <div class="w-10 h-10 rounded-lg bg-slate-900 border border-white/10 flex items-center justify-center overflow-hidden flex-shrink-0">
+                <img 
+                  id="preview_${itemID}" 
+                  src="${imagen}" 
+                  class="w-full h-full object-cover ${tieneImagen ? '' : 'hidden'}" 
+                />
+                <span id="placeholder_${itemID}" class="text-[10px] text-slate-600 ${tieneImagen ? 'hidden' : ''}">🚫</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="md:col-span-2">
+            <label class="text-[11px] text-slate-400 block mb-1">Descripción / Detalles</label>
+            <textarea class="item-descripcion w-full p-2.5 bg-slate-900 border border-white/10 rounded-xl text-xs text-white h-16 resize-none outline-none focus:border-emerald-500">${descripcion}</textarea>
+          </div>
+        </div>
+      `;
+      contenedor.appendChild(itemDiv);
     }
+  });
+}
 
+// 🚫 CONFIGURACIÓN DE DRAWFLOW REMOVIDA 
+// El lienzo de mapa conceptual ha sido reemplazado por el Gestor de Inventario y Vitrina Virtual en el DOM.
+function crearNodoVisual(type) {
+  // Posición por defecto en el centro del canvas visible
+  const posX = 100;
+  const posY = 150;
+  
+  if (type === 'message') {
+    const htmlContent = `
+      <div class="flex flex-col gap-2 pointer-events-auto">
+        <span class="text-[10px] font-bold tracking-wider uppercase text-blue-400">💬 Mensaje de Clipsy</span>
+        <textarea class="w-full bg-slate-950 border border-white/10 rounded-lg p-2 text-xs text-white focus:outline-none node-content-input" rows="3" placeholder="¿Qué dirá el bot?"></textarea>
+        <div>
+          <label class="text-[9px] text-slate-400 block mb-0.5">Texto del botón de salida:</label>
+          <input type="text" class="w-full bg-slate-950 border border-white/10 rounded-lg p-1 text-xs text-white node-condition-input" placeholder="Ej: Ver Precios">
+        </div>
+      </div>
+    `;
+    // 1 entrada (izquierda), 1 salida (derecha)
+    dfEditor.addNode('message', 1, 1, posX, posY, 'message-node', { content: '', condition: '' }, htmlContent);
+  }
+  
+  else if (type === 'input') {
+    const htmlContent = `
+      <div class="flex flex-col gap-2 pointer-events-auto">
+        <span class="text-[10px] font-bold tracking-wider uppercase text-amber-400">⌨️ Capturar Dato</span>
+        <textarea class="w-full bg-slate-950 border border-white/10 rounded-lg p-2 text-xs text-white focus:outline-none node-content-input" rows="2" placeholder="Pregunta (Ej: Déjame tu teléfono)"></textarea>
+        <div>
+          <label class="text-[9px] text-slate-400 block mb-0.5">Tipo de validación:</label>
+          <select class="w-full bg-slate-950 border border-white/10 rounded-lg p-1 text-xs text-white node-input-type-select">
+            <option value="text">Cualquier texto</option>
+            <option value="phone">Número de Teléfono</option>
+            <option value="name">Nombre Completo</option>
+          </select>
+        </div>
+      </div>
+    `;
+    dfEditor.addNode('input', 1, 1, posX, posY, 'input-node', { content: '', inputType: 'text' }, htmlContent);
+  }
+  
+  else if (type === 'whatsapp_trigger') {
+    const htmlContent = `
+      <div class="flex flex-col gap-1 pointer-events-auto">
+        <span class="text-[10px] font-bold tracking-wider uppercase text-emerald-400">📲 Cierre en WhatsApp</span>
+        <textarea class="w-full bg-slate-950 border border-white/10 rounded-lg p-2 text-xs text-white focus:outline-none node-content-input" rows="2" placeholder="Mensaje final antes del redireccionamiento..."></textarea>
+      </div>
+    `;
+    // Es un nodo de fin de flujo: Solo tiene entrada, no saca más ramificaciones
+    dfEditor.addNode('whatsapp_trigger', 1, 0, posX, posY, 'whatsapp-node', { content: '' }, htmlContent);
+  }
+}
+
+/**
+ * Extrae la data visual del Canvas y la compila al formato limpio que requiere nuestra BD
+ */
+function procesarYGuardarMapaConceptual() {
+  const rawData = dfEditor.export().drawflow.Home.data;
+  
+  const processedNodes = [];
+  const processedConnections = [];
+  
+  // 1. Recorrer todos los elementos visuales creados para extraer sus valores reales desde el DOM
+  Object.keys(rawData).forEach(nodeId => {
+    const drawflowNode = rawData[nodeId];
+    // Localizamos el contenedor del nodo en el árbol HTML real
+    const nodeElement = document.getElementById(`node-${nodeId}`);
+    
+    let content = '';
+    let conditionValue = '';
+    let inputType = 'none';
+    
+    if (nodeElement) {
+      const contentInput = nodeElement.querySelector('.node-content-input');
+      if (contentInput) content = contentInput.value;
+      
+      const conditionInput = nodeElement.querySelector('.node-condition-input');
+      if (conditionInput) conditionValue = conditionInput.value;
+      
+      const typeSelect = nodeElement.querySelector('.node-input-type-select');
+      if (typeSelect) inputType = typeSelect.value;
+    }
+    
+    // Construimos el nodo según nuestro esquema de Mongoose
+    processedNodes.push({
+      id: nodeId, // Vinculamos el ID del canvas
+      type: drawflowNode.name,
+      content: content,
+      inputType: drawflowNode.name === 'input' ? inputType : 'none'
+    });
+    
+    // 2. Extraer los cables / conexiones salientes de este nodo específico
+    const outputs = drawflowNode.outputs;
+    Object.keys(outputs).forEach(outputKey => {
+      const connectionsList = outputs[outputKey].connections;
+      connectionsList.forEach(conn => {
+        processedConnections.push({
+          id: `conn_${nodeId}_to_${conn.node}`,
+          sourceNodeId: nodeId,
+          targetNodeId: conn.node,
+          conditionValue: drawflowNode.name === 'message' ? conditionValue : 'Continuar' 
+          // Si es input o trigger, la transición no depende de un botón de opción específico, pasa directo
+        });
+      });
+    });
   });
 
-  console.log("🔥 FILTRO CHATS:", type);
+  // 3. Crear el Payload final consolidado
+  const payload = {
+    name: document.getElementById("bizName").value,
+    slug: document.getElementById("bizSlug").value,
+    nodes: processedNodes,
+    connections: processedConnections
+  };
+
+  // 4. Envío de datos por tu canal AJAX convencional hacia el backend
+  fetch('/api/business/save', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+  .then(res => res.json())
+  .then(data => {
+    if(data.success) {
+      alert("¡Mapa conceptual de flujos guardado con éxito!");
+    } else {
+      alert("Error guardando el mapa conceptual.");
+    }
+  })
+  .catch(err => console.error("Error crítico en guardado:", err));
 }
 
 // =========================================
@@ -1388,29 +1796,90 @@ function toggleBusinessesAccordion(force = null){
   }
 }
 // =========================================
-// 🔥 OPEN CREATE MODAL
+// 🔥 OPEN CREATE MODAL (Con Inicialización Limpia de Vitrina)
 // =========================================
-
-function openCreateBusinessModal(){
-
+function openCreateBusinessModal() {
   const modal = document.getElementById("createBusinessModal");
+  if (!modal) return;
 
+  // 1. Mostrar el modal usando Flexbox para centrado correcto
   modal.classList.remove("hidden");
-
   modal.classList.add("flex");
+
+  // 2. Limpiar por completo el contenedor de productos para evitar duplicados
+  const contenedor = document.getElementById("contenedorInventario");
+  if (contenedor) {
+    contenedor.innerHTML = "";
+    
+    // 3. Inicializar automáticamente con una primera prenda vacía/disponible
+    agregarArticuloVacio();
+    console.log("🏪 Vitrina virtual inicializada con un casillero limpio y disponible.");
+  }
+
+  // 4. Resetear los campos de texto estándar del formulario si es necesario
+  const inputs = modal.querySelectorAll("input:not([type='color']):not([type='file']), textarea");
+  inputs.forEach(input => input.value = "");
+
+  // Resetear la previsualización del logo
+  const logoPreview = document.getElementById("logoPreview");
+  if (logoPreview) {
+    logoPreview.src = "";
+    logoPreview.classList.add("hidden");
+  }
+
+  // Asegurar que el panel de campos secundarios empiece visible por defecto
+  const panel = document.getElementById("formFieldsPanel");
+  const text = document.getElementById("togglePanelText");
+  if (panel && text) {
+    panel.classList.remove("hidden");
+    panel.classList.add("block");
+    text.innerText = "Ocultar Campos Secundarios";
+  }
 }
 
 // =========================================
-// 🔥 CLOSE CREATE MODAL
+// 🔥 CLOSE CREATE MODAL (Con Limpieza de Memoria)
 // =========================================
-
-function closeCreateBusinessModal(){
-
+function closeCreateBusinessModal() {
   const modal = document.getElementById("createBusinessModal");
-
   modal.classList.add("hidden");
-
   modal.classList.remove("flex");
+
+  // 1. Limpiar los inputs tradicionales del formulario maestro para que no queden remanentes
+  const fields = ["bizName", "bizSlug", "welcomeMessage", "productInfo", "productLink", "whatsappNumber", "waMessage", "testimonials"];
+  fields.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = "";
+  });
+
+  // Ocultar la preview de la foto si existe
+  const logoPreview = document.getElementById("logoPreview");
+  if (logoPreview) logoPreview.classList.add("hidden");
+
+  // 2. Destruir y vaciar el lienzo para liberar memoria
+  if (editor) {
+    try {
+      editor.clear(); // Comando nativo de Drawflow para vaciar nodos y conexiones en memoria
+    } catch (e) {
+      console.warn("Drawflow ya estaba limpio o inactivo:", e);
+    }
+    editor = null; // Desvincular variable global
+  }
+
+  const container = document.getElementById('drawflow');
+  if (container) {
+    container.innerHTML = ''; // Limpieza física del HTML
+  }
+  
+  // 3. Remover el ID de edición para asegurar que la próxima acción sea una creación limpia
+  window.editingBusinessId = null;
+  
+  // Restaurar el botón de guardado a su estado original de creación si cambió a 'updateBusiness'
+  const saveBtn = document.querySelector("button[onclick='updateBusiness()']");
+  if (saveBtn) {
+    saveBtn.setAttribute("onclick", "createBusiness()");
+    saveBtn.innerText = "Guardar Configuración General";
+  }
 }
 
 // =========================================
@@ -1441,12 +1910,15 @@ function logout(){
 
 
 // =========================================
-// 🏢 CREATE BUSINESS
+// 🏢 CREATE BUSINESS (Versión Vitrina Virtual)
+// =========================================
+
+// =========================================
+// 🏢 CREATE BUSINESS (Versión Vitrina Virtual Adaptada)
 // =========================================
 
 async function createBusiness(){
-
-  try{
+  try {
 
     // =========================================
     // 🔥 CAPTURAR CAMPOS (FIX IDS NULL SAFE)
@@ -1465,7 +1937,7 @@ async function createBusiness(){
       document.getElementById("productInfo")?.value?.trim();
 
     const productLink =
-      document.getElementById("productLink")?.value?.trim();
+      document.getElementById("productLink")?.value?.trim() || "";
 
     const primaryColor =
       document.getElementById("color")?.value;
@@ -1488,141 +1960,113 @@ async function createBusiness(){
       countryCode + phone;
 
     // =========================================
-    // 🔥 LOGO
+    // 🔥 LOGO (REEMPLAZADO POR URL DE IMAGEN DIRECTA)
     // =========================================
 
-    let logo = "";
-
-    const logoPreview =
-      document.getElementById("logoPreview");
-
-    if(logoPreview && logoPreview.src){
-      logo = logoPreview.src;
-    }
+    const logo = 
+      document.getElementById("bizLogoUrl")?.value?.trim() || "";
 
     // =========================================
-    // 🔥 TESTIMONIOS
+    // 🔥 COMPILACIÓN DINÁMICA DEL CATÁLOGO DE PRODUCTOS (Para Backend)
     // =========================================
-
-    let testimonials = [];
-
-    const hiddenTestimonials =
-      document.getElementById("testimonials")?.value;
-
-    if(hiddenTestimonials){
-
-      try{
-
-        testimonials = JSON.parse(hiddenTestimonials);
-
-      }catch(e){
-
-        console.error("❌ ERROR TESTIMONIOS:",e);
-
-        testimonials = [];
+    const products = [];
+    const bloquesPrendas = document.querySelectorAll("#contenedorInventario .item-inventario");
+    
+    bloquesPrendas.forEach((bloque) => {
+      const nombre = bloque.querySelector(".item-nombre")?.value?.trim();
+      const precio = bloque.querySelector(".item-precio")?.value?.trim();
+      const categoria = bloque.querySelector(".item-categoria")?.value?.trim();
+      const imagen = bloque.querySelector(".item-imagen")?.value?.trim(); 
+      const descripcion = bloque.querySelector(".item-descripcion")?.value?.trim();
+      
+      // Mapeamos exactamente a la estructura que tu endpoint `/business` procesa
+      if (nombre && precio) {
+        products.push({
+          name: nombre,
+          price: precio,
+          imageUrl: imagen || "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=400",
+          description: descripcion || "",
+          category: categoria || "General",
+          isTopSeller: false
+        });
       }
-    }
+    });
 
     // =========================================
-    // 🔥 VALIDACIONES
+    // 🔥 VALIDACIONES REESTRUCTURADAS
     // =========================================
 
     if(!name){
-      return alert("Falta nombre negocio");
+      return alert("Falta nombre de negocio");
     }
 
     if(!slug){
-      return alert("Falta slug");
+      return alert("Falta slug del negocio");
     }
 
     if(!welcomeMessage){
-      return alert("Falta mensaje bienvenida");
+      return alert("Falta mensaje de bienvenida");
     }
 
     if(!productInfo){
-      return alert("Falta info producto");
+      return alert("Falta información del producto");
     }
 
-    if(!productLink){
-      return alert("Falta link producto");
-    }
-
-    if(!whatsappNumber){
-      return alert("Falta WhatsApp");
+    if(!whatsappNumber || phone.length < 6){
+      return alert("Falta ingresar un número de WhatsApp válido");
     }
 
     // =========================================
-    // 🔥 PAYLOAD
+    // 🔥 PAYLOAD REESTRUCTURADO (Sincronizado al 100% con tu Backend)
     // =========================================
-
     const payload = {
-
-      name,
-
-      slug,
-
-      logo,
-
-      primaryColor,
-
-      welcomeMessage,
-
-      productInfo,
-
-      productLink,
-
-      whatsappNumber,
-
-      waMessage,
-
-      testimonials
+      name: name || "",
+      slug: slug || "",
+      logo: logo || "", 
+      primaryColor: primaryColor || "#000000",
+      welcomeMessage: welcomeMessage || "",
+      aiInstructions: productInfo || "Eres un vendedor amable y persuasivo.", // 🧠 Sincronizado con tus instrucciones de IA
+      products: products, // 🛍️ Sincronizado con el Catálogo que lee tu backend
+      whatsappNumber: whatsappNumber || "",
+      waMessage: waMessage || "",
+      testimonials: [] // 🛡️ Sincronización nula/vacía para evitar fallos de desestructuración en el backend
     };
 
-    console.log("🔥 PAYLOAD:",payload);
+    console.log("🔥 ENVIANDO PAYLOAD:", payload);
 
     // =========================================
     // 🔥 REQUEST
     // =========================================
 
-    const res = await fetch(`${API}/business`,{
-
-      method:"POST",
-
-      headers:{
-        "Content-Type":"application/json",
-        Authorization:`Bearer ${token}`
+    const res = await fetch(`${API}/business`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
       },
-
-      body:JSON.stringify(payload)
+      body: JSON.stringify(payload)
     });
 
-    console.log("🔥 STATUS:",res.status);
+    console.log("🔥 STATUS:", res.status);
 
     // =========================================
     // 🔥 FIX CRÍTICO: EVITAR HTML EN JSON PARSE
     // =========================================
 
     const text = await res.text();
-
-    console.log("🔥 RAW:",text);
+    console.log("🔥 RAW:", text);
 
     let data = {};
-
-    try{
-
+    try {
       data = JSON.parse(text);
-
-    }catch(err){
-
-      console.error("❌ JSON ERROR:",err);
-
+    } catch(err) {
+      console.error("❌ JSON ERROR:", err);
       console.log("❌ RESPUESTA NO JSON:", text);
-
-      return alert("Backend devolvió HTML o texto (error en API)");
+      return alert("El Backend devolvió un formato incorrecto o un error de servidor (HTML/Texto).");
     }
 
     // =========================================
-    // 🔥 ERROR
+    // 🔥 ERROR DE SERVIDOR/NEGOCIO
     // =========================================
 
     if(data.error){
@@ -1634,7 +2078,6 @@ async function createBusiness(){
     // =========================================
 
     const createMsgEl = document.getElementById("createMsg");
-
     if(createMsgEl){
       createMsgEl.innerHTML = `
         ✅ Negocio creado:
@@ -1649,10 +2092,10 @@ async function createBusiness(){
       `;
     }
 
-    alert("✅ Negocio creado");
+    alert("✅ ¡Negocio y Vitrina Virtual creados exitosamente!");
 
     // =========================================
-    // 🔥 LIMPIAR FORM
+    // 🔥 LIMPIAR FORMULARIO E INVENTARIOS
     // =========================================
 
     const bizNameEl = document.getElementById("bizName");
@@ -1662,9 +2105,7 @@ async function createBusiness(){
     const linkEl = document.getElementById("productLink");
     const waEl = document.getElementById("whatsappNumber");
     const waMsgEl = document.getElementById("waMessage");
-    const logoEl = document.getElementById("logoPreview");
-    const testimonialsEl = document.getElementById("testimonials");
-    const testimonialsListEl = document.getElementById("testimonialsList");
+    const logoUrlEl = document.getElementById("bizLogoUrl");
 
     if(bizNameEl) bizNameEl.value = "";
     if(bizSlugEl) bizSlugEl.value = "";
@@ -1673,12 +2114,20 @@ async function createBusiness(){
     if(linkEl) linkEl.value = "";
     if(waEl) waEl.value = "";
     if(waMsgEl) waMsgEl.value = "";
+    if(logoUrlEl) logoUrlEl.value = "";
 
-    if(testimonialsEl) testimonialsEl.value = "";
+    // Reiniciar el contenedor de inventario con un único bloque vacío disponible
+    const contenedorInventario = document.getElementById("contenedorInventario");
+    if(contenedorInventario) {
+      contenedorInventario.innerHTML = "";
+      if(typeof agregarArticuloVacio === "function") {
+        agregarArticuloVacio();
+      }
+    }
 
-    if(testimonialsListEl) testimonialsListEl.innerHTML = "";
-
-    if(logoEl) logoEl.src = "";
+    if(typeof closeCreateBusinessModal === "function") {
+      closeCreateBusinessModal();
+    }
 
     // =========================================
     // 🔥 RECARGAR NEGOCIOS
@@ -1686,14 +2135,11 @@ async function createBusiness(){
 
     loadBusinesses();
 
-  }catch(err){
-
-    console.error("❌ CREATE ERROR:",err);
-
-    alert("Error creando negocio");
+  } catch(err) {
+    console.error("❌ CREATE ERROR:", err);
+    alert("Error crítico creando el negocio");
   }
 }
-
 // =========================================
 // 🖼 PREVIEW LOGO
 // =========================================
@@ -1895,16 +2341,19 @@ async function loadBusinesses(){
         gap-3
       `;
 
+      // 🛡️ FIX MULTI-LOGO: Soporta tanto 'logo' como 'logoUrl' guardado en tu base de datos
+      const logoToShow = business.logo || business.logoUrl;
+
       div.innerHTML = `
 
         <!-- TOP CONTENT -->
         <div class="flex items-start gap-4 min-w-0">
 
           ${
-            business.logo
+            logoToShow
             ? `
               <img
-                src="${business.logo}"
+                src="${logoToShow}"
                 class="
                   w-12 h-12
                   rounded-xl
@@ -2033,7 +2482,6 @@ async function loadBusinesses(){
   }
 }
 
-
 // =========================================
 // 🏢 OPEN BUSINESS (UI PREMIUM CLEAN)
 // =========================================
@@ -2041,11 +2489,8 @@ async function loadBusinesses(){
 async function openBusiness(business){
 
   currentBusiness = business;
-
   currentLead = null;
-
   leadId = null;
-
   conversationId = null;
 
   // =========================================
@@ -2053,32 +2498,31 @@ async function openBusiness(business){
   // =========================================
 
   const accordion = document.getElementById("businessAccordion");
-
   const icon = document.getElementById("businessAccordionIcon");
 
   if(accordion){
-
     accordion.style.display = "block";
-
     accordion.style.overflow = "hidden";
-
     accordion.style.transition = "all .3s ease";
-
     accordion.style.maxHeight = "0px";
-
     accordion.style.opacity = "0";
-
     setTimeout(()=>{
-
       accordion.classList.add("hidden");
-
     },300);
   }
 
   if(icon){
-
     icon.style.transform = "rotate(-90deg)";
   }
+
+  // =========================================
+  // 🔥 FALLBACKS SEGUROS DE DATOS
+  // =========================================
+  const logoToShow = business.logo || business.logoUrl || ""; // 🛡️ Soporta ambos formatos de logo
+  const infoToShow = business.productInfo || business.aiInstructions || ""; // 🛡️ Evita vacíos en la descripción
+  
+  // 🎯 DOMINIO AJUSTADO A TU PETICIÓN: https://ai-sales-chat.onrender.com/
+  const liveUrl = `https://ai-sales-chat.onrender.com/${business.slug}`; 
 
   // =========================================
   // 🔥 HEADER NEGOCIO
@@ -2119,10 +2563,10 @@ async function openBusiness(business){
           ">
 
             ${
-              business.logo
+              logoToShow
               ? `
                 <img
-                  src="${business.logo}"
+                  src="${logoToShow}"
                   class="
                     w-16 h-16
                     sm:w-20 sm:h-20
@@ -2171,7 +2615,7 @@ async function openBusiness(business){
                 </span>
 
                 <a
-                  href="https://ai-sales-chat.onrender.com/${business.slug}"
+                  href="${liveUrl}"
                   target="_blank"
                   class="
                     text-xs
@@ -2187,7 +2631,7 @@ async function openBusiness(business){
                     whitespace-nowrap
                   "
                 >
-                  Abrir link
+                  Abrir vitrina
                 </a>
 
               </div>
@@ -2198,11 +2642,11 @@ async function openBusiness(business){
                 mt-1
                 break-all
               ">
-                https://ai-sales-chat.onrender.com/${business.slug}
+                ${liveUrl}
               </div>
 
               ${
-                business.productInfo
+                infoToShow
                 ? `
                   <div class="
                     mt-4
@@ -2212,7 +2656,7 @@ async function openBusiness(business){
                     leading-relaxed
                     break-words
                   ">
-                    ${business.productInfo}
+                    ${infoToShow}
                   </div>
                 `
                 : ``
@@ -2292,7 +2736,7 @@ async function openBusiness(business){
                   class="w-3 h-3 rounded-full border border-slate-600 shrink-0"
                   style="background:${business.primaryColor}"
                 ></div>
-                Color Chat
+                Color Vitrina
               </div>
             `
             : ``
@@ -2331,13 +2775,21 @@ async function openBusiness(business){
               pb-2
             ">
 
-              ${business.testimonials.map(item=>{
+              ${business.testimonials.map(item => {
+                // 🛡️ COMPATIBILIDAD: Extrae la URL y el tipo de forma segura, sea objeto o string directo
+                const isObject = typeof item === "object" && item !== null;
+                const type = isObject ? (item.type || "text") : "text";
+                const content = isObject ? item.content : item;
 
-                if(item.match(/\.(mp4|mov|webm|mkv)$/i)){
+                if (!content) return "";
 
+                // Determinar visualización según tipo o extensión de archivo
+                const isVideo = type === "video" || content.match(/\.(mp4|mov|webm|mkv)$/i);
+
+                if (isVideo) {
                   return `
                     <video
-                      src="${item}"
+                      src="${content}"
                       controls
                       class="
                         w-40
@@ -2355,7 +2807,7 @@ async function openBusiness(business){
 
                 return `
                   <img
-                    src="${item}"
+                    src="${content}"
                     class="
                       w-40
                       h-28
@@ -2382,14 +2834,11 @@ async function openBusiness(business){
   `;
 
   document.getElementById("chatMessages").innerHTML = "";
-
   document.getElementById("dynamicOptions").innerHTML = "";
 
   await loadAnalytics();
-
   await loadLeads();
 }
-
 // =========================================
 // 📊 ANALYTICS
 // =========================================
@@ -2597,18 +3046,104 @@ async function reopenLead(lead){
 }
 
 // =========================================
-// 🔥 FILTRO GLOBAL LEADS
-// =========================================
-
-
-
-// =========================================
 // 👥 RENDER LEADS
 // =========================================
 
 function renderLeads(){
 
   const container = document.getElementById("chatMessages");
+
+  // =========================================
+  // 🔥 HERO FIJO + SCROLL INTERNO
+  // =========================================
+
+  container.style.overflowY = "auto";
+
+  container.style.overflowX = "hidden";
+
+  container.style.height = "calc(100vh - 260px)";
+
+  container.style.maxHeight = "calc(100vh - 260px)";
+
+  container.style.minHeight = "calc(100vh - 260px)";
+
+  container.style.paddingRight = "6px";
+
+  container.style.scrollbarWidth = "thin";
+
+  container.style.scrollbarColor =
+    "#22c55e rgba(2, 6, 23, 0.2)";
+
+  container.style.scrollBehavior = "smooth";
+
+  container.style.overscrollBehavior = "contain";
+
+  container.style.webkitOverflowScrolling = "touch";
+
+  // =========================================
+  // 🔥 SCROLL MODERNO VERDE
+  // =========================================
+
+  if(!document.getElementById("modernLeadsScroll")){
+
+    const style = document.createElement("style");
+
+    style.id = "modernLeadsScroll";
+
+    style.innerHTML = `
+
+      #chatMessages::-webkit-scrollbar{
+        width:10px;
+        height:10px;
+      }
+
+      #chatMessages::-webkit-scrollbar-track{
+        background:rgba(2, 6, 23, 0.25);
+        border-radius:20px;
+      }
+
+      #chatMessages::-webkit-scrollbar-thumb{
+        background:linear-gradient(
+          180deg,
+          #22c55e,
+          #16a34a
+        );
+        border-radius:20px;
+        border:2px solid rgba(2, 6, 23, 0.85);
+        box-shadow:
+          0 0 10px rgba(34, 197, 94, 0.35),
+          0 0 20px rgba(34, 197, 94, 0.15);
+        transition:all .3s ease;
+      }
+
+      #chatMessages::-webkit-scrollbar-thumb:hover{
+        background:linear-gradient(
+          180deg,
+          #4ade80,
+          #22c55e
+        );
+        box-shadow:
+          0 0 14px rgba(34, 197, 94, 0.55),
+          0 0 24px rgba(34, 197, 94, 0.25);
+      }
+
+      #chatMessages::-webkit-scrollbar-corner{
+        background:transparent;
+      }
+
+    `;
+
+    document.head.appendChild(style);
+  }
+
+  // =========================================
+  // 🔥 FILTRO GLOBAL
+  // =========================================
+
+  if(typeof window.leadsFilter === "undefined"){
+
+    window.leadsFilter = "all";
+  }
 
   container.innerHTML = "";
 
@@ -2641,87 +3176,135 @@ function renderLeads(){
   const soldLeads = leads.filter(lead => lead.sold);
 
   // =========================================
-  // 🔥 FILTRO ACTIVO
+  // 🔥 FILTRAR
   // =========================================
 
-  const filteredLeads =
-    currentLeadFilter === "closed"
-      ? soldLeads
+  const filteredOpenLeads =
+    window.leadsFilter === "sold"
+      ? []
       : openLeads;
 
+  const filteredSoldLeads =
+    window.leadsFilter === "open"
+      ? []
+      : soldLeads;
+
   // =========================================
-  // 🔥 TITULO DINÁMICO (FIX OVERLAP SCROLL)
+  // 🔥 HERO FILTROS
   // =========================================
 
   container.innerHTML += `
 
     <div class="
-      flex
-      items-center
-      justify-between
-      gap-3
-      mb-7
-      mt-0
       sticky
       top-0
-      z-80
-      backdrop-blur-xl
-      bg-[#05070f]/98
-      border-b
-      border-white/10
-      px-4
-      py-4
-      shadow-md
-      shadow-black/40
+      z-30
+      mb-6
+      pt-2
+      pb-4
+      backdrop-blur-2xl
+      bg-slate-950/80
     ">
 
       <div class="
         flex
+        flex-wrap
         items-center
-        gap-2
-        min-w-0
+        gap-3
       ">
 
-        <div class="
-          text-lg
-          font-bold
-          ${
-            currentLeadFilter === "closed"
-              ? "text-emerald-300"
-              : "text-blue-300"
-          }
-        ">
-
-          ${
-            currentLeadFilter === "closed"
-              ? "✅ Ventas Cerradas"
-              : "🟡 Leads Abiertos"
-          }
-
-        </div>
-
-        <div class="
-          text-xs
-          px-2
-          py-1
-          rounded-lg
-          border
-          ${
-            currentLeadFilter === "closed"
+        <!-- TODOS -->
+        <button
+          onclick="window.leadsFilter='all'; renderLeads();"
+          class="
+            px-4
+            py-2
+            rounded-2xl
+            text-sm
+            font-bold
+            transition
+            border
+            ${
+              window.leadsFilter === "all"
               ? `
-                bg-emerald-500/10
-                border-emerald-500/20
-                text-emerald-300
+                bg-emerald-500
+                text-white
+                border-emerald-400
+                shadow-[0_0_20px_rgba(34,197,94,0.35)]
               `
               : `
-                bg-blue-500/10
-                border-blue-500/20
-                text-blue-300
+                bg-white/5
+                text-slate-300
+                border-white/10
+                hover:bg-white/10
               `
-          }
-        ">
-          ${filteredLeads.length}
-        </div>
+            }
+          "
+        >
+          📦 Todos (${leads.length})
+        </button>
+
+        <!-- ABIERTOS -->
+        <button
+          onclick="window.leadsFilter='open'; renderLeads();"
+          class="
+            px-4
+            py-2
+            rounded-2xl
+            text-sm
+            font-bold
+            transition
+            border
+            ${
+              window.leadsFilter === "open"
+              ? `
+                bg-blue-500
+                text-white
+                border-blue-400
+                shadow-[0_0_20px_rgba(59,130,246,0.35)]
+              `
+              : `
+                bg-white/5
+                text-slate-300
+                border-white/10
+                hover:bg-white/10
+              `
+            }
+          "
+        >
+          🟡 Abiertos (${openLeads.length})
+        </button>
+
+        <!-- CERRADOS -->
+        <button
+          onclick="window.leadsFilter='sold'; renderLeads();"
+          class="
+            px-4
+            py-2
+            rounded-2xl
+            text-sm
+            font-bold
+            transition
+            border
+            ${
+              window.leadsFilter === "sold"
+              ? `
+                bg-emerald-500
+                text-white
+                border-emerald-400
+                shadow-[0_0_20px_rgba(34,197,94,0.35)]
+              `
+              : `
+                bg-white/5
+                text-slate-300
+                border-white/10
+                hover:bg-white/10
+              `
+            }
+          "
+        >
+          ✅ Cerrados (${soldLeads.length})
+        </button>
 
       </div>
 
@@ -2730,42 +3313,53 @@ function renderLeads(){
   `;
 
   // =========================================
-  // 🔥 SI NO HAY LEADS FILTRADOS
+  // 🟡 ABIERTOS
   // =========================================
 
-  if(!filteredLeads.length){
+  if(filteredOpenLeads.length){
 
     container.innerHTML += `
 
       <div class="
-        text-center
-        text-slate-400
-        mt-16
-        px-4
+        sticky
+        top-24
+        z-20
+        flex
+        items-center
+        gap-2
+        mb-4
+        mt-2
+        py-2
+        backdrop-blur-xl
+        bg-slate-950/70
       ">
 
-        ${
-          currentLeadFilter === "closed"
-            ? "No hay ventas cerradas"
-            : "No hay leads abiertos"
-        }
+        <div class="
+          text-lg
+          font-bold
+          text-blue-300
+        ">
+          🟡 Leads Abiertos
+        </div>
+
+        <div class="
+          text-xs
+          px-2
+          py-1
+          rounded-lg
+          bg-blue-500/10
+          border
+          border-blue-500/20
+          text-blue-300
+        ">
+          ${filteredOpenLeads.length}
+        </div>
 
       </div>
 
     `;
 
-    return;
-  }
-
-  // =========================================
-  // 🟡 RENDER LEADS ABIERTOS
-  // =========================================
-
-  if(currentLeadFilter === "open"){
-
-    filteredLeads.forEach(lead=>{
-
-      const phoneNumber = lead.phone ? lead.phone.replace(/\D/g,'') : "";
+    filteredOpenLeads.forEach(lead=>{
 
       const div = document.createElement("div");
 
@@ -2780,8 +3374,12 @@ function renderLeads(){
         w-full
         overflow-hidden
         border
-        border-white/10
         mb-4
+        ${
+          lead.sold
+          ? "border-emerald-500/30"
+          : "border-white/10"
+        }
       `;
 
       div.innerHTML = `
@@ -2890,37 +3488,6 @@ function renderLeads(){
               💬 Abrir
             </button>
 
-            ${
-              phoneNumber
-                ? `
-                  <a
-                    href="https://wa.me/${phoneNumber}"
-                    target="_blank"
-                    class="
-                      px-4
-                      py-2
-                      rounded-xl
-                      text-sm
-                      font-bold
-                      bg-green-500/10
-                      border
-                      border-green-500/20
-                      text-green-300
-                      hover:bg-green-500
-                      hover:text-white
-                      transition
-                      inline-flex
-                      items-center
-                      justify-center
-                    "
-                    onclick="event.stopPropagation();"
-                  >
-                    💚 WhatsApp
-                  </a>
-                `
-                : ""
-            }
-
             <button
               class="
                 px-4
@@ -2974,12 +3541,53 @@ function renderLeads(){
   }
 
   // =========================================
-  // ✅ RENDER VENTAS CERRADAS
+  // ✅ VENTAS CERRADAS
   // =========================================
 
-  if(currentLeadFilter === "closed"){
+  if(filteredSoldLeads.length){
 
-    filteredLeads.forEach(lead=>{
+    container.innerHTML += `
+
+      <div class="
+        sticky
+        top-24
+        z-20
+        flex
+        items-center
+        gap-2
+        mb-4
+        mt-8
+        py-2
+        backdrop-blur-xl
+        bg-slate-950/70
+      ">
+
+        <div class="
+          text-lg
+          font-bold
+          text-emerald-300
+        ">
+          ✅ Ventas Cerradas
+        </div>
+
+        <div class="
+          text-xs
+          px-2
+          py-1
+          rounded-lg
+          bg-emerald-500/10
+          border
+          border-emerald-500/20
+          text-emerald-300
+        ">
+          ${filteredSoldLeads.length}
+        </div>
+
+      </div>
+
+    `;
+
+    filteredSoldLeads.forEach(lead=>{
 
       const div = document.createElement("div");
 
@@ -3158,127 +3766,6 @@ function renderLeads(){
 }
 
 // =========================================
-// 🔥 FILTRO LEADS
-// =========================================
-
-function filterLeadType(type){
-
-  currentLeadFilter = type;
-
-  const openBtn = document.getElementById("openLeadsBtn");
-
-  const closedBtn = document.getElementById("closedLeadsBtn");
-
-  if(type === "open"){
-
-    openBtn.className = `
-      bg-gradient-to-r
-      from-emerald-500
-      to-green-500
-      hover:from-emerald-400
-      hover:to-green-400
-      transition
-      px-4
-      py-3
-      rounded-xl
-      text-sm
-      font-bold
-      shadow-lg
-      shadow-green-500/20
-    `;
-
-    closedBtn.className = `
-      bg-white/5
-      hover:bg-white/10
-      border
-      border-white/10
-      transition
-      px-4
-      py-3
-      rounded-xl
-      text-sm
-      font-bold
-    `;
-
-  } else {
-
-    closedBtn.className = `
-      bg-gradient-to-r
-      from-emerald-500
-      to-green-500
-      hover:from-emerald-400
-      hover:to-green-400
-      transition
-      px-4
-      py-3
-      rounded-xl
-      text-sm
-      font-bold
-      shadow-lg
-      shadow-green-500/20
-    `;
-
-    openBtn.className = `
-      bg-white/5
-      hover:bg-white/10
-      border
-      border-white/10
-      transition
-      px-4
-      py-3
-      rounded-xl
-      text-sm
-      font-bold
-    `;
-  }
-
-  // =========================================
-  // 🔥 RE-RENDER LEADS
-  // =========================================
-
-  renderLeads();
-
-  console.log("🔥 FILTRO:", type);
-}
-
-function formatMessageWithWhatsAppButton(text) {
-
-  if (!text) return "";
-
-  // Detecta números colombianos de 10 dígitos (ajustable)
-  const phoneRegex = /(3\d{9})/g;
-
-  return text.replace(phoneRegex, (match) => {
-
-    return `
-      <a
-        href="https://wa.me/57${match}"
-        target="_blank"
-        onclick="event.stopPropagation();"
-        class="
-          inline-flex
-          items-center
-          gap-2
-          px-3
-          py-2
-          rounded-xl
-          bg-green-500/10
-          border
-          border-green-500/20
-          text-green-300
-          font-bold
-          hover:bg-green-500
-          hover:text-white
-          transition
-        "
-      >
-        💚 WhatsApp ${match}
-      </a>
-    `;
-  });
-}
-
-// =========================================
 // 💬 OPEN LEAD CONVERSATION
 // =========================================
 
@@ -3290,7 +3777,157 @@ async function openLeadConversation(lead){
 
   conversationId = lead.conversationId;
 
-  document.getElementById("chatMessages").innerHTML = "";
+  const container = document.getElementById("chatMessages");
+
+  container.innerHTML = "";
+
+  // =========================================
+  // 📱 DETECTAR WHATSAPP DEL LEAD
+  // =========================================
+
+  let detectedPhone = "";
+
+  // 🔥 SI YA EXISTE EN EL LEAD
+  if(lead.phone){
+
+    detectedPhone = String(lead.phone)
+      .replace(/\D/g,"");
+  }
+
+  // =========================================
+  // 🔥 HEADER FIJO CON BOTÓN WHATSAPP
+  // =========================================
+
+  const hero = document.createElement("div");
+
+  hero.className = `
+    sticky
+    top-0
+    z-50
+    mb-4
+    backdrop-blur-2xl
+    bg-slate-950/80
+    border-b
+    border-white/10
+    pb-4
+  `;
+
+  hero.innerHTML = `
+
+    <div class="
+      flex
+      flex-col
+      sm:flex-row
+      sm:items-center
+      sm:justify-between
+      gap-4
+      p-4
+      rounded-3xl
+      glass
+      border
+      border-white/10
+    ">
+
+      <!-- INFO -->
+      <div class="min-w-0">
+
+        <div class="
+          text-xl
+          font-black
+          break-words
+        ">
+          ${lead.name || "Lead"}
+        </div>
+
+        <div class="
+          text-sm
+          text-slate-400
+          break-all
+          mt-1
+        ">
+          ${lead.phone || "Sin número"}
+        </div>
+
+      </div>
+
+      <!-- ACTIONS -->
+      <div class="
+        flex
+        flex-wrap
+        gap-2
+      ">
+
+        ${
+          detectedPhone
+          ? `
+            <a
+              href="https://wa.me/${detectedPhone}"
+              target="_blank"
+              onclick="event.stopPropagation()"
+              class="
+                px-4
+                py-2
+                rounded-2xl
+                text-sm
+                font-bold
+                bg-emerald-500/10
+                border
+                border-emerald-500/20
+                text-emerald-300
+                hover:bg-emerald-500
+                hover:text-white
+                transition
+                flex
+                items-center
+                gap-2
+              "
+            >
+              💬 WhatsApp
+            </a>
+          `
+          : `
+            <div
+              class="
+                px-4
+                py-2
+                rounded-2xl
+                text-sm
+                font-bold
+                bg-white/5
+                border
+                border-white/10
+                text-slate-500
+              "
+            >
+              Sin WhatsApp
+            </div>
+          `
+        }
+
+      </div>
+
+    </div>
+
+  `;
+
+  container.appendChild(hero);
+
+  // =========================================
+  // 💬 CONTENEDOR MENSAJES
+  // =========================================
+
+  const messagesWrap = document.createElement("div");
+
+  messagesWrap.id = "leadConversationMessages";
+
+  messagesWrap.className = `
+    flex
+    flex-col
+    gap-3
+    pb-10
+  `;
+
+  container.appendChild(messagesWrap);
 
   try{
 
@@ -3302,50 +3939,75 @@ async function openLeadConversation(lead){
 
     const messages = await res.json();
 
+    // =========================================
+    // 🔥 DETECTAR NÚMERO DESDE MENSAJES
+    // =========================================
+
     messages.forEach(msg=>{
 
-      // =========================================
-      // 🔥 DETECTAR WHATSAPP AUTOMÁTICO
-      // =========================================
+      if(
+        !detectedPhone &&
+        msg.role === "user"
+      ){
 
-      let content = msg.content;
+        const match = String(msg.content || "")
+          .match(/(\+?\d[\d\s\-]{7,20})/);
 
-      const phoneRegex = /(3\d{9})/g;
+        if(match){
 
-      if(content && typeof content === "string"){
-
-        content = content.replace(phoneRegex, (match) => {
-
-          return `
-            <a
-              href="https://wa.me/57${match}"
-              target="_blank"
-              onclick="event.stopPropagation();"
-              class="
-                inline-flex
-                items-center
-                gap-2
-                px-3
-                py-2
-                rounded-xl
-                bg-green-500/10
-                border
-                border-green-500/20
-                text-green-300
-                font-bold
-                hover:bg-green-500
-                hover:text-white
-                transition
-              "
-            >
-              💚 WhatsApp ${match}
-            </a>
-          `;
-        });
+          detectedPhone = match[0]
+            .replace(/\D/g,"");
+        }
       }
+    });
+
+    // =========================================
+    // 🔥 ACTUALIZAR BOTÓN SI DETECTÓ NÚMERO
+    // =========================================
+
+    if(
+      detectedPhone &&
+      !hero.querySelector("a")
+    ){
+
+      hero.querySelector(".flex.flex-wrap.gap-2").innerHTML = `
+
+        <a
+          href="https://wa.me/${detectedPhone}"
+          target="_blank"
+          onclick="event.stopPropagation()"
+          class="
+            px-4
+            py-2
+            rounded-2xl
+            text-sm
+            font-bold
+            bg-emerald-500/10
+            border
+            border-emerald-500/20
+            text-emerald-300
+            hover:bg-emerald-500
+            hover:text-white
+            transition
+            flex
+            items-center
+            gap-2
+          "
+        >
+          💬 WhatsApp
+        </a>
+
+      `;
+    }
+
+    // =========================================
+    // 💬 RENDER MENSAJES
+    // =========================================
+
+    messages.forEach(msg=>{
 
       addMessage(
-        content,
+        msg.content,
         msg.role === "assistant"
           ? "bot"
           : "user"
@@ -3356,50 +4018,6 @@ async function openLeadConversation(lead){
 
     console.error(err);
   }
-}
-
-function convertTextToWhatsAppButtons(text){
-
-  if(!text) return text;
-
-  const regex = /(\+?\d{10,15})/g;
-
-  return text.replace(regex, (match)=>{
-
-    let number = match.replace(/\D/g,"");
-
-    // si es colombiano sin +57
-    if(number.length === 10){
-      number = "57" + number;
-    }
-
-    return `
-      <a
-        href="https://wa.me/${number}"
-        target="_blank"
-        onclick="event.stopPropagation();"
-        class="
-          inline-flex
-          items-center
-          gap-2
-          px-3
-          py-2
-          rounded-xl
-          bg-green-500/10
-          border
-          border-green-500/20
-          text-green-300
-          font-bold
-          hover:bg-green-500
-          hover:text-white
-          transition
-          my-1
-        "
-      >
-        💚 WhatsApp ${match}
-      </a>
-    `;
-  });
 }
 // =========================================
 // 💬 SEND MESSAGE
@@ -3581,12 +4199,17 @@ function renderOptions(options=[]){
 // 💬 ADD MESSAGE
 // =========================================
 
-function addMessage(content,role){
-
-  const container = document.getElementById("chatMessages");
+// =========================================
+// 💬 ENVIAR Y MOSTRAR MENSAJES (ACTUALIZADA)
+// =========================================
+function addMessage(content, role) {
+  // 1. Detectar el contenedor activo (chat principal o conversación de leads)
+  const container = document.getElementById("chatMessages") || document.getElementById("leadConversationMessages");
+  if (!container) return;
 
   const div = document.createElement("div");
 
+  // Estilos base y animaciones alineados con el diseño de Prestige Closer
   div.className = `
     animate-fade
     w-fit
@@ -3599,102 +4222,90 @@ function addMessage(content,role){
     whitespace-pre-wrap
     break-words
     overflow-hidden
+    shadow-sm
     ${
       role === "user"
-      ? "message-user ml-auto"
-      : "message-bot"
+      ? "message-user ml-auto text-white"
+      : "message-bot mr-auto text-white bg-white/5 border border-white/10"
     }
   `;
 
-  // =========================================
-  // 🔥 MEDIA HANDLER (IGUAL QUE TENÍAS)
-  // =========================================
-
-  if(isMedia(content)){
-
-    if(isImage(content)){
-
+  // 2. Procesamiento de Contenido Multimedia (Imágenes, Videos, Enlaces)
+  if (typeof isMedia === "function" && isMedia(content)) {
+    
+    if (typeof isImage === "function" && isImage(content)) {
       div.innerHTML = `
         <img
           src="${content}"
-          class="
-            rounded-2xl
-            max-w-full
-            h-auto
-            mb-2
-            object-cover
-            block
-          "
+          alt="Media"
+          class="rounded-2xl max-w-full h-auto mb-2 object-cover block border border-white/10"
+          onload="scrollToBottom('${container.id}')"
         />
       `;
-    }
-
-    else if(isVideo(content)){
-
+    } 
+    else if (typeof isVideo === "function" && isVideo(content)) {
       div.innerHTML = `
         <video
           controls
-          class="
-            rounded-2xl
-            max-w-full
-            w-full
-            h-auto
-            block
-          "
+          class="rounded-2xl max-w-full w-full h-auto block border border-white/10"
+          onloadedmetadata="scrollToBottom('${container.id}')"
         >
           <source src="${content}">
+          Tu navegador no soporta reproducción de video.
         </video>
       `;
-    }
-
-    else{
-
+    } 
+    else {
       div.innerHTML = `
-        <a
-          href="${content}"
-          target="_blank"
-          class="
-            underline
-            text-blue-300
-            break-all
-          "
-        >
-          Abrir contenido
-        </a>
+        <div class="flex items-center gap-2">
+          <span>🔗</span>
+          <a
+            href="${content}"
+            target="_blank"
+            class="underline text-emerald-400 hover:text-emerald-300 break-all transition-colors duration-200"
+          >
+            Abrir archivo multimedia
+          </a>
+        </div>
       `;
     }
 
   } else {
-
-    // =========================================
-    // 🔥 WHATSAPP BUTTON SUPPORT
-    // =========================================
-
-    const isHTML = /<\/?[a-z][\s\S]*>/i.test(content);
-
-    if(isHTML){
-      div.innerHTML = content;
-    } else {
-      div.innerHTML = convertTextToWhatsAppButtons(content);
-    }
+    // Texto plano o instrucciones de texto del bot / usuario
+    div.innerText = content;
   }
 
+  // 3. Insertar el mensaje en el DOM
   container.appendChild(div);
 
-  container.scrollTop = container.scrollHeight;
+  // 4. Forzar Scroll inmediato
+  scrollToBottom(container.id);
 }
+
+/**
+ * Función auxiliar para garantizar que el scroll baje 
+ * incluso si los recursos (imágenes/videos) se cargan de forma asíncrona.
+ */
+function scrollToBottom(containerId) {
+  const container = document.getElementById(containerId);
+  if (container) {
+    container.scrollTop = container.scrollHeight;
+  }
+}
+
 // =========================================
-// ⏳ TYPING
+// ⏳ TYPING (Indicador de Escritura)
 // =========================================
 
-function showTyping(){
-
+function showTyping() {
   const container = document.getElementById("chatMessages");
+  if (!container) return;
+
+  // Evitar duplicados
+  if (document.getElementById("typing")) return;
 
   const div = document.createElement("div");
-
   div.id = "typing";
-
   div.className = `
     message-bot
     rounded-3xl
@@ -3707,159 +4318,371 @@ function showTyping(){
   `;
 
   div.innerHTML = `
-    <div class="
-      flex
-      items-center
-      justify-center
-      min-w-[24px]
-      min-h-[24px]
-    ">
+    <div class="flex items-center justify-center min-w-[24px] min-h-[24px]">
       <div class="loader"></div>
     </div>
   `;
 
   container.appendChild(div);
-
   container.scrollTop = container.scrollHeight;
 }
 
-function removeTyping(){
-
+function removeTyping() {
   const typing = document.getElementById("typing");
-
-  if(typing){
+  if (typing) {
     typing.remove();
   }
 }
 
 // =========================================
-// 🗑 DELETE BUSINESS
+// 🗑️ DELETE BUSINESS (Eliminar de la DB)
 // =========================================
 
-async function deleteBusiness(id){
+async function deleteBusiness(id) {
+  if (!confirm("⚠️ ¿Estás completamente seguro de eliminar este negocio? Se perderán todos sus datos y leads asociados de forma permanente.")) return;
 
-  if(!confirm("Eliminar negocio?")) return;
-
-  try{
-
-    await fetch(`${API}/business/${id}`,{
-      method:"DELETE",
-      headers:{
-        Authorization:`Bearer ${token}`
+  try {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`${API}/business/${id}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`
       }
     });
 
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.error || "No se pudo eliminar el negocio en el servidor.");
+    }
+
+    alert("🗑️ Negocio eliminado con éxito.");
+
+    // Si el negocio eliminado es el que está seleccionado actualmente en el chat, lo limpiamos
+    if (typeof currentBusiness !== "undefined" && currentBusiness && currentBusiness._id === id) {
+      currentBusiness = null;
+      const chatTitle = document.getElementById("chatTitle");
+      const chatMessages = document.getElementById("chatMessages");
+      if (chatTitle) chatTitle.innerText = "Selecciona un negocio";
+      if (chatMessages) chatMessages.innerHTML = "";
+    }
+
+    // Recargar la lista de negocios en la interfaz
     loadBusinesses();
 
-  }catch(err){
-
-    console.error(err);
+  } catch (err) {
+    console.error("❌ Error al eliminar el negocio:", err);
+    alert(`No se pudo eliminar el negocio: ${err.message}`);
   }
 }
 
 // =========================================
-// 📷 MEDIA DETECTORS
+// 📷 MEDIA DETECTORS (Detección Multimedia)
 // =========================================
 
-function isMedia(text){
-
-  if(!text) return false;
-
+function isMedia(text) {
+  if (!text) return false;
   return text.startsWith("http");
 }
 
-function isImage(url){
-
+function isImage(url) {
   return /(jpg|jpeg|png|gif|webp)/i.test(url);
 }
 
-function isVideo(url){
-
+function isVideo(url) {
   return /(mp4|mov|webm|mkv)/i.test(url);
 }
 
 // =========================================
-// ⌨ ENTER SEND
+// ⌨️ ENTER SEND (Envío con Teclado)
 // =========================================
 
-document.addEventListener("keydown",e=>{
-
-  if(e.key === "Enter"){
-
+document.addEventListener("keydown", e => {
+  if (e.key === "Enter") {
     const active = document.activeElement;
-
-    if(active && active.id === "messageInput"){
+    if (active && active.id === "messageInput") {
       sendMessage();
     }
   }
 });
 
+// =========================================
+// 🏢 EDIT BUSINESS (Cargar datos en el Modal)
+// =========================================
+
 let editingBusinessId = null;
 
-async function editBusiness(id){
+async function editBusiness(id) {
+  // Guardamos el ID de forma global para usarlo en la actualización
+  window.editingBusinessId = id; 
 
-  editingBusinessId = id;
+  try {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`${API}/business-edit/${id}`, {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
+      }
+    });
 
-  const res = await fetch(`${API}/business/${id}`, {
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem("token")}`
+    if (!res.ok) {
+      console.error("Error cargando negocio:", await res.text());
+      alert("No se pudo cargar la información del negocio para editar.");
+      return;
     }
-  });
 
-  const biz = await res.json();
+    const biz = await res.json();
 
-  document.getElementById("bizName").value = biz.name || "";
-  document.getElementById("bizSlug").value = biz.slug || "";
-  document.getElementById("color").value = biz.primaryColor || "#25D366";
-  document.getElementById("welcomeMessage").value = biz.welcomeMessage || "";
-  document.getElementById("productInfo").value = biz.productInfo || "";
-  document.getElementById("productLink").value = biz.productLink || "";
-  document.getElementById("whatsappNumber").value = biz.whatsappNumber || "";
-  document.getElementById("waMessage").value = biz.waMessage || "";
+    console.log("FLOW:", JSON.stringify(biz.flow, null, 2));
+    console.log("NEGOCIO EDIT:", biz);
+    console.log("NODES:", biz.nodes);
+    console.log("CONNECTIONS:", biz.connections);
 
-  openCreateBusinessModal();
+    // 1. Rellenar campos básicos del formulario en el Modal
+    if (document.getElementById("bizName")) document.getElementById("bizName").value = biz.name || "";
+    if (document.getElementById("bizSlug")) document.getElementById("bizSlug").value = biz.slug || "";
+    if (document.getElementById("color")) document.getElementById("color").value = biz.primaryColor || "#25D366";
+    if (document.getElementById("welcomeMessage")) document.getElementById("welcomeMessage").value = biz.welcomeMessage || "";
+    if (document.getElementById("productInfo")) document.getElementById("productInfo").value = biz.productInfo || "";
+    if (document.getElementById("productLink")) document.getElementById("productLink").value = biz.productLink || "";
+    if (document.getElementById("waMessage")) document.getElementById("waMessage").value = biz.waMessage || "";
 
-  // cambia botón crear por actualizar
-  document.querySelector("#createBusinessModal button[onclick='createBusiness()']")
-    .innerText = "Actualizar Negocio";
+    // Manejo inteligente del número de WhatsApp y su prefijo de país
+    if (document.getElementById("whatsappNumber")) {
+      const num = biz.whatsappNumber || "";
+      const countryCodeSelect = document.getElementById("countryCode");
+      
+      if (countryCodeSelect && num.startsWith("57") && num.length > 10) {
+        countryCodeSelect.value = "57";
+        document.getElementById("whatsappNumber").value = num.replace(/^57/, "");
+      } else {
+        document.getElementById("whatsappNumber").value = num;
+      }
+    }
 
-  document.querySelector("#createBusinessModal button[onclick='createBusiness()']")
-    .setAttribute("onclick", "updateBusiness()");
+    // Visualización de la vista previa del Logo de Marca
+    const logoPreview = document.getElementById("logoPreview");
+    if (logoPreview) {
+      if (biz.logo) {
+        logoPreview.src = biz.logo;
+        logoPreview.classList.remove("hidden");
+      } else {
+        logoPreview.classList.add("hidden");
+      }
+    }
+
+    // Carga de testimonios en un campo auxiliar oculto si es necesario
+    if (biz.testimonials && document.getElementById("testimonials")) {
+      document.getElementById("testimonials").value = JSON.stringify(biz.testimonials);
+    }
+
+    // 2. Abrir el modal de creación/edición de negocio
+    openCreateBusinessModal();
+
+    // 3. Renderizar dinámicamente el mapa de flujo visual en Drawflow
+    setTimeout(() => {
+      if (!window.editor) {
+        console.warn("⚠️ El editor de Drawflow no está inicializado en 'window.editor'");
+        return;
+      }
+
+      editor.clear();
+
+      // Caso A: Si ya cuenta con el objeto nativo exportado por Drawflow
+      if (biz.flow && biz.flow.drawflow) {
+        editor.import(biz.flow);
+      } 
+      // Caso B: Reconstrucción del mapa Drawflow usando el array persistido de nodos y conexiones de la DB
+      else if (biz.nodes && biz.nodes.length) {
+        const drawflowData = {
+          drawflow: {
+            Home: {
+              data: {}
+            }
+          }
+        };
+
+        // Estructurar nodos compatibles con el formato de renderizado del Canvas
+        biz.nodes.forEach(node => {
+          drawflowData.drawflow.Home.data[node.id] = {
+            id: node.id,
+            name: node.name || "node",
+            data: node.data || {},
+            class: node.class || "",
+            html: node.html || node.label || "",
+            typenode: false,
+            inputs: node.inputs || {},
+            outputs: node.outputs || {},
+            pos_x: Number(node.pos_x ?? node.x ?? 100),
+            pos_y: Number(node.pos_y ?? node.y ?? 100)
+          };
+        });
+
+        // Enlazar de vuelta las conexiones entre salidas y entradas
+        if (biz.connections && biz.connections.length) {
+          biz.connections.forEach(conn => {
+            const sourceNode = drawflowData.drawflow.Home.data[conn.output_id];
+            if (!sourceNode) return;
+
+            if (!sourceNode.outputs[conn.output_class]) {
+              sourceNode.outputs[conn.output_class] = { connections: [] };
+            }
+
+            sourceNode.outputs[conn.output_class].connections.push({
+              node: conn.input_id,
+              output: conn.input_class
+            });
+          });
+        }
+
+        console.log("🛠️ Estructura Drawflow reconstruida con éxito:", drawflowData);
+        editor.import(drawflowData);
+      } 
+      // Caso C: Si no hay información visual previa, se genera el nodo inicial por defecto
+      else {
+        if (typeof createStartNode === "function") {
+          createStartNode();
+        }
+      }
+    }, 150);
+
+    // 4. Cambiar temporalmente el disparador del botón para Actualizar en lugar de Crear
+    const btn = document.querySelector("#createBusinessModal button[onclick='createBusiness()']");
+    if (btn) {
+      btn.innerText = "Actualizar Negocio 🔄";
+      btn.setAttribute("onclick", "updateBusiness()");
+    }
+
+  } catch (err) {
+    console.error("❌ Error en editBusiness:", err);
+    alert("Ocurrió un error inesperado al cargar la tienda.");
+  }
 }
 
-async function updateBusiness(){
+// =========================================
+// 🏢 UPDATE BUSINESS (Actualizar Datos y Flujo)
+// =========================================
 
-  const body = {
-    name: document.getElementById("bizName").value,
-    slug: document.getElementById("bizSlug").value,
-    primaryColor: document.getElementById("color").value,
-    welcomeMessage: document.getElementById("welcomeMessage").value,
-    productInfo: document.getElementById("productInfo").value,
-    productLink: document.getElementById("productLink").value,
-    whatsappNumber: document.getElementById("whatsappNumber").value,
-    waMessage: document.getElementById("waMessage").value
-  };
+async function updateBusiness() {
+  const businessId = window.editingBusinessId || (typeof editingBusinessId !== "undefined" ? editingBusinessId : null);
+  if (!businessId) {
+    return alert("❌ Error: No se encontró el identificador ID del negocio para actualizar.");
+  }
 
-  await fetch(`${API}/business/${editingBusinessId}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("token")}`
-    },
-    body: JSON.stringify(body)
-  });
+  try {
+    // 1. Lectura y formateo inicial de campos del formulario
+    const name = document.getElementById("bizName")?.value?.trim();
+    const slug = document.getElementById("bizSlug")?.value?.trim();
+    const welcomeMessage = document.getElementById("welcomeMessage")?.value?.trim();
+    const productInfo = document.getElementById("productInfo")?.value?.trim();
+    const productLink = document.getElementById("productLink")?.value?.trim();
+    const primaryColor = document.getElementById("color")?.value;
+    const waMessage = document.getElementById("waMessage")?.value?.trim();
 
-  closeCreateBusinessModal();
-  loadBusinesses();
+    // Formatear correctamente el número de WhatsApp usando el prefijo de país
+    const countryCode = document.getElementById("countryCode")?.value || "";
+    const phone = document.getElementById("whatsappNumber")?.value?.replace(/\D/g, "") || "";
+    const whatsappNumber = countryCode + phone;
+
+    // Validación exhaustiva de campos obligatorios
+    if (!name || !slug || !welcomeMessage || !productInfo || !productLink || !whatsappNumber) {
+      return alert("⚠️ Por favor completa todos los campos obligatorios del formulario.");
+    }
+
+    // 2. Extraer recursos multimedia opcionales (Logo y Testimonios en formato JSON)
+    let logo = "";
+    const logoPreview = document.getElementById("logoPreview");
+    if (logoPreview && logoPreview.src && !logoPreview.src.endsWith('/')) {
+      logo = logoPreview.src;
+    }
+
+    let testimonials = [];
+    const hiddenTestimonials = document.getElementById("testimonials")?.value;
+    if (hiddenTestimonials) {
+      try { 
+        testimonials = JSON.parse(hiddenTestimonials); 
+      } catch(e) { 
+        testimonials = []; 
+      }
+    }
+
+    // 3. Obtener el mapa del lienzo Canvas de Drawflow
+    let canvasData = { nodes: [], connections: [], flow: {} };
+    try {
+      if (typeof exportCanvasData === "function") {
+        canvasData = exportCanvasData();
+      } else {
+        console.warn("⚠️ exportCanvasData no está definida. Se sincronizarán arrays vacíos.");
+      }
+    } catch (canvasErr) {
+      console.error("❌ Error al exportar datos de nodos del Canvas:", canvasErr);
+    }
+
+    // 4. Construcción del objeto de envío (Payload)
+    const body = {
+      name,
+      slug,
+      primaryColor,
+      welcomeMessage,
+      productInfo,
+      productLink,
+      whatsappNumber,
+      waMessage,
+      logo,
+      testimonials,
+      nodes: canvasData.nodes || [],
+      connections: canvasData.connections || [],
+      flow: canvasData.flow || {}
+    };
+
+    console.log("🚀 Enviando actualización al servidor:", body);
+
+    // 5. Petición PUT hacia el Backend en Render
+    const token = localStorage.getItem("token");
+    const res = await fetch(`${API}/business/${businessId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify(body)
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(errText || "Error en la respuesta de actualización del servidor.");
+    }
+
+    const data = await res.json();
+    if (data.error) {
+      return alert(`❌ Error del servidor: ${data.error}`);
+    }
+
+    alert("✅ ¡Negocio, vitrina y mapa conceptual de Prestige Closer actualizados correctamente!");
+    
+    // 6. Cerrar el modal y recargar la lista de tiendas
+    closeCreateBusinessModal();
+    loadBusinesses();
+
+  } catch (err) {
+    console.error("❌ Error en updateBusiness:", err);
+    alert("Hubo un fallo crítico al intentar actualizar la tienda en el servidor. Revisa los logs de consola.");
+  }
 }
 
-function backToLeads(){
+// =========================================
+// 🔙 VOLVER (Retornar al listado de Leads)
+// =========================================
 
+function backToLeads() {
   currentLead = null;
   leadId = null;
   conversationId = null;
 
-  document.getElementById("chatMessages").innerHTML = "";
+  const messagesContainer = document.getElementById("chatMessages");
+  if (messagesContainer) {
+    messagesContainer.innerHTML = "";
+  }
 
   renderLeads();
 }
