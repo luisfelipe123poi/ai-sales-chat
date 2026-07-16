@@ -13,37 +13,6 @@ const jwt = require("jsonwebtoken");
 const app = express();
 
 // =========================
-// 🔥 CONFIGURACIÓN DE CORS ULTRA COMPATIBLE
-// =========================
-const allowedOrigins = [
-  "https://ai-sales-chat.onrender.com",
-  "https://chat.prestigecloser.com",
-  "https://prestigecloser.com",
-  "https://e4c90577.prestigecloser.pages.dev"
-];
-
-app.use(cors({
-  origin: function (origin, callback) {
-    // Permitir peticiones sin origin (como llamadas internas del backend o Postman)
-    if (!origin) return callback(null, true);
-    
-    // Si el origin está en nuestra lista de permitidos o es un localhost de pruebas
-    if (allowedOrigins.includes(origin) || origin.startsWith("http://localhost") || origin.startsWith("http://127.0.0.1")) {
-      return callback(null, true);
-    } else {
-      console.log("⚠️ CORS Bloqueó origen no registrado:", origin);
-      return callback(new Error("Bloqueado por políticas de CORS de Prestige Closer[cite: 1]"));
-    }
-  },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
-}));
-
-// Responder siempre con éxito inmediato a las peticiones preflight (OPTIONS) antes de procesar rutas
-app.options("*", cors());
-
-// =========================
 // 📦 MODELOS
 // =========================
 const Lead = require("./models/Lead");
@@ -77,9 +46,11 @@ const s3 = new S3Client({
 const upload = multer({ storage: multer.memoryStorage() });
 
 // =========================
-// 🧱 MIDDLEWARES ADICIONALES
+// 🧱 MIDDLEWARES
 // =========================
-// 🔥 FIX 413 ERROR (Puesto estratégicamente antes de cargar tus rutas)
+app.use(cors());
+
+// 🔥 FIX 413 ERROR
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
 
@@ -101,6 +72,7 @@ function auth(req, res, next) {
   if (!token) return res.status(401).json({ error: "No autorizado" });
 
   try {
+
     const realToken = token.startsWith("Bearer ")
       ? token.split(" ")[1]
       : token;
@@ -109,6 +81,7 @@ function auth(req, res, next) {
 
     req.user = decoded;
     next();
+
   } catch {
     res.status(401).json({ error: "Token inválido" });
   }
