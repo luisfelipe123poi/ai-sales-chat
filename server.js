@@ -1512,41 +1512,20 @@ app.listen(PORT, () => {
 // 🌐 PÁGINAS
 // =========================
 
-// ========================================================
-// 🛑 IMPORTANTE: Asegúrate de que todas tus rutas de la API 
-// (ej. app.get("/business/slug/:slug", ...)) estén escritas 
-// ARRIBA de esta sección.
-// ========================================================
-
-// =========================
-// 🌐 PÁGINAS (SIEMPRE AL FINAL)
-// =========================
-
 app.use(express.static("public"));
 
-// CRM (Gestión interna)
+// CRM
 app.get("/crm/:slug", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "crm.html"));
 });
 
-// CHAT (Por si alguna vez quieres ver el chat tipo burbuja clásico en /chat/slug)
+// CHAT
 app.get("/chat/:slug", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "chat.html"));
 });
 
-// 🔥 NUEVA VITRINA VIRTUAL PREMIUM (Acceso directo por Slug)
-// Al ser un comodín (/:slug), intercepta cualquier ruta que no haya hecho match antes.
-// DEBE ser la última ruta definida en tu servidor.
+// 🔥 IMPORTANTE: esto SIEMPRE de último
 app.get("/:slug", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "vitrina.html"));[cite: 1]
-});
-
-// =========================
-// 🚀 SERVER (AL FINAL ABSOLUTO)
-// =========================
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  console.log(`🔥 Servidor corriendo en puerto ${PORT}`);
+  res.sendFile(path.join(__dirname, "public", "chat.html"));
 });
 
