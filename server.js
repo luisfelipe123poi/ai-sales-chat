@@ -6,6 +6,7 @@ const cors = require("cors");
 const path = require("path");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const Business = require("./models/Business"); // o donde tengas guardado tu archivo del esquema
 
 // =========================
 // 🧱 APP INIT
