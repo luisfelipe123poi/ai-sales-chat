@@ -966,6 +966,28 @@ app.post("/business", auth, async (req, res) => {
   }
 });
 
+// RUTA PARA OBTENER UN NEGOCIO POR SU SLUG
+app.get('/business/slug/:slug', async (req, res) => {
+    try {
+        const { slug } = req.params;
+        
+        // 1. Buscar el negocio en tu Base de Datos por su slug
+        // (Ajusta 'Business' según el nombre de tu modelo de base de datos)
+        const business = await Business.findOne({ slug: slug }); 
+
+        if (!business) {
+            return res.status(404).json({ error: "Negocio no encontrado" });
+        }
+
+        // 2. Responder con los datos del negocio (incluyendo sus productos/catálogo)
+        res.json(business);
+
+    } catch (error) {
+        console.error("Error al obtener el negocio:", error);
+        res.status(500).json({ error: "Error interno del servidor" });
+    }
+});
+
 // Obtener información pública del negocio y catálogo por su Slug
 app.get('/public/business/:slug', async (req, res) => {
   try {
