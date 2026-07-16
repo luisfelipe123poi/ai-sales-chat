@@ -1,50 +1,16 @@
 require("dotenv").config();
 
 const express = require("express");
-const mongoose = require("mongoose"); // Usaremos únicamente esta instancia global
+const mongoose = require("mongoose");
 const cors = require("cors");
 const path = require("path");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
-const multer = require("multer");
 
 // =========================
 // 🧱 APP INIT
 // =========================
 const app = express();
-
-// =========================
-// 🔥 CONFIGURACIÓN DE CORS ULTRA COMPATIBLE
-// =========================
-const allowedOrigins = [
-  "https://ai-sales-chat.onrender.com",
-  "https://chat.prestigecloser.com",
-  "https://prestigecloser.com",
-  "https://e4c90577.prestigecloser.pages.dev"
-];
-
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin) || origin.startsWith("http://localhost") || origin.startsWith("http://127.0.0.1")) {
-      return callback(null, true);
-    } else {
-      console.log("⚠️ CORS Bloqueó origen no registrado:", origin);
-      return callback(new Error("Bloqueado por políticas de CORS de Prestige Closer"));
-    }
-  },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
-}));
-
-// Responder siempre con éxito inmediato a las peticiones preflight (OPTIONS)
-app.options("*", cors());
-
-// 🔥 FIX 413 ERROR
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ limit: "10mb", extended: true }));
 
 // =========================
 // 📦 MODELOS
@@ -54,13 +20,30 @@ const Conversation = require("./models/Conversation");
 const Message = require("./models/Message");
 const Business = require("./models/Business");
 
-// ✅ CORREGIDO: Usando la única instancia de mongoose declarada arriba
-const userSchema = new mongoose.Schema({
+// 🔥 NUEVO MODELO USER
+const mongooseUser = require("mongoose");
+
+const userSchema = new mongooseUser.Schema({
   email: { type: String, unique: true },
   password: String
 }, { timestamps: true });
 
-const User = mongoose.model("User", userSchema);
+const User = mongooseUser.model("User", userSchema);
+
+const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+const multer = require("multer");
+
+// Configuración de R2
+const s3 = new S3Client({
+  region: "auto",
+  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  credentials: {
+    accessKeyId: process.env.R2_ACCESS_KEY_ID,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+  },
+});
+
+const upload = multer({ storage: multer.memoryStorage() });
 
 // =========================
 // 🧱 MIDDLEWARES
@@ -1516,15 +1499,23 @@ app.post("/upload-testimonial", upload.single("file"), async (req, res) => {
 
 
 
+// =========================
+// 🚀 SERVER
+// =========================
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`🔥 Servidor corriendo en puerto ${PORT}`);
+});
+
 // ========================================================
-// 🔌 ENDPOINTS DE LA API (SIEMPRE ARRIBA DE LAS PÁGINAS)
+// 🔌 ENDPOINTS DE LA API (DEBEN IR ARRIBA DE LAS PÁGINAS)
 // ========================================================
 
 // Endpoint para obtener los datos del negocio por su slug (ej: "default")
 app.get("/business/slug/:slug", async (req, res) => {
   try {
     const { slug } = req.params;
-    console.log(`🔍 Buscando negocio para el slug: "${slug}"`);
     
     // Buscamos el negocio en la base de datos usando tu modelo 'Business'
     const business = await Business.findOne({ slug });
@@ -1543,33 +1534,23 @@ app.get("/business/slug/:slug", async (req, res) => {
 });
 
 // =========================
-// 🌐 PÁGINAS (ABAJO DE LA API)
+// 🌐 PÁGINAS
 // =========================
 
 app.use(express.static("public"));
 
-// CRM (Gestión interna)
+// CRM
 app.get("/crm/:slug", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "crm.html"));
 });
 
-// CHAT (Para ver el chat clásico en /chat/slug)
+// CHAT
 app.get("/chat/:slug", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "chat.html"));
 });
 
-// 🔥 VITRINA VIRTUAL PREMIUM (Acceso directo por Slug)
-// Al ser un comodín (/:slug), intercepta cualquier ruta no registrada antes.
-// DEBE ser la última ruta definida en tu servidor.
+// 🔥 IMPORTANTE: esto SIEMPRE de último
 app.get("/:slug", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "vitrina.html")); // 👈 ¡Carga la vitrina aquí!
+  res.sendFile(path.join(__dirname, "public", "chat.html"));
 });
 
-// ========================================================
-// 🚀 SERVER (DEBE IR AL FINAL ABSOLUTO DEL ARCHIVO)
-// ========================================================
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  console.log(`🔥 Servidor corriendo en puerto ${PORT}`);
-});
