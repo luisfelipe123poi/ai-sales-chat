@@ -105,31 +105,38 @@ function closerBot(message, business, lead) {
     return "";
   };
 
-// 🔥 PARSEADOR UNIVERSAL TESTIMONIOS (CORREGIDO PARA MEDIA Y LINKS DRIVE)
-  const formatTestimonials = () => {
-    if (!business.testimonials || !business.testimonials.length) return "";
+// 🔥 PARSEADOR UNIVERSAL TESTIMONIOS (TOTALMENTE BLINDADO CONTRA CUALQUIER DATO CORRUPTO)
+const formatTestimonials = () => {
+  // 1. Asegura que business y business.testimonials existan antes de medir su length
+  if (!business?.testimonials || !business.testimonials.length) return "";
 
-    return business.testimonials.map(t => {
+  return business.testimonials
+    .map(t => {
+      // 2. Si el testimonio viene como null o undefined en el array, lo ignoramos de inmediato
+      if (!t) return "";
 
-      // compatibilidad vieja (strings)
+      // Compatibilidad vieja (strings)
       if (typeof t === "string") return t.trim(); 
 
-      // nuevo formato
-      if (t.type === "text") {
+      // Nuevo formato (usamos ?. para evitar crash si content viene vacío)
+      if (t.type === "text" && t.content) {
         // Si el texto es un link (como los de Drive), lo enviamos limpio sin el emoji
-        // para que el frontend lo detecte como media/link automáticamente
         if (t.content.trim().startsWith("http")) {
           return t.content.trim();
         }
         return `💬 ${t.content}`;
       }
       
-      if (t.type === "image") return t.content.trim(); // Enviamos solo la URL para que el frontend la renderice
-      if (t.type === "video") return t.content.trim(); // Enviamos solo la URL para que el frontend la renderice
+      // Enviamos solo la URL para que el frontend la renderice
+      if (t.type === "image" && t.content) return t.content.trim(); 
+      if (t.type === "video" && t.content) return t.content.trim(); 
 
       return "";
-    }).join("\n\n");
-  };
+    })
+    // 3. Filtramos los strings vacíos para que no dejen saltos de línea innecesarios
+    .filter(Boolean)
+    .join("\n\n");
+};
 
   // ==========================================
   // 🔥 FILTRO GLOBAL "WAIT" (FIX PRIORITARIO)
@@ -1122,107 +1129,112 @@ app.get("/my-businesses", auth, async (req, res) => {
 // 💬 CHAT
 // =========================
 app.post("/chat", async (req, res) => {
-  const { message, leadId, conversationId, businessId } = req.body;
+  const { message, leadId, conversationId, businessId } = req.body; //
 
   try {
-    if (!businessId) {
-      return res.status(400).json({ error: "businessId requerido" });
+    if (!businessId) { //
+      return res.status(400).json({ error: "businessId requerido" }); //
     }
 
-    const business = await Business.findById(businessId);
+    const business = await Business.findById(businessId); //[cite: 1]
 
-    console.log("🔥 BUSINESS:", business);
-    console.log("🔥 TESTIMONIOS EN BD:", business?.testimonials);
+    console.log("🔥 BUSINESS:", business); //[cite: 1]
+    console.log("🔥 TESTIMONIOS EN BD:", business?.testimonials); //[cite: 1]
 
-    if (!business) {
-      return res.status(404).json({ error: "Negocio no existe" });
+    if (!business) { //[cite: 1]
+      return res.status(404).json({ error: "Negocio no existe" }); //[cite: 1]
     }
 
-    let lead = leadId
-      ? await Lead.findById(leadId)
-      : await Lead.create({ businessId, stage: "attention" });
-
-    if (!lead.stage) {
-      lead.stage = "attention";
+    // 🛡️ DOBLE BLINDAJE: Si el negocio no tiene testimonios en BD, aseguramos un array vacío
+    if (!business.testimonials) {
+      business.testimonials = [];
     }
 
-    if (!lead.notes) {
-      lead.notes = {};
+    let lead = leadId //[cite: 1]
+      ? await Lead.findById(leadId) //[cite: 1]
+      : await Lead.create({ businessId, stage: "attention" }); //[cite: 1]
+
+    if (!lead.stage) { //[cite: 1]
+      lead.stage = "attention"; //[cite: 1]
     }
 
-    let conversation = conversationId
-      ? await Conversation.findById(conversationId)
-      : await Conversation.create({
-          leadId: lead._id,
-          businessId
-        });
+    if (!lead.notes) { //[cite: 1]
+      lead.notes = {}; //[cite: 1]
+    }
 
-    await Message.create({
-      conversationId: conversation._id,
-      role: "user",
-      content: message
-    });
+    let conversation = conversationId //[cite: 1]
+      ? await Conversation.findById(conversationId) //[cite: 1]
+      : await Conversation.create({ //[cite: 1]
+          leadId: lead._id, //[cite: 1]
+          businessId //[cite: 1]
+        }); //[cite: 1]
 
-    if (lead.stage === "action") {
-      if (!lead.name && message.length < 30 && !message.includes("@")) {
-        lead.name = message;
+    await Message.create({ //[cite: 1]
+      conversationId: conversation._id, //[cite: 1]
+      role: "user", //[cite: 1]
+      content: message //[cite: 1]
+    }); //[cite: 1]
+
+    if (lead.stage === "action") { //[cite: 1]
+      if (!lead.name && message.length < 30 && !message.includes("@")) { //[cite: 1]
+        lead.name = message; //[cite: 1]
       }
 
-      if (!lead.email && message.includes("@")) {
-        lead.email = message;
+      if (!lead.email && message.includes("@")) { //[cite: 1]
+        lead.email = message; //[cite: 1]
       }
 
-      if (!lead.phone && /\d{7,}/.test(message)) {
-        lead.phone = message;
+      if (!lead.phone && /\d{7,}/.test(message)) { //[cite: 1]
+        lead.phone = message; //[cite: 1]
       }
     }
 
-    // 🔥 AQUI LLAMAS TU BOT (NUEVO)
-    const result = closerBot(message, business, lead);
+    // 🔥 AQUI LLAMAS TU BOT (Ya viaja con business.testimonials seguro)
+    const result = closerBot(message, business, lead); //[cite: 1]
 
-    console.log("🔥 RESULT BOT:", result);
+    console.log("🔥 RESULT BOT:", result); //[cite: 1]
 
-    const reply = result.reply;
-    const options = result.options || [];
-    const showInput = result.showInput ?? false;
-    const inputType = result.inputType ?? "text";
+    const reply = result.reply; //[cite: 1]
+    const options = result.options || []; //[cite: 1]
+    const showInput = result.showInput ?? false; //[cite: 1]
+    const inputType = result.inputType ?? "text"; //[cite: 1]
 
-    await Message.create({
-      conversationId: conversation._id,
-      role: "assistant",
-      content: reply
-    });
+    await Message.create({ //[cite: 1]
+      conversationId: conversation._id, //[cite: 1]
+      role: "assistant", //[cite: 1]
+      content: reply //[cite: 1]
+    }); //[cite: 1]
 
-    await Lead.findByIdAndUpdate(lead._id, {
-      name: lead.name,
-      email: lead.email,
-      phone: lead.phone,
-      stage: lead.stage
-    });
+    await Lead.findByIdAndUpdate(lead._id, { //[cite: 1]
+      name: lead.name, //[cite: 1]
+      email: lead.email, //[cite: 1]
+      phone: lead.phone, //[cite: 1]
+      stage: lead.stage //[cite: 1]
+    }); //[cite: 1]
 
-    const showWhatsApp =
-      lead.stage === "action" &&
-      lead.name &&
-      (lead.phone || lead.email);
+    const showWhatsApp = //[cite: 1]
+      lead.stage === "action" && //[cite: 1]
+      lead.name && //[cite: 1]
+      (lead.phone || lead.email); //[cite: 1]
 
-    res.json({
-      reply,
-      options,
-      leadId: lead._id,
-      conversationId: conversation._id,
-      showWhatsApp,
-      whatsappNumber: business.whatsappNumber,
+    res.json({ //[cite: 1]
+      reply, //[cite: 1]
+      options, //[cite: 1]
+      leadId: lead._id, //[cite: 1]
+      conversationId: conversation._id, //[cite: 1]
+      showWhatsApp, //[cite: 1]
+      whatsappNumber: business.whatsappNumber, //[cite: 1]
 
-      showInput,
-      inputType,
+      showInput, //[cite: 1]
+      inputType, //[cite: 1]
 
       // 🔥 DEBUG EXTRA (NO ROMPE NADA)
-      testimonials: business.testimonials
-    });
+      testimonials: business.testimonials //[cite: 1]
+    }); //[cite: 1]
 
-  } catch (error) {
-    console.error("CHAT ERROR:", error);
-    res.status(500).json({ error: "Error en chat" });
+  } catch (error) { //[cite: 1]
+    console.error("CHAT ERROR:", error); //[cite: 1]
+    res.status(500).json({ error: "Error en chat" }); //[cite: 1]
   }
 });
 // =========================
