@@ -1512,6 +1512,16 @@ app.listen(PORT, () => {
 // 🌐 PÁGINAS
 // =========================
 
+// ========================================================
+// 🛑 IMPORTANTE: Asegúrate de que todas tus rutas de la API 
+// (ej. app.get("/business/slug/:slug", ...)) estén escritas 
+// ARRIBA de esta sección.
+// ========================================================
+
+// =========================
+// 🌐 PÁGINAS (SIEMPRE AL FINAL)
+// =========================
+
 app.use(express.static("public"));
 
 // CRM (Gestión interna)
@@ -1525,8 +1535,18 @@ app.get("/chat/:slug", (req, res) => {
 });
 
 // 🔥 NUEVA VITRINA VIRTUAL PREMIUM (Acceso directo por Slug)
-// Al entrar a dominio.com/tu-negocio cargará la nueva identidad visual
+// Al ser un comodín (/:slug), intercepta cualquier ruta que no haya hecho match antes.
+// DEBE ser la última ruta definida en tu servidor.
 app.get("/:slug", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "vitrina.html")); // 👈 ¡CAMBIADO AQUÍ!
+  res.sendFile(path.join(__dirname, "public", "vitrina.html"));[cite: 1]
+});
+
+// =========================
+// 🚀 SERVER (AL FINAL ABSOLUTO)
+// =========================
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`🔥 Servidor corriendo en puerto ${PORT}`);
 });
 
