@@ -1514,19 +1514,19 @@ app.listen(PORT, () => {
 
 app.use(express.static("public"));
 
-// CRM
+// CRM (Gestión interna)
 app.get("/crm/:slug", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "crm.html"));
 });
 
-// CHAT
+// CHAT (Por si alguna vez quieres ver el chat tipo burbuja clásico en /chat/slug)
 app.get("/chat/:slug", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "chat.html"));
 });
 
-// 🔥 IMPORTANTE: esto SIEMPRE de último
+// 🔥 NUEVA VITRINA VIRTUAL PREMIUM (Acceso directo por Slug)
+// Al entrar a dominio.com/tu-negocio cargará la nueva identidad visual
 app.get("/:slug", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "chat.html"));
+  res.sendFile(path.join(__dirname, "public", "vitrina.html")); // 👈 ¡CAMBIADO AQUÍ!
 });
 
- 
