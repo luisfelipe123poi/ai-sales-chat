@@ -1,17 +1,50 @@
 require("dotenv").config();
 
 const express = require("express");
-const mongoose = require("mongoose");
+const mongoose = require("mongoose"); // Usaremos únicamente esta instancia global
 const cors = require("cors");
 const path = require("path");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const Business = require("./models/Business"); // o donde tengas guardado tu archivo del esquema
+const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+const multer = require("multer");
 
 // =========================
 // 🧱 APP INIT
 // =========================
 const app = express();
+
+// =========================
+// 🔥 CONFIGURACIÓN DE CORS ULTRA COMPATIBLE
+// =========================
+const allowedOrigins = [
+  "https://ai-sales-chat.onrender.com",
+  "https://chat.prestigecloser.com",
+  "https://prestigecloser.com",
+  "https://e4c90577.prestigecloser.pages.dev"
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin) || origin.startsWith("http://localhost") || origin.startsWith("http://127.0.0.1")) {
+      return callback(null, true);
+    } else {
+      console.log("⚠️ CORS Bloqueó origen no registrado:", origin);
+      return callback(new Error("Bloqueado por políticas de CORS de Prestige Closer"));
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
+}));
+
+// Responder siempre con éxito inmediato a las peticiones preflight (OPTIONS)
+app.options("*", cors());
+
+// 🔥 FIX 413 ERROR
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ limit: "10mb", extended: true }));
 
 // =========================
 // 📦 MODELOS
@@ -21,30 +54,13 @@ const Conversation = require("./models/Conversation");
 const Message = require("./models/Message");
 const Business = require("./models/Business");
 
-// 🔥 NUEVO MODELO USER
-const mongooseUser = require("mongoose");
-
-const userSchema = new mongooseUser.Schema({
+// ✅ CORREGIDO: Usando la única instancia de mongoose declarada arriba
+const userSchema = new mongoose.Schema({
   email: { type: String, unique: true },
   password: String
 }, { timestamps: true });
 
-const User = mongooseUser.model("User", userSchema);
-
-const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
-const multer = require("multer");
-
-// Configuración de R2
-const s3 = new S3Client({
-  region: "auto",
-  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId: process.env.R2_ACCESS_KEY_ID,
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
-  },
-});
-
-const upload = multer({ storage: multer.memoryStorage() });
+const User = mongoose.model("User", userSchema);
 
 // =========================
 // 🧱 MIDDLEWARES
