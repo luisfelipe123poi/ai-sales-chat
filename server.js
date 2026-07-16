@@ -24,7 +24,7 @@ const Business = require("./models/Business");
 const mongooseUser = require("mongoose");
 
 const userSchema = new mongooseUser.Schema({
-  email: { type: String, unique: true }, 
+  email: { type: String, unique: true },
   password: String
 }, { timestamps: true });
 
@@ -94,197 +94,645 @@ function closerBot(message, business, lead) {
 
   if (!lead) lead = {};
 
-  // 🔥 Blindaje inicial contra nulos
+  // 🔥 doble blindaje real
   if (!lead.notes || typeof lead.notes !== "object" || lead.notes === null) {
     lead.notes = {};
   }
 
   if (!message) message = "";
 
-  // 🚨 CONTINGENCIA: Si el negocio no tiene nodos configurados
-  if (!business.nodes || business.nodes.length === 0) {
-    return {
-      reply: business.welcomeMessage || "¡Hola! Bienvenido.",
-      options: [],
-      showInput: false,
-      inputType: "none"
-    };
-  }
+  const getGenderWord = () => {
+    return "";
+  };
 
-  // ==========================================
-  // ⚡ MOTOR DINÁMICO REPARADO (CLIPSY)
-  // ==========================================
-  let currentNode = null;
+// 🔥 PARSEADOR UNIVERSAL TESTIMONIOS (CORREGIDO PARA MEDIA Y LINKS DRIVE)
+  const formatTestimonials = () => {
+    if (!business.testimonials || !business.testimonials.length) return "";
 
-  // 1. Determinar el nodo actual o el inicio del grafo
-  if (!lead.stage || lead.stage === "" || message.toLowerCase() === "start" || message.toLowerCase() === "hola") {
-    
-    // Buscamos el nodo de inicio de forma flexible
-    currentNode = business.nodes.find(n => 
-      String(n.id || n._id) === "start" || 
-      (n.data && String(n.data.customId) === "start") ||
-      String(n.id || n._id) === "node_start"
-    );
+    return business.testimonials.map(t => {
 
-    // Si no encuentra un nodo explícito "start", tomamos el primero del canvas
-    if (!currentNode && business.nodes.length > 0) {
-      currentNode = business.nodes[0];
-    }
-    
-    lead.stage = currentNode ? String(currentNode.id || currentNode._id) : "";
-  } else {
-    // Búsqueda tolerante del nodo actual convirtiendo a String
-    currentNode = business.nodes.find(n => String(n.id || n._id) === String(lead.stage));
-    if (!currentNode) {
-      currentNode = business.nodes[0];
-      lead.stage = currentNode ? String(currentNode.id || currentNode._id) : "";
-    }
-  }
+      // compatibilidad vieja (strings)
+      if (typeof t === "string") return t.trim(); 
 
-  if (!currentNode) {
-    return {
-      reply: business.welcomeMessage || "¡Hola! Escribe 'hola' para iniciar.",
-      options: [],
-      showInput: false,
-      inputType: "none"
-    };
-  }
-
-  // 2. Procesar transiciones cuando el cliente responde o pulsa un botón
-  if (lead.stage && message.toLowerCase() !== "start" && message.toLowerCase() !== "hola") {
-    
-    const connections = business.connections || [];
-
-    console.log("================================");
-    console.log("MENSAJE:", message);
-    console.log("LEAD STAGE:", lead.stage);
-    console.log("CURRENT NODE:", currentNode);
-    console.log("CONNECTIONS:", connections);
-    console.log("================================");
-
-    // 🔥 FIX CRÍTICO: Comparamos limpiando el prefijo "node_" si existe en cualquiera de los dos lados
-    const connection = connections.find(c => {
-      const cleanSourceId = String(c.sourceNodeId).replace("node_", "");
-      const cleanCurrentId = String(currentNode.id || currentNode._id).replace("node_", "");
-      
-      return cleanSourceId === cleanCurrentId && 
-             c.conditionValue && 
-             c.conditionValue.toLowerCase().trim() === message.toLowerCase().trim();
-    });
-
-    if (connection) {
-      const nextNode = business.nodes.find(n => {
-        connections.forEach(c => {
-
-          const cleanSourceId =
-            String(c.sourceNodeId).replace("node_", "");
-
-          const cleanCurrentId =
-            String(currentNode.id || currentNode._id)
-              .replace("node_", "");
-
-          console.log({
-            sourceNodeId: c.sourceNodeId,
-            currentNodeId: currentNode.id || currentNode._id,
-            cleanSourceId,
-            cleanCurrentId,
-            conditionValue: c.conditionValue,
-            message
-          });
-
-        });
-        const cleanTargetId = String(connection.targetNodeId).replace("node_", "");
-        const cleanNodeId = String(n.id || n._id).replace("node_", "");
-        return cleanTargetId === cleanNodeId;
-      });
-
-      if (nextNode) {
-        currentNode = nextNode;
-        lead.stage = String(nextNode.id || nextNode._id);
-      }
-    } else {
-      // Si el nodo actual requería entrada de texto libre (Name, Phone, etc)
-      if (currentNode.inputType && currentNode.inputType !== 'none') {
-        if (currentNode.inputType === "name") lead.name = message;
-        if (currentNode.inputType === "phone") lead.phone = message;
-
-        // Buscamos la conexión lineal de salida limpiando los prefijos "node_"
-        const linearConnection = connections.find(c => {
-          const cleanSourceId = String(c.sourceNodeId).replace("node_", "");
-          const cleanCurrentId = String(currentNode.id || currentNode._id).replace("node_", "");
-          return cleanSourceId === cleanCurrentId;
-        });
-
-        if (linearConnection) {
-          const nextNode = business.nodes.find(n => {
-            const cleanTargetId = String(linearConnection.targetNodeId).replace("node_", "");
-            const cleanNodeId = String(n.id || n._id).replace("node_", "");
-            return cleanTargetId === cleanNodeId;
-          });
-
-          if (nextNode) {
-            currentNode = nextNode;
-            lead.stage = String(nextNode.id || nextNode._id);
-          }
+      // nuevo formato
+      if (t.type === "text") {
+        // Si el texto es un link (como los de Drive), lo enviamos limpio sin el emoji
+        // para que el frontend lo detecte como media/link automáticamente
+        if (t.content.trim().startsWith("http")) {
+          return t.content.trim();
         }
-      } else {
-        // Fallback si el texto enviado no coincide con ningún botón
-        const currentOptions = connections
-          .filter(c => {
-            const cleanSourceId = String(c.sourceNodeId).replace("node_", "");
-            const cleanCurrentId = String(currentNode.id || currentNode._id).replace("node_", "");
-            return cleanSourceId === cleanCurrentId && c.conditionValue && c.conditionValue !== '';
-          })
-          .map(c => ({ label: c.conditionValue, value: c.conditionValue }));
-
-        return {
-          reply: "Por favor, selecciona una de las opciones válidas del menú para poder ayudarte.",
-          options: currentOptions,
-          showInput: currentNode.inputType !== 'none',
-          inputType: currentNode.inputType || "none"
-        };
+        return `💬 ${t.content}`;
       }
+      
+      if (t.type === "image") return t.content.trim(); // Enviamos solo la URL para que el frontend la renderice
+      if (t.type === "video") return t.content.trim(); // Enviamos solo la URL para que el frontend la renderice
+
+      return "";
+    }).join("\n\n");
+  };
+
+  // ==========================================
+  // 🔥 FILTRO GLOBAL "WAIT" (FIX PRIORITARIO)
+  // ==========================================
+  if (message === "wait") {
+    
+    let waitAction = lead.user_goal === "money" ? "la oportunidad de generar ingresos" : (lead.user_goal === "hobby" ? "la oportunidad de empezar algo para ti" : "esta oportunidad de aprender");
+    let waitText = lead.user_goal === "money" ? "tu estabilidad" : (lead.user_goal === "hobby" ? "tu momento de relax" : "tu aprendizaje");
+
+    reply = `Pensarlo no cambia nada. Decidir sí. 
+
+¿Vas a dejar pasar ${waitAction} hoy o vas a seguir postergando ${waitText}?`;
+
+    options = [
+      { label: "🔥 Entrar ahora", value: "push_close" },
+      { label: "🤔 Dudar", value: "objection_doubt" }
+    ];
+
+    return { reply, options, showInput: false };
+  }
+
+  // ==========================================
+  // 🔥 FILTRO GLOBAL "DUDAR" (PREVIENE CRASH)
+  // ==========================================
+  if (
+    message === "objection_doubt" || 
+    message === "objection_doubt_alt1" || 
+    message === "objection_doubt_alt2" ||
+    message === "action_doubt"
+  ) {
+
+    // MEJORA FLUJO DINERO EN DUDA
+    if (lead.user_goal === "money") {
+      reply = `La duda es el enemigo número uno de tu cuenta bancaria, ${lead.name}. 
+
+Mientras lo piensas, otros ya están aplicando el sistema y cobrando sus primeras comisiones. El miedo no paga facturas, las decisiones sí.
+
+Mira a los que dejaron la duda atrás:
+
+${formatTestimonials() || "Nuestros alumnos ya están facturando."}
+
+¿Vas a ver cómo otros lo logran o vas a ser tú el siguiente?`;
+    } else {
+      reply = `La duda no desaparece pensando… desaparece actuando.
+
+Muchas personas tenían miedo al fracaso, pero mira cómo lograron avanzar aplicando el sistema:
+
+${formatTestimonials() || "Nuestros alumnos ya están viendo resultados."}
+
+¿Avanzas o te quedas donde estás?`;
+    }
+
+    options = [
+      { label: "🔥 Avanzar", value: "push_close" },
+      { label: "😕 Esperar", value: "wait" }
+    ];
+
+    return { reply, options, showInput: false };
+  }
+
+  // =========================
+  // 🔥 START (PEDIR NOMBRE)
+  // =========================
+  if (message === "start") {
+
+    reply = `Hola 💖
+
+antes de empezar…
+
+¿cómo te llamas?`;
+
+    options = [];
+
+    lead.stage = "ask_name";
+
+    return {
+      reply,
+      options,
+      showInput: true,
+      inputType: "name"
+    };
+  }
+
+  // =========================
+  // 🔥 CAPTURAR NOMBRE
+  // =========================
+  else if (lead.stage === "ask_name") {
+
+    lead.name = message;
+
+    reply = `Mucho gusto ${lead.name} 💖
+
+me alegra verte aquí ✨
+
+quiero entender mejor algo 👇
+
+¿qué te gustaría lograr realmente con esto?`;
+
+    options = [
+      { label: "💰 Ganar dinero", value: "money" },
+      { label: "🎨 Hacerlo por hobby", value: "hobby" },
+      { label: "🧠 Aprender algo nuevo", value: "learn" }
+    ];
+
+    lead.stage = "interest";
+
+    return {
+      reply,
+      options,
+      showInput: false
+    };
+  }
+
+  // =========================
+  // 🔥 FLUJOS SEPARADOS
+  // =========================
+  else if (lead.stage === "interest") {
+
+    const testimonialsText = formatTestimonials()
+      ? "\n\n🔥 Mira lo que dicen otros:\n\n" + formatTestimonials()
+      : "";
+
+    if (message === "money") {
+      lead.user_goal = "money"; // Guardamos la meta
+      reply = `Brutal ${lead.name} 💰
+
+Elegiste el camino de los resultados. La mayoría de alumnos empiezan aquí con hambre de libertad financiera.
+
+Este sistema no es para "probar", es para ejecutar y facturar cada semana. Aquí no vendemos humo, vendemos un método que funciona si tú funcionas ✨.${testimonialsText}
+
+dime 👇
+
+¿ya intentaste vender algo antes?`;
+
+      options = [
+        { label: "Sí", value: "money_sold_before" },
+        { label: "No", value: "money_first_time" }
+      ];
+
+      lead.stage = "money_flow";
+
+      return { reply, options, showInput: false };
+    }
+
+    if (message === "hobby") {
+      lead.user_goal = "hobby"; // Guardamos la meta
+      let hobbyText = business.type === "creativo"
+        ? "crear cosas con tus manos, relajarte y desconectarte del estrés"
+        : "aprender algo nuevo, estimular tu mente y disfrutar el proceso";
+
+      reply = `Me encanta eso ${lead.name} 💖
+
+porque cuando lo haces por hobby…
+
+lo haces por ti.
+
+sin presión,
+sin estrés,
+solo disfrutando ✨
+
+muchas personas usan esto para:
+
+${hobbyText}${testimonialsText}
+
+¿te gustaría vivir eso?`;
+
+      options = [
+        { label: "😍 Sí, me encantaría", value: "hobby_yes" },
+        { label: "🤔 No estoy seguro", value: "hobby_doubt" }
+      ];
+
+      lead.stage = "hobby_flow";
+
+      return { reply, options, showInput: false };
+    }
+
+    if (message === "learn") {
+      lead.user_goal = "learn"; // Guardamos la meta
+      reply = `Excelente decisión ${lead.name} 🧠
+
+aprender algo nuevo cambia completamente tu forma de pensar.
+
+muchas personas empiezan sin saber nada…
+
+y en pocas semanas ya entienden cosas que antes parecían imposibles.
+
+no necesitas experiencia.
+
+solo empezar.${testimonialsText}
+
+dime 👇
+
+¿te gustaría aprender desde cero paso a paso?`;
+
+      options = [
+        { label: "💖 Sí, desde cero", value: "learn_yes" },
+        { label: "🤔 Tengo dudas", value: "learn_doubt" }
+      ];
+
+      lead.stage = "learn_flow";
+
+      return { reply, options, showInput: false };
     }
   }
 
-  // Reemplazar la variable del nombre del lead de forma dinámica si ya existe en memoria
-  let dynamicReply = currentNode.content || "";
-  if (lead.name) {
-    dynamicReply = dynamicReply.replace(/{name}/g, lead.name).replace(/\${lead.name}/g, lead.name);
+  // =========================
+  // 💰 CONTINUACIÓN DINERO (RE-DISEÑADO MORTAL)
+  // =========================
+  else if (lead.stage === "money_flow") {
+
+    if (message === "money_sold_before") {
+      reply = `Perfecto ${lead.name} 💰
+
+¡Eso es una ventaja enorme! Si ya tienes experiencia, este sistema es la pieza del rompecabezas que te faltaba para profesionalizar y escalar tus ganancias. 
+
+Vas a dejar de "intentar" y vas a empezar a facturar con una estructura probada.
+
+Imagina este escenario 👇 en solo 30 días ya viendo cómo entran tus propios resultados por aplicar el método.
+
+🔥 Mira la facturación de los que ya están dentro:
+${formatTestimonials() || "Nuestros alumnos ya están escalando sus ventas."}
+
+¿Estás listo para dejar de jugar y empezar a construir tu libertad hoy mismo?`;
+
+      options = [
+        { label: "🚀 ¡SÍ, QUIERO FACTURAR!", value: "push_close" },
+        { label: "🤔 Tengo algunas dudas", value: "action_doubt" }
+      ];
+
+      lead.stage = "pre_action";
+      return { reply, options, showInput: false };
+    }
+
+    if (message === "money_first_time") {
+      reply = `Excelente ${lead.name} 💰
+
+Que sea tu primera vez es lo mejor que te puede pasar. No tienes vicios de otros métodos que no sirven. Vas a aprender el sistema correcto desde cero.
+
+Aquí no necesitas ser un experto en ventas... necesitas decisión y seguir el paso a paso.
+
+Imagina esto 👇 en 30 días, mirando atrás y agradeciendo el haber empezado hoy.
+
+🔥 Mira lo que logran personas que empezaron exactamente como tú:
+${formatTestimonials() || "Alumnos desde cero ya están cobrando sus primeras ganancias."}
+
+¿Estás listo para que este sea el inicio de tus propios resultados?`;
+
+      options = [
+        { label: "🚀 ¡SÍ, QUIERO EMPEZAR!", value: "push_close" },
+        { label: "🤔 Tengo algunas dudas", value: "action_doubt" }
+      ];
+
+      lead.stage = "pre_action";
+      return { reply, options, showInput: false };
+    }
   }
 
-  // 🔥 FIX CRÍTICO: Recolectar opciones de salida limpiando el prefijo "node_"
-  const safeConnections = business.connections || [];
-  const nextOptions = safeConnections
-    .filter(c => {
-      const cleanSourceId = String(c.sourceNodeId).replace("node_", "");
-      const cleanCurrentId = String(currentNode.id || currentNode._id).replace("node_", "");
-      
-      return cleanSourceId === cleanCurrentId && 
-             c.conditionValue && 
-             c.conditionValue !== '';
-    })
-    .map(c => ({
-      label: c.conditionValue,
-      value: c.conditionValue
-    }));
+  // =========================
+  // 🎨 CONTINUACIÓN HOBBY
+  // =========================
+  else if (lead.stage === "hobby_flow") {
 
-  // Trigger finalizador de WhatsApp
-  if (currentNode.type === 'whatsapp_trigger') {
+    if (message === "hobby_yes") {
+
+      reply = `Es una sensación increíble 💖
+
+muchas personas empiezan así…
+
+y terminan enamoradas del proceso 😍
+
+🔥 mira esto:
+${formatTestimonials() || ""}
+
+¿te gustaría aprender paso a paso aunque empieces desde cero?`;
+
+      options = [
+        { label: "💖 Sí", value: "hobby_start" },
+        { label: "🤔 Tengo dudas", value: "hobby_doubt" }
+      ];
+
+      return { reply, options, showInput: false };
+    }
+
+    if (message === "hobby_doubt") {
+
+      reply = `Es normal dudar 💖
+
+pero aquí no necesitas experiencia…
+
+solo ganas de probar.
+
+🔥 otros ya empezaron:
+${formatTestimonials() || ""}
+
+¿quieres intentarlo?`;
+
+      options = [
+        { label: "💖 Sí", value: "hobby_start" },
+        { label: "😕 Prefiero esperar", value: "wait" }
+      ];
+
+      return { reply, options, showInput: false };
+    }
+
+    if (message === "hobby_start") {
+
+      reply = `Perfecto 💖
+
+imagina tu primera creación terminada…
+
+y la satisfacción de haberlo logrado ✨
+
+¿quieres empezar hoy?`;
+
+      options = [
+        { label: "🔥 Sí", value: "push_close" },
+        { label: "🤔 Aún no", value: "wait" }
+      ];
+
+      lead.stage = "pre_action";
+
+      return { reply, options, showInput: false };
+    }
+  }
+
+  // =========================
+  // 🧠 CONTINUACIÓN APRENDER
+  // =========================
+  else if (lead.stage === "learn_flow") {
+
+    if (message === "learn_yes") {
+
+      reply = `Perfecto ${lead.name} 🧠
+
+vas a avanzar más rápido de lo que crees.
+
+cuando tienes una guía paso a paso…
+
+todo se vuelve mucho más fácil.
+
+🔥 mira resultados reales:
+${formatTestimonials() || ""}
+
+¿quieres empezar hoy mismo?`;
+
+      options = [
+        { label: "🔥 Sí", value: "push_close" },
+        { label: "🤔 Aún no", value: "wait" }
+      ];
+
+      lead.stage = "pre_action";
+
+      return { reply, options, showInput: false };
+    }
+
+    if (message === "learn_doubt") {
+
+      reply = `Es normal tener dudas.
+
+pero no necesitas saberlo todo para empezar.
+
+solo dar el primer paso.
+
+🔥 otros ya lo hicieron:
+${formatTestimonials() || ""}
+
+¿quieres intentarlo?`;
+
+      options = [
+        { label: "💖 Sí", value: "push_close" },
+        { label: "😕 Prefiero esperar", value: "wait" }
+      ];
+
+      lead.stage = "pre_action";
+
+      return { reply, options, showInput: false };
+    }
+  }
+
+  // =========================
+  // 🔥 FASE DE TRANSICIÓN A OBJECIONES
+  // =========================
+  else if (lead.stage === "pre_action" && message === "action_doubt") {
+
+    reply = `Te entiendo perfectamente. Es normal querer estar seguro antes de dar un gran paso.
+
+¿Qué es lo que te hace dudar ahora mismo?`;
+
+    options = [
+      { label: "💸 El dinero", value: "objection_money" },
+      { label: "⏳ El tiempo", value: "objection_time" },
+      { label: "🤔 Cómo funciona", value: "objection_doubt" }
+    ];
+
+    return { reply, options, showInput: false };
+  }
+
+  // =========================
+  // 🔥 OBJECIONES (CON COSTO DE OPORTUNIDAD)
+  // =========================
+  else if (message === "objection_money") {
+    
+    let moneyAction = lead.user_goal === "money" 
+      ? "invertirlo en tu libertad y ver cómo se multiplica"
+      : (lead.user_goal === "hobby" ? "dedicarlo a tu bienestar y algo que te apasiona" : "invertirlo en un conocimiento que te servirá para siempre");
+
+    if (lead.user_goal === "money") {
+      reply = `Te entiendo, ${lead.name}. Pero piénsalo así:
+
+Si hoy no tienes ${business.price || "46 USD"} para invertir en tu futuro, esa es exactamente la razón por la que NECESITAS entrar.
+
+Ese monto es lo que gastas en una cena que olvidas mañana. Aquí lo estás poniendo a trabajar para ti. 
+
+¿Vas a seguir gastando o vas a ${moneyAction}?`;
+    } else {
+      reply = `Te entiendo perfectamente ${lead.name}.
+
+Pero mira, el acceso cuesta ${business.price || "46 USD"}. 
+
+Eso es lo que te gastas en una cena o un par de salidas un fin de semana. La diferencia es que esto te va a dar resultados reales si aplicas lo que te enseñamos.
+
+¿Prefieres gastarlo o ${moneyAction}?`;
+    }
+
+    options = [
+      { label: "🔥 Invertir hoy", value: "push_close" },
+      { label: "🤔 Aún dudo", value: "objection_doubt_alt1" }
+    ];
+
+    return { reply, options, showInput: false };
+  }
+
+  else if (message === "objection_time") {
+
+    reply = `No es tiempo…
+
+es prioridad.
+
+¿quieres intentarlo ahora que el sistema está listo para ti?`;
+
+    options = [
+      { label: "💖 Sí", value: "push_close" },
+      { label: "🤔 No sé", value: "objection_doubt_alt2" }
+    ];
+
+    return { reply, options, showInput: false };
+  }
+
+  // ==========================================
+  // 🔥 CIERRE & MICRO-VALIDACIÓN (ACTUALIZADO)
+  // ==========================================
+  if (message === "push_close") {
+
+    let closeText = "";
+    if (lead.user_goal === "money") {
+      closeText = "lograr esa estabilidad y libertad económica que te mereces";
+    } else if (lead.user_goal === "hobby") {
+      closeText = "disfrutar de este hobby y desconectarte del mundo haciendo lo que te gusta";
+    } else {
+      closeText = "dominar esta nueva habilidad y aprender paso a paso";
+    }
+
+    reply = `Bien.
+
+Imagina esto 👇 ya dentro, avanzando, viendo cómo los resultados empiezan a llegar.
+
+¿Te hace sentido que para ${closeText} necesitas una herramienta profesional como esta?`;
+
+    options = [
+      { label: "😍 Sí, totalmente", value: "emotion_happy" },
+      { label: "🤩 Sí, es lo que necesito", value: "emotion_motivated" },
+      { label: "💖 Sí, vamos con todo", value: "emotion_proud" }
+    ];
+
+    // FIX: Actualizamos el stage para que el bot escuche los "emotion_"
+    lead.stage = "awaiting_emotion"; 
+
+    return { reply, options, showInput: false };
+  }
+
+  // ==========================================
+  // 🔥 MENSAJES DE DESEO (HYPE) (ACTUALIZADO)
+  // ==========================================
+  else if (lead.stage === "awaiting_emotion" && (message || "").startsWith("emotion_")) {
+
+    let hypeText = "";
+    if (lead.user_goal === "money") {
+      hypeText = "Despertar y ver notificaciones de ingresos en tu celular, sentir la paz de tener un sistema trabajando para ti y decir: 'Valió la pena tomar la decisión'.";
+    } else if (lead.user_goal === "hobby") {
+      hypeText = "Ese momento de paz donde estás creando algo con tus propias manos y te sientes feliz con el resultado.";
+    } else {
+      hypeText = "Sentir la satisfacción de que ahora sabes algo que antes parecía imposible y ver tu progreso real.";
+    }
+
+    reply = `¡Exacto! Esa visión es la que vamos a construir juntos ✨
+
+Esto ya no es una posibilidad, es el plan de acción para tu nueva realidad. ${hypeText}
+
+No vas a estar solo, Laura y todo el equipo te llevaremos de la mano.
+
+¿Estás listo para dar el paso que va a marcar un antes y un después en tu vida?`;
+
+    options = [
+      { label: "🚀 ¡SÍ, ESTOY LISTO!", value: "confirm_hype" },
+      { label: "🤔 Cuéntame un poco más", value: "more_hype" }
+    ];
+
+    lead.stage = "hype_desire";
+
     return {
-      reply: dynamicReply,
+      reply,
+      options,
+      showInput: false
+    };
+  }
+
+  else if (lead.stage === "hype_desire") {
+
+    if (message === "confirm_hype" || message === "more_hype") {
+
+      let finalBenefit = "";
+      if (lead.user_goal === "money") {
+        finalBenefit = "empezar a construir tu libertad económica hoy mismo ✨";
+      } else if (lead.user_goal === "hobby") {
+        finalBenefit = "empezar a disfrutar de tu nuevo hobby hoy mismo ✨";
+      } else {
+        finalBenefit = "convertirte en un experto en este tema paso a paso ✨";
+      }
+
+      reply = `Brutal 🔥
+
+Entonces no perdamos ni un segundo más. Mi compañera Laura ya tiene todo preparado para darte la bienvenida oficial. 
+
+Vas a recibir el acceso inmediato, los bonos exclusivos de acción rápida y el acompañamiento VIP.
+
+¿Tienes WhatsApp a la mano? Te enviaré un REGALO ESPECIAL si tomas acción en este momento. 
+
+⚠️ ATENCIÓN: Solo quedan 3 cupos con el bono de regalo y solo es válido por las próximas 2 horas. 
+
+Dime tu número para asegurar tu lugar y ${finalBenefit}`;
+
+      lead.stage = "capture_whatsapp";
+
+      return {
+        reply,
+        options: [],
+        showInput: true,
+        inputType: "phone"
+      };
+    }
+  }
+
+  // =========================
+  // 🔥 FIX CRÍTICO WHATSAPP & RETARGETING
+  // =========================
+  else if (lead.stage === "capture_whatsapp") {
+
+    if (/\d{7,}/.test(message)) {
+
+      lead.phone = message;
+
+      lead.stage = "action";
+
+      reply = `Listo.
+
+${business.productInfo}
+
+💰 ${business.price || "46 USD"}
+
+👉 ${business.productLink}
+
+🔥 ENVÍA TU COMPROBANTE AHORA MISMO POR WHATSAPP
+
+mi compañera Laura activará tu acceso inmediato
+
+🎁 además recibirás un SUPER BONO exclusivo
+
+⚠️ IMPORTANTE:
+Solo quedan 3 cupos para el bono de hoy. Si no envías el comprobante en las próximas 2 horas… pierdes el regalo especial.`;
+
+      return {
+        reply,
+        options: [],
+        showInput: false,
+        showWhatsApp: true,
+        whatsappNumber: business.whatsappNumber
+      };
+    }
+
+    // Mensaje de rescate si el input no es válido
+    return {
+      reply: `${lead.name || "Hola"}, ¿tuviste algún problema con el número? No quiero que pierdas tu cupo y el bono de regalo. Necesito tu número para enviarte los accesos ahora mismo.`,
       options: [],
-      showInput: false,
-      showWhatsApp: true,
-      whatsappNumber: business.whatsappNumber
+      showInput: true,
+      inputType: "phone",
+      showWhatsApp: false
     };
   }
 
   return {
-    reply: dynamicReply,
-    options: nextOptions,
-    showInput: currentNode.inputType !== 'none',
-    inputType: currentNode.inputType || "none"
+    reply,
+    options,
+    showInput: false
   };
 }
 // =========================
@@ -390,133 +838,182 @@ app.post("/register", async (req, res) => {
   }
 });
 
+// =========================
+// 🔐 LOGIN
+// =========================
 app.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
+
     const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ error: "Usuario no existe" });
+    if (!user) {
+      return res.status(400).json({ error: "Usuario no existe" });
+    }
 
     const valid = await bcrypt.compare(password, user.password);
-    if (!valid) return res.status(400).json({ error: "Contraseña incorrecta" });
+    if (!valid) {
+      return res.status(400).json({ error: "Contraseña incorrecta" });
+    }
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+    const token = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
     res.json({ token });
+
   } catch (error) {
-    // ESTO TE DIRÁ EL ERROR REAL EN LA CONSOLA DEL NAVEGADOR
-    res.status(500).json({ error: error.message }); 
+    console.error("LOGIN ERROR:", error);
+    res.status(500).json({ error: "Error en login" });
   }
 });
-// =========================
-// 🏢 CREAR NEGOCIO (CORREGIDO)
-// =========================
+
+// ==========================================
+// 🏢 CREAR NEGOCIO (ACTUALIZADO A VITRINA PREMIUM)
+// ==========================================
 app.post("/business", auth, async (req, res) => {
   try {
     const {
       name,
       slug,
-      logo,
+      logo, // Mapped como logoUrl si usas ese nombre en el modelo
       primaryColor,
       welcomeMessage,
-      productInfo,
-      productLink,
+      aiInstructions,   // 🧠 NUEVO: Reemplaza la lógica compleja de flujos
+      products,         // 🛍️ NUEVO: El array de productos del catálogo
       whatsappNumber,
       waMessage,
-      testimonials: testimonialsRaw,
-
-      // 🔥 AGREGAR ESTO
-      nodes = [],
-      connections = [],
-      flow = {}
-
+      testimonials: testimonialsRaw // Capturamos "testimonials" del front
     } = req.body;
 
-    let cleanSlug = (slug || "")
-      .toLowerCase()
-      .replace(/[^a-z0-9-]/g, "-")
-      .replace(/-+/g, "-")
-      .replace(/^-|-$/g, "");
+    // Limpiamos y normalizamos el slug para evitar caracteres extraños en la URL
+    const cleanSlug = slug.toLowerCase().replace(/[^a-z0-9-_]/g, '');
 
     const exists = await Business.findOne({ slug: cleanSlug });
-
     if (exists) {
       return res.json({ error: "Slug ya existe" });
     }
 
     let processedTestimonials = [];
 
+    // Verificamos si llegaron testimonios (mantenemos tu lógica intacta)
     if (testimonialsRaw && Array.isArray(testimonialsRaw)) {
-      if (
-        testimonialsRaw.length > 0 &&
-        typeof testimonialsRaw[0] === "object"
-      ) {
+      // Si el frontend ya mandó los objetos listos {type, content}
+      if (typeof testimonialsRaw[0] === 'object') {
         processedTestimonials = testimonialsRaw;
-      } else {
+      } 
+      // Si mandó solo texto (por si acaso), lo procesamos
+      else {
         processedTestimonials = testimonialsRaw
           .map(line => line.trim())
           .filter(line => line !== "")
           .map(content => {
             let type = "text";
-
-            if (content.match(/\.(mp4|mov|webm|mkv|youtube|youtu)/i)) {
-              type = "video";
-            } else if (
-              content.match(/\.(jpg|jpeg|png|gif|webp|imgur|cloudinary)/i)
-            ) {
-              type = "image";
-            }
-
-            return {
-              type,
-              content
-            };
+            if (content.match(/\.(mp4|mov|webm|mkv|youtube|youtu)/i)) type = "video";
+            else if (content.match(/\.(jpg|jpeg|png|gif|webp|imgur|cloudinary)/i)) type = "image";
+            return { type, content };
           });
       }
     }
 
+    // Procesamos y estructuramos los productos que vienen del front
+    // Nos aseguramos de que cumplan con la estructura de la vitrina
+    const processedProducts = Array.isArray(products) 
+      ? products.map(prod => ({
+          name: prod.name || "Producto sin nombre",
+          price: prod.price || "$0",
+          imageUrl: prod.imageUrl || prod.image || "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=400", // Imagen placeholder por si acaso
+          description: prod.description || "",
+          category: prod.category || "General",
+          isTopSeller: prod.isTopSeller || false
+        }))
+      : [];
+
     const business = await Business.create({
       name,
       slug: cleanSlug,
-      logo,
+      logoUrl: logo, // Lo asignamos a logoUrl para tu modelo
       primaryColor,
       welcomeMessage,
-      productInfo,
-      productLink,
+      aiInstructions: aiInstructions || "Eres un vendedor amable y persuasivo.", // Prompt base del sistema
+      products: processedProducts, // Guardamos el catálogo de productos listo
       whatsappNumber,
       userId: req.user.id,
-      waMessage,
-      testimonials: processedTestimonials,
-
-      // 🔥 ESTO ES LO QUE FALTABA
-      nodes,
-      connections,
-      flow
+      waMessage: waMessage || "Hola, quiero concretar mi pedido de",
+      testimonials: processedTestimonials // Guardamos el array procesado
     });
 
-    console.log("🔥 NODES GUARDADOS:", business.nodes?.length || 0);
-    console.log("🔥 CONNECTIONS GUARDADAS:", business.connections?.length || 0);
-    console.log(
-      "🔥 FLOW GUARDADO:",
-      Object.keys(business.flow || {}).length
-    );
-
-    const protocol =
-      req.headers["x-forwarded-proto"] || req.protocol;
-
-    const host = req.get("host");
+    console.log("🔥 TESTIMONIOS GUARDADOS:", business.testimonials);
+    console.log("🛍️ PRODUCTOS EN EL CATÁLOGO:", business.products.length);
 
     res.json({
-      message: "Negocio creado",
-      url: `${protocol}://${host}/${cleanSlug}`,
+      message: "Negocio creado exitosamente",
+      url: `https://ai-sales-chat.onrender.com/${cleanSlug}`, // Ajustado a la ruta limpia de la vitrina
       business
     });
 
   } catch (error) {
     console.error("BUSINESS ERROR:", error);
-    res.status(500).json({
-      error: "Error al crear negocio"
-    });
+    res.status(500).json({ error: "Error al crear negocio" });
   }
 });
+
+// Obtener información pública del negocio y catálogo por su Slug
+app.get('/public/business/:slug', async (req, res) => {
+  try {
+    const business = await Business.findOne({ slug: req.params.slug.toLowerCase() });
+    if (!business) return res.status(404).json({ error: "Negocio no encontrado" });
+    
+    // Retornamos únicamente los datos necesarios (excluyendo API keys por seguridad)
+    res.json({
+      name: business.name,
+      slug: business.slug,
+      logoUrl: business.logoUrl,
+      whatsappNumber: business.whatsappNumber,
+      waMessage: business.waMessage,
+      products: business.products
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+app.post('/chat', async (req, res) => {
+  try {
+    const { businessId, message } = req.body;
+    const business = await Business.findById(businessId);
+    if (!business) return res.status(404).json({ error: "Negocio no existente" });
+
+    // 🧠 Construimos el prompt del sistema usando las instrucciones directas y el inventario real
+    const systemPrompt = `
+      Eres el cerrador de ventas y asistente virtual de la tienda "${business.name}".
+      
+      Instrucciones de comportamiento y políticas:
+      ${business.aiInstructions}
+      
+      Este es el catálogo de productos disponible en la tienda para asesorar al cliente. Úsalo para responder precios, descripciones y disponibilidad:
+      ${JSON.stringify(business.products)}
+      
+      REGLAS DE RESPUESTA:
+      1. Sé persuasivo, amable y enfócate en concretar la venta.
+      2. No inventes productos que no estén en el catálogo anterior.
+      3. Mantén tus respuestas relativamente cortas y conversacionales.
+    `;
+
+    // Aquí haces tu llamada normal a OpenAI usando "systemPrompt" como developer/system message
+    // y el "message" enviado por el usuario en la vitrina.
+    
+    // const response = await openai.chat.completions.create({ ... });
+    // res.json({ reply: response.choices[0].message.content });
+    
+    res.json({ reply: "Respuesta simulada del bot basada en las nuevas instrucciones" }); // Reemplazar con tu llamada real
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // =========================
 // 📦 CLONAR TEMPLATE
 // =========================
@@ -538,10 +1035,7 @@ app.post("/clone-template/:id", auth, async (req, res) => {
       productLink: template.productLink,
       whatsappNumber: template.whatsappNumber,
       userId: req.user.id,
-      isTemplate: false,
-
-      nodes: template.nodes || [],
-      connections: template.connections || []
+      isTemplate: false
     });
 
     res.json({
@@ -610,38 +1104,6 @@ app.get("/business/:slug", async (req, res) => {
 });
 
 // =========================
-// 🏢 GET BUSINESS BY ID (EDITAR NEGOCIO)
-// =========================
-app.get("/business-edit/:id", auth, async (req, res) => {
-  try {
-
-    const business = await Business.findById(req.params.id);
-
-    if (!business) {
-      return res.status(404).json({
-        error: "Negocio no encontrado"
-      });
-    }
-
-    if (business.userId !== req.user.id) {
-      return res.status(403).json({
-        error: "No autorizado"
-      });
-    }
-
-    res.json(business);
-
-  } catch (error) {
-
-    console.error("GET BUSINESS BY ID ERROR:", error);
-
-    res.status(500).json({
-      error: "Error obteniendo negocio"
-    });
-  }
-});
-
-// =========================
 // 🏢 MIS NEGOCIOS
 // =========================
 app.get("/my-businesses", auth, async (req, res) => {
@@ -678,10 +1140,7 @@ app.post("/chat", async (req, res) => {
 
     let lead = leadId
       ? await Lead.findById(leadId)
-      : await Lead.create({
-          businessId,
-          stage: "attention"
-        });
+      : await Lead.create({ businessId, stage: "attention" });
 
     if (!lead.stage) {
       lead.stage = "attention";
@@ -704,44 +1163,6 @@ app.post("/chat", async (req, res) => {
       content: message
     });
 
-    // =========================
-    // START NODE
-    // =========================
-    if (message === "start") {
-      const startNode =
-        business.nodes?.find(
-          n =>
-            n.type === "start" ||
-            n.id === "start"
-        );
-
-      if (startNode) {
-        await Message.create({
-          conversationId: conversation._id,
-          role: "assistant",
-          content: startNode.content || ""
-        });
-
-        return res.json({
-          reply: startNode.content || "",
-          options: (startNode.options || []).map(opt => ({
-            label: opt,
-            value: opt
-          })),
-          leadId: lead._id,
-          conversationId: conversation._id,
-          showWhatsApp: false,
-          whatsappNumber: business.whatsappNumber,
-          showInput:
-            startNode.inputType &&
-            startNode.inputType !== "none",
-          inputType:
-            startNode.inputType || "text",
-          testimonials: business.testimonials
-        });
-      }
-    }
-
     if (lead.stage === "action") {
       if (!lead.name && message.length < 30 && !message.includes("@")) {
         lead.name = message;
@@ -756,7 +1177,7 @@ app.post("/chat", async (req, res) => {
       }
     }
 
-    // 🔥 AQUI LLAMAS TU BOT
+    // 🔥 AQUI LLAMAS TU BOT (NUEVO)
     const result = closerBot(message, business, lead);
 
     console.log("🔥 RESULT BOT:", result);
@@ -791,8 +1212,11 @@ app.post("/chat", async (req, res) => {
       conversationId: conversation._id,
       showWhatsApp,
       whatsappNumber: business.whatsappNumber,
+
       showInput,
       inputType,
+
+      // 🔥 DEBUG EXTRA (NO ROMPE NADA)
       testimonials: business.testimonials
     });
 
@@ -889,12 +1313,7 @@ app.put("/business/:id", auth, async (req, res) => {
 
     const updated = await Business.findByIdAndUpdate(
       req.params.id,
-      {
-        ...req.body,
-
-        nodes: req.body.nodes || business.nodes || [],
-        connections: req.body.connections || business.connections || []
-      },
+      req.body,
       { new: true }
     );
 
@@ -1077,168 +1496,33 @@ app.post("/upload-testimonial", upload.single("file"), async (req, res) => {
 
 
 
-// =========================================
-// 🗑️ DELETE LEAD
-// =========================================
-
-app.delete("/lead/:id", auth, async(req,res)=>{
-
-  try{
-
-    await Lead.findByIdAndDelete(req.params.id);
-
-    res.json({
-      success:true
-    });
-
-  }catch(err){
-
-    console.error(err);
-
-    res.status(500).json({
-      error:"Error eliminando lead"
-    });
-  }
-});
-
-// =========================
-// ✅ MARCAR LEAD COMO VENDIDO
-// =========================
-
-app.put("/lead/status/:id", auth, async (req,res)=>{
-
-  try{
-
-    console.log("BODY:", req.body);
-
-    const lead = await Lead.findById(req.params.id);
-
-    if(!lead){
-
-      return res.status(404).json({
-        error:"Lead no encontrado"
-      });
-    }
-
-    // 🔥 FIX CRÍTICO
-    lead.sold = Boolean(req.body.sold);
-
-    await lead.save();
-
-    res.json({
-      success:true,
-      lead
-    });
-
-  }catch(error){
-
-    console.error("UPDATE LEAD STATUS ERROR:", error);
-
-    res.status(500).json({
-      error:error.message
-    });
-  }
-});
-
 // =========================
 // 🚀 SERVER
 // =========================
 const PORT = process.env.PORT || 3000;
 
-app.set("trust proxy", 1);
-
-// =========================
-// 📦 STATIC FILES
-// =========================
-app.use(express.static(path.join(__dirname, "public")));
-
-// =========================
-// 🌐 DASHBOARD
-// =========================
-app.get("/dashboard", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "dashboard.html"));
+app.listen(PORT, () => {
+  console.log(`🔥 Servidor corriendo en puerto ${PORT}`);
 });
 
 // =========================
-// 🌐 CRM
+// 🌐 PÁGINAS
 // =========================
+
+app.use(express.static("public"));
+
+// CRM
 app.get("/crm/:slug", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "crm.html"));
 });
 
-// =========================
-// 🌐 CHAT
-// =========================
+// CHAT
 app.get("/chat/:slug", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "chat.html"));
 });
 
-// =========================
-// 🔥 LANDING DINÁMICA
-// =========================
-app.get("/:slug", async (req, res, next) => {
-
-  const slug = req.params.slug;
-
-  const protectedRoutes = [
-    "dashboard",
-    "crm",
-    "chat",
-    "login",
-    "register",
-    "business",
-    "conversation",
-    "analytics",
-    "my-businesses",
-    "upload-testimonial",
-    "ai-closer"
-  ];
-
-  // 🔥 NO TOCAR RUTAS DEL SISTEMA
-  if (protectedRoutes.includes(slug)) {
-    return next();
-  }
-
-  // 🚨 FIX CRÍTICO: evitar que API caiga aquí
-  // (esto evita que /business/:id o rutas similares entren como landing)
-  if (
-    slug.includes("business") ||
-    slug.includes("api") ||
-    slug.includes("upload") ||
-    slug.includes("conversation") ||
-    slug.includes("analytics")
-  ) {
-    return next();
-  }
-
-  try {
-
-    console.log("🔥 SLUG LANDING:", slug);
-
-    const business = await Business.findOne({ slug });
-
-    console.log("🔥 BUSINESS ENCONTRADO:", business);
-
-    if (!business) {
-      return res.status(404).send("Negocio no encontrado");
-    }
-
-    // 🔥 SERVIR CHAT.HTML
-    return res.sendFile(
-      path.join(__dirname, "public", "chat.html")
-    );
-
-  } catch (err) {
-
-    console.error("❌ FALLBACK ERROR:", err);
-
-    return res.status(500).send("Error servidor");
-  }
+// 🔥 IMPORTANTE: esto SIEMPRE de último
+app.get("/:slug", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "chat.html"));
 });
-// =========================
-// 🚀 START
-// =========================
-app.listen(PORT, () => {
-  console.log(`🔥 Servidor corriendo en puerto ${PORT}`);
-});
-  
+
