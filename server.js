@@ -28,7 +28,8 @@ const userSchema = new mongooseUser.Schema({
   password: String
 }, { timestamps: true });
 
-const User = mongooseUser.model("User", userSchema);
+// Evitamos registrar el modelo dos veces si hay recargas en caliente
+const User = mongooseUser.models.User || mongooseUser.model("User", userSchema);
 
 const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 const multer = require("multer");
@@ -48,12 +49,37 @@ const upload = multer({ storage: multer.memoryStorage() });
 // =========================
 // 🧱 MIDDLEWARES
 // =========================
-app.use(cors());
 
-// 🔥 FIX 413 ERROR
+// 🔥 CONFIGURACIÓN DE CORS ULTRA COMPATIBLE
+const allowedOrigins = [
+  "https://chat.prestigecloser.com",
+  "https://prestigecloser.com",
+  "https://ai-sales-chat.onrender.com",
+  "https://e4c90577.prestigecloser.pages.dev" // Tu Cloudflare Pages de la Vitrina
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // Permitimos peticiones sin origen (como Postman o llamadas directas del server)
+    if (!origin) return callback(null, true);
+    
+    // Si el origen está en la lista o es local para tus pruebas en casa
+    if (allowedOrigins.indexOf(origin) !== -1 || origin.startsWith("http://localhost")) {
+      callback(null, true);
+    } else {
+      callback(new Error("Bloqueado por políticas de CORS de Prestige Closer"));
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
+// 🔥 FIX 413 ERROR & JSON PARSING
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
 
+// Servir archivos estáticos de la carpeta public
 app.use(express.static("public"));
 
 // =========================
@@ -62,7 +88,6 @@ app.use(express.static("public"));
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB conectado"))
   .catch(err => console.log("❌ Error MongoDB:", err));
-
 // =========================
 // 🔐 AUTH MIDDLEWARE
 // =========================
