@@ -1508,6 +1508,31 @@ app.listen(PORT, () => {
   console.log(`🔥 Servidor corriendo en puerto ${PORT}`);
 });
 
+// ========================================================
+// 🔌 ENDPOINTS DE LA API (DEBEN IR ARRIBA DE LAS PÁGINAS)
+// ========================================================
+
+// Endpoint para obtener los datos del negocio por su slug (ej: "default")
+app.get("/business/slug/:slug", async (req, res) => {
+  try {
+    const { slug } = req.params;
+    
+    // Buscamos el negocio en la base de datos usando tu modelo 'Business'
+    const business = await Business.findOne({ slug });
+    
+    // Si no existe, respondemos con JSON para que el frontend lo maneje y no devuelva un HTML
+    if (!business) {
+      return res.status(404).json({ error: "Negocio no encontrado" });
+    }
+    
+    // Si existe, enviamos los datos del negocio en formato JSON
+    return res.json(business);
+  } catch (error) {
+    console.error("❌ Error al cargar el negocio por slug:", error);
+    return res.status(500).json({ error: "Error interno del servidor al buscar el negocio" });
+  }
+});
+
 // =========================
 // 🌐 PÁGINAS
 // =========================
