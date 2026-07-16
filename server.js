@@ -1125,29 +1125,23 @@ app.get("/my-businesses", auth, async (req, res) => {
   }
 });
 
-// =========================
-// 💬 CHAT
-// =========================
+// =========================================
+// 💬 CHAT (TOTALMENTE LIMPIO - SIN TESTIMONIOS)
+// =========================================
 app.post("/chat", async (req, res) => {
-  const { message, leadId, conversationId, businessId } = req.body; //
+  const { message, leadId, conversationId, businessId } = req.body; //[cite: 1]
 
   try {
-    if (!businessId) { //
-      return res.status(400).json({ error: "businessId requerido" }); //
+    if (!businessId) { //[cite: 1]
+      return res.status(400).json({ error: "businessId requerido" }); //[cite: 1]
     }
 
     const business = await Business.findById(businessId); //[cite: 1]
 
     console.log("🔥 BUSINESS:", business); //[cite: 1]
-    console.log("🔥 TESTIMONIOS EN BD:", business?.testimonials); //[cite: 1]
 
     if (!business) { //[cite: 1]
       return res.status(404).json({ error: "Negocio no existe" }); //[cite: 1]
-    }
-
-    // 🛡️ DOBLE BLINDAJE: Si el negocio no tiene testimonios en BD, aseguramos un array vacío
-    if (!business.testimonials) {
-      business.testimonials = [];
     }
 
     let lead = leadId //[cite: 1]
@@ -1189,7 +1183,7 @@ app.post("/chat", async (req, res) => {
       }
     }
 
-    // 🔥 AQUI LLAMAS TU BOT (Ya viaja con business.testimonials seguro)
+    // 🔥 LLAMADA AL BOT (Sin arrastrar lógica de testimonios)
     const result = closerBot(message, business, lead); //[cite: 1]
 
     console.log("🔥 RESULT BOT:", result); //[cite: 1]
@@ -1226,10 +1220,7 @@ app.post("/chat", async (req, res) => {
       whatsappNumber: business.whatsappNumber, //[cite: 1]
 
       showInput, //[cite: 1]
-      inputType, //[cite: 1]
-
-      // 🔥 DEBUG EXTRA (NO ROMPE NADA)
-      testimonials: business.testimonials //[cite: 1]
+      inputType //[cite: 1]
     }); //[cite: 1]
 
   } catch (error) { //[cite: 1]
