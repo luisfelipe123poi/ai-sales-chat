@@ -973,6 +973,25 @@ app.post("/business", auth, async (req, res) => {
   }
 });
 
+// Agregar esto en tu archivo de rutas del Backend (Express)
+app.get('/business/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Buscar directamente por el ID de MongoDB
+    const business = await Business.findById(id); 
+
+    if (!business) {
+      return res.status(404).json({ error: "Negocio no encontrado por ID" });
+    }
+
+    res.json(business);
+  } catch (error) {
+    console.error("Error al obtener el negocio por ID:", error);
+    res.status(500).json({ error: "Error interno del servidor al buscar por ID" });
+  }
+});
+
 // RUTA PARA OBTENER UN NEGOCIO POR SU SLUG
 app.get('/business/slug/:slug', async (req, res) => {
     try {
@@ -1127,7 +1146,7 @@ app.get("/my-businesses", auth, async (req, res) => {
 });
 
 // =========================================
-// 💬 CHAT (TOTALMENTE LIMPIO - SIN TESTIMONIOS)
+// 💬 CHAT (TOTALMENTE UNIFICADO Y OPTIMIZADO)
 // =========================================
 app.post('/chat', async (req, res) => {
   try {
@@ -1178,36 +1197,36 @@ app.post('/chat', async (req, res) => {
       ? `Productos actuales en su carrito de compras: ${JSON.stringify(context.itemsEnCarrito)}`
       : "El carrito de compras del usuario está vacío actualmente.";
 
-    // 4. 🧠 El Prompt de Entrenamiento (¡Aquí está!)
+    // 4. 🧠 El Prompt de Entrenamiento Ultra-Conciso y Detallado
     const systemPrompt = `
-      Eres el cerrador de ventas y asistente virtual estrella de la tienda "${business.name}".
-      
-      Instrucciones de comportamiento y políticas personalizadas de la tienda:
-      ${business.aiInstructions || "Eres un vendedor amable y persuasivo."}
-      
-      Este es el catálogo de productos disponible en la tienda para asesorar al cliente. Úsalo para responder precios, descripciones y disponibilidad:
+      Eres un asesor de imagen de tienda física rápido, conciso y directo para "${business.name}". Tu meta es vender guiando al usuario en vivo de manera sumamente humana pero sin rodeos.
+
+      🚨 REGLA DE ORO DE BREVEDAD: Responde en MÁXIMO 2 o 3 líneas cortas. Sé directo, dinámico y ve al grano inmediatamente. Prohibido dar discursos largos, introducciones decorativas o textos redundantes.
+
+      🛍️ INVENTARIO REAL Y STOCK DISPONIBLE (ESTRICTO):
       ${JSON.stringify(business.products || [])}
       
+      ⚠️ CONTROL DE STOCK Y ENVÍOS EN VIVO: Revisa meticulosamente los campos de cada producto (tallas, colores, características y envío si están declarados). Si el cliente pregunta por disponibilidad, colores o materiales, usa esta información exacta. Si pide algo agotado o inexistente, infórmale inmediatamente de forma corta y sugiérele una alternativa que SÍ tengas en este catálogo.
+
       --------------------------------------------------
-      🚨 CONTEXTO DE NAVEGACIÓN EN TIEMPO REAL:
+      🚨 CONTEXTO DE NAVEGACIÓN EN TIEMPO REAL (Usa esto para responder de inmediato si el usuario es ambiguo):
       - ${viendoActualmente}
       - ${carritoActual}
       --------------------------------------------------
       
-      REGLAS DE COMPORTAMIENTO:
-      1. Sé persuasivo, empático, tutea al usuario y enfócate en concretar la venta de forma amigable.
-      2. No inventes productos. Si no lo tienes, sugiere la alternativa más parecida de tu catálogo.
-      3. Si el usuario hace preguntas ambiguas, asume que se refiere al producto que está viendo actualmente en pantalla.
-      4. Respuestas cortas, fluidas y muy conversacionales.
+      REGLAS DE INTERACCIÓN EN TIEMPO REAL:
+      1. Si preguntan tallas, colores o envíos, ve directo al grano basándote estrictamente en el inventario provisto arriba.
+      2. Si te piden consejos de combinación, sugiere un artículo real de la lista en una sola frase corta que use el estilo de la tienda.
+      3. Termina siempre con una pregunta de cierre rápida y proactiva: "¿Te la agregamos al carrito?", "¿Qué talla te reservamos?", o "¿Te pasamos con un asesor a WhatsApp?".
 
-      🔥 REGLAS DE ACCIÓN TÉCNICA (FORMATOS ESPECIALES):
-      - REGLA A (TARJETA INTERACTIVA DE COMPRA):
-        Si el usuario quiere comprar o cotizar un producto específico, añade de forma exacta al final de tu mensaje:
-        [TARJETA_PRODUCTO: {"nombre": "Nombre exacto del producto", "precio": "Precio"}]
+      🔥 REGLAS DE ACCIÓN TÉCNICA (OBLIGATORIAS - SIN MARKDOWN):
+      - REGLA A (INTERÉS COMPRA / RECOMENDACIÓN):
+        Si el usuario quiere comprar, cotizar o le estás recomendando un producto del catálogo, añade de forma exacta en la última línea:
+        [TARJETA_PRODUCTO: {"nombre": "Nombre exacto según catálogo", "precio": "Precio"}]
       
       - REGLA B (AGREGAR AL CARRITO):
-        Si el usuario dice "agrégamelo al carrito", "añádelo" o pide una talla, añade al final en la última línea:
-        [ACCION: {"tipo": "AGREGAR_CARRITO", "nombre": "Nombre exacto del producto", "precio": "Precio", "talla": "Talla especificada o M"}]
+        Si el usuario dice "lo quiero", "me lo llevo", "agrégalo" o confirma su talla para comprar, confirma alegremente y añade de forma exacta en la última línea:
+        [ACCION: {"tipo": "AGREGAR_CARRITO", "nombre": "Nombre exacto", "precio": "Precio", "talla": "Talla elegida o M"}]
     `;
 
     // 5. Llamada Real a OpenAI gpt-4o-mini
@@ -1217,7 +1236,7 @@ app.post('/chat', async (req, res) => {
         { role: "system", content: systemPrompt },
         { role: "user", content: message }
       ],
-      temperature: 0.6
+      temperature: 0.5 // Ajustado levemente hacia abajo para un apego más estricto a las reglas y stock
     });
 
     const reply = response.choices[0].message.content;
@@ -1240,7 +1259,7 @@ app.post('/chat', async (req, res) => {
     // 6. Control de UI dinámico para el Frontend (Evita que desaparezca el input erróneamente)
     const showWhatsApp = lead.stage === "action" && lead.name && (lead.phone || lead.email);
     
-    // Forzamos a que el input SIEMPRE se muestre (true) para que no se quite en tu pantalla
+    // Forzamos a que el input SIEMPRE se muestre (true) para evitar que se oculte en la pantalla del usuario
     const showInput = true; 
     const inputType = "text"; 
 
