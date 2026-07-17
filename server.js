@@ -1324,73 +1324,81 @@ app.get("/analytics/:businessId", auth, async (req, res) => {
 // =========================
 app.put("/business/:id", auth, async (req, res) => {
   try {
-    const { id } = req.params;
-    const business = await Business.findById(id);
+    const business = await Business.findById(req.params.id);
 
     if (!business) {
-      return res.status(404).json({ error: "No existe el negocio" });
+      return res.status(404).json({ error: "No existe" });
     }
 
     if (business.userId !== req.user.id) {
       return res.status(403).json({ error: "No autorizado" });
     }
 
-    // 1. Validación de Slug único
+    // 1. Validar Slug único
     if (req.body.slug) {
-      const cleanSlug = req.body.slug.toLowerCase().replace(/[^a-z0-9-_]/g, '');
       const slugExists = await Business.findOne({
-        slug: cleanSlug,
-        _id: { $ne: id }
+        slug: req.body.slug,
+        _id: { $ne: req.params.id }
       });
-
-      if (slugExists) {
-        return res.json({ error: "El slug ya está siendo utilizado por otro negocio" });
-      }
-      req.body.slug = cleanSlug;
+      if (slugExists) return res.json({ error: "Slug ya existe" });
     }
 
-    // 2. 🔥 PROCESAMIENTO DE TESTIMONIOS (Lógica coherente con POST)
-    if (req.body.testimonials && Array.isArray(req.body.testimonials)) {
-      req.body.testimonials = req.body.testimonials.map(t => {
+    // 2. Procesar Testimonios (Lógica mantenida)
+    if (req.body.testimonials) {
+      req.body.testimonials = (req.body.testimonials || []).map(t => {
         if (typeof t === "string") {
-          let type = "text";
-          if (t.match(/\.(mp4|mov|webm|mkv|youtube|youtu)/i)) type = "video";
-          else if (t.match(/\.(jpg|jpeg|png|gif|webp|imgur|cloudinary)/i)) type = "image";
-          return { type, content: t };
+          if (t.includes("youtube") || t.includes("video") || t.includes("drive")) return { type: "video", content: t };
+          if (t.match(/\.(jpg|jpeg|png|webp|gif)/i)) return { type: "image", content: t };
+          return { type: "text", content: t };
         }
-        return t; // Ya viene como objeto
+        return t;
       });
     }
 
-    // 3. 🛍️ NORMALIZACIÓN DE PRODUCTOS
-    // Aseguramos que los productos enviados desde el front tengan el formato correcto
-    if (req.body.products && Array.isArray(req.body.products)) {
-      req.body.products = req.body.products.map(prod => ({
-        name: prod.name || prod.nombre || "Sin nombre",
-        price: prod.price || prod.precio || "$0",
-        imageUrl: prod.imageUrl || prod.image || prod.imagen || "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=400",
-        description: prod.description || prod.descripcion || "",
-        category: prod.category || prod.categoria || "General",
-        tallas: prod.tallas || prod.availableSizes || "",
-        colores: prod.colores || prod.colors || "",
-        envio: prod.envio || prod.shipping || ""
+    // 3. Normalizar Productos (Vital para que coincida con tu Schema)
+    if (req.body.products) {
+      req.body.products = req.body.products.map(p => ({
+        id: p.id,
+        name: p.name || p.nombre || "",
+        price: p.price || p.precio || "",
+        category: p.category || p.categoria || "",
+        image: p.image || p.imageUrl || p.imagen || "",
+        description: p.description || p.descripcion || "",
+        tallas: p.tallas || p.availableSizes || "",
+        tallasAgotadas: p.tallasAgotadas || p.outOfStockSizes || "",
+        colores: p.colores || p.colors || "",
+        envio: p.envio || p.shipping || ""
       }));
     }
 
-    // 4. ACTUALIZACIÓN SEGURA
-    // Usamos el objeto req.body completo. 
-    // Nota: Mongoose actualizará los campos definidos en tu Schema.
+    // 4. Actualización Segura
+    // En lugar de pasar todo req.body, extraemos solo lo permitido
+    const updateData = {
+      name: req.body.name,
+      slug: req.body.slug,
+      logo: req.body.logo,
+      primaryColor: req.body.primaryColor,
+      welcomeMessage: req.body.welcomeMessage,
+      whatsappNumber: req.body.whatsappNumber,
+      waMessage: req.body.waMessage,
+      products: req.body.products,
+      testimonials: req.body.testimonials,
+      nodes: req.body.nodes,
+      connections: req.body.connections,
+      flow: req.body.flow
+    };
+
     const updated = await Business.findByIdAndUpdate(
-      id,
-      { $set: req.body }, // $set asegura que solo sobrescribamos los campos enviados
+      req.params.id,
+      { $set: updateData },
       { new: true, runValidators: true }
     );
 
-    res.json({ message: "Negocio actualizado correctamente", business: updated });
+    res.json({ business: updated });
 
   } catch (error) {
     console.error("UPDATE BUSINESS ERROR:", error);
-    res.status(500).json({ error: "Error actualizando los datos en el servidor" });
+    res.status(500).json({ error: "Error actualizando" });
   }
 });
 
