@@ -186,6 +186,12 @@
         const productModal = document.getElementById('product-modal');
         const modalContainer = document.getElementById('modal-container');
         const chatBadge = document.getElementById('chat-badge');
+        // El carrito de compras empieza vacío
+        let carritoGlobal = []; 
+
+        // Esta variable guardará el producto que el usuario tiene abierto o está mirando.
+        // Deberás actualizarla cada vez que el usuario haga clic para ver los detalles de un producto en tu vitrina.
+        let productoViendoActualmente = null;
 
         // Control de apertura y cierre del chat
         function toggleChat() {
@@ -196,6 +202,38 @@
             } else {
                 chatWindow.classList.add('opacity-0', 'pointer-events-none', 'translate-y-10', 'scale-95');
                 chatWindow.classList.remove('opacity-100', 'pointer-events-auto', 'translate-y-0', 'scale-100');
+            }
+        }
+
+        // ==========================================
+        // 🔥 FUNCIÓN DE SEGUIMIENTO DE NAVEGACIÓN
+        // ==========================================
+        /**
+         * Captura el producto que el usuario está interactuando en la interfaz
+         * y actualiza el contexto para que la Inteligencia Artificial lo sepa en secreto.
+         * 
+         * @param {string} nombre - Nombre exacto del producto.
+         * @param {string} precio - Precio del producto.
+         */
+        function verDetallesProducto(nombre, precio) {
+            // 1. Guardamos inmediatamente los datos en la variable global
+            productoViendoActualmente = {
+                nombre: nombre || "Producto sin nombre",
+                precio: precio || "$0.00"
+            };
+    
+            // 2. Feedback en consola para que verifiques que está funcionando al hacer clic
+            console.log("🎯 Contexto actualizado. El usuario ahora está viendo:", productoViendoActualmente);
+
+            // Reemplaza el bloque opcional con esto:
+            const miModal = document.getElementById("modal-detalles"); // Cambia "modal-detalles" por el ID real de tu modal
+            if (miModal) {
+                // Actualizas los textos del modal con el producto seleccionado
+                document.getElementById("modal-producto-nombre").innerText = nombre;
+                document.getElementById("modal-producto-precio").innerText = precio;
+    
+                // Muestras el modal quitándole la clase que lo oculta (ej: hidden de Tailwind o usando display block)
+                miModal.classList.remove("hidden"); 
             }
         }
 
@@ -271,25 +309,26 @@
             // 2. Inyectar productos en el HTML
             productosFiltrados.forEach(prod => {
                 const imgUrl = prod.imagen || "https://images.unsplash.com/photo-1527853787696-f7be74f2e39a?w=400";
-                
+        
                 const productCard = document.createElement("div");
                 productCard.className = "bg-white rounded-2xl overflow-hidden shadow-xs border border-slate-100 flex flex-col justify-between group transition-transform duration-200 hover:scale-[1.01]";
-                
+        
                 // Sanitizar strings para pasar como parámetros JS de manera segura
                 const escapedName = prod.nombre.replace(/'/g, "\\'");
                 const escapedPrice = prod.precio.replace(/'/g, "\\'");
                 const escapedImg = imgUrl.replace(/'/g, "\\'");
                 const escapedDesc = prod.descripcion.replace(/'/g, "\\'").replace(/\n/g, " ");
 
+                // 🔥 Aquí vinculamos el onclick para que actualice la variable global que lee la IA
                 productCard.innerHTML = `
                     <div class="relative aspect-[4/5] bg-slate-100 cursor-pointer overflow-hidden" 
-                         onclick="openModal('${escapedName}', '${escapedPrice}', '${escapedImg}', '${escapedDesc}')">
+                         onclick="verDetallesProducto('${escapedName}', '${escapedPrice}'); openModal('${escapedName}', '${escapedPrice}', '${escapedImg}', '${escapedDesc}')">
                         <img src="${imgUrl}" alt="${escapedName}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
                     </div>
                     <div class="p-3">
                         <h3 class="font-bold text-xs text-slate-800 line-clamp-1">${prod.nombre}</h3>
                         <p class="text-emerald-600 font-extrabold text-sm mt-0.5">${prod.precio}</p>
-                        <button onclick="preguntarAlBot('${escapedName}', '${escapedPrice}')" class="w-full mt-2.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95">
+                        <button onclick="verDetallesProducto('${escapedName}', '${escapedPrice}'); preguntarAlBot('${escapedName}', '${escapedPrice}')" class="w-full mt-2.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95">
                             <i data-lucide="message-square" class="w-3.5 h-3.5"></i> Preguntar al Bot
                         </button>
                     </div>
@@ -298,13 +337,15 @@
             });
 
             // Re-renderizar iconos inyectados dinámicamente
-            lucide.createIcons();
+            if (window.lucide) {
+                lucide.createIcons();
+            }
         }
 
         // Función para cambiar de categoría de manera interactiva
         window.filtrarCategoria = function(categoria) {
             categoriaActiva = categoria;
-            
+    
             // Actualizar diseño de botones activos
             document.querySelectorAll(".cat-btn").forEach(btn => {
                 if (btn.innerText.includes(categoria)) {
@@ -509,6 +550,79 @@
             }, 50);
         }
 
+        // ========================================================
+        // 🛠️ FUNCIONES DE APOYO INTERACTIVAS (TARJETAS Y CARRITO)
+        // ========================================================
+ 
+        // Función para pintar la tarjeta interactiva con tu diseño hermoso
+        function renderizarTarjetaInteractiva(nombre, precio) {
+            const cardDiv = document.createElement('div');
+            cardDiv.className = "bg-white border border-slate-150 rounded-2xl overflow-hidden max-w-[85%] shadow-sm mt-2 self-start animate-fade";
+     
+            cardDiv.innerHTML = `
+                <div class="p-3">
+                    <p class="font-bold text-xs text-slate-800">${nombre}</p>
+                    <p class="text-emerald-600 font-bold text-xs mt-1">Total: ${precio}</p>
+                    <p class="text-[9px] text-slate-400 mt-1">🚚 Envío incluido a nivel nacional</p>
+                    <button onclick="comprarProducto('${nombre.replace(/'/g, "\\'")}', '${precio.replace(/'/g, "\\'")}')" class="w-full mt-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-all cursor-pointer">
+                        <i data-lucide="credit-card" class="w-3.5 h-3.5"></i> Comprar Ahora
+                    </button>
+                </div>
+            `;
+     
+            // 🔥 ID ACTUALIZADO: Apunta perfectamente a "messages" como tu addMessage
+            const messagesContainer = document.getElementById("messages"); 
+       
+            if (messagesContainer) {
+                messagesContainer.appendChild(cardDiv);
+         
+                // Renderizar iconos de Lucide dinámicamente si los usas
+                if (window.lucide) {
+                    lucide.createIcons();
+                }
+         
+                // 🔥 SCROLL SUAVE ACTUALIZADO: Copiado exacto de tu lógica nativa
+                setTimeout(() => {
+                    messagesContainer.scrollTo({
+                        top: messagesContainer.scrollHeight,
+                        behavior: "smooth"
+                    });
+                }, 50);
+            }
+        }
+ 
+        // Función que agrega físicamente el producto al carrito global del cliente
+        function agregarAlCarritoGlobal(nombre, precio, talla) {
+            // 1. Agregar al array global que lee la IA
+            if (typeof carritoGlobal !== 'undefined') {
+                carritoGlobal.push({ nombre, precio, talla });
+            }
+     
+            // 2. Feedback en consola
+            console.log("🛒 ¡Carrito Actualizado!", carritoGlobal);
+     
+            // 3. Crear el aviso flotante visual en la pantalla
+            mostrarAvisoNotificacion(`🛒 Agregado al carrito: ${nombre} (Talla ${talla})`);
+        }
+ 
+        // Notificación flotante rápida para que el usuario sienta el feedback inmediato
+        function mostrarAvisoNotificacion(mensaje) {
+            const toast = document.createElement("div");
+            // Usamos fixed y clases de Tailwind para que flote elegantemente en la pantalla
+            toast.className = "fixed bottom-24 right-4 bg-slate-900 text-white text-xs px-4 py-2.5 rounded-full shadow-lg z-50 animate-bounce";
+            toast.innerText = mensaje;
+            document.body.appendChild(toast);
+       
+            // Desaparece automáticamente a los 3 segundos
+            setTimeout(() => toast.remove(), 3000);
+        }
+ 
+        // Acción global al presionar "Comprar Ahora"
+        window.comprarProducto = function(nombre, precio) {
+            alert(`¡Perfecto! Redirigiendo a la pasarela de pago para la prenda: ${nombre} por valor de ${precio}`);
+            // Aquí puedes enlazar tu WhatsApp con un mensaje prellenado o redirección de cobro
+        }
+
         // Renderizado de Opciones de Respuestas Rápidas
         function showOptions(options) {
             const container = document.getElementById("options-container");
@@ -576,6 +690,7 @@
             try {
                 showTyping();
 
+                // 1. Enviamos el mensaje con el contexto de navegación y carrito actual en secreto
                 const res = await fetch(`${API}/chat`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -584,7 +699,12 @@
                         leadId,
                         conversationId,
                         businessId: business?._id,
-                        clientName: clientName || undefined
+                        clientName: clientName || undefined,
+                        // 🔥 CONTEXTO INYECTADO:
+                        context: {
+                            viendoActualmente: productoViendoActualmente, // Lo que el usuario clickeó en la vitrina
+                            itemsEnCarrito: carritoGlobal              // Estado actual de lo que lleva guardado
+                        }
                     })
                 });
 
@@ -596,8 +716,57 @@
                 leadId = data.leadId;
                 conversationId = data.conversationId;
 
-                addMessage(data.reply, "bot");
+                // 2. Procesamiento de la respuesta de la IA (Tags especiales)
+                let replyText = data.reply || "";
+                let productoTarjeta = null;
+                let accionCarrito = null;
 
+                // --- ESCÁNER A: ¿La IA envió una Tarjeta Interactiva de Compra? ---
+                const regexTarjeta = /\[TARJETA_PRODUCTO:\s*({.*?})\]/;
+                const coincidenciaTarjeta = replyText.match(regexTarjeta);
+                if (coincidenciaTarjeta && coincidenciaTarjeta[1]) {
+                    try {
+                        productoTarjeta = JSON.parse(coincidenciaTarjeta[1]);
+                        // Removemos el código JSON para que el usuario reciba el texto limpio
+                        replyText = replyText.replace(regexTarjeta, "").trim();
+                    } catch (e) { 
+                        console.error("❌ Error parseando tarjeta interactiva:", e); 
+                    }
+                }
+ 
+                // --- ESCÁNER B: ¿La IA dio la orden de agregar algo al carrito? ---
+                const regexAccion = /\[ACCION:\s*({.*?})\]/;
+                const coincidenciaAccion = replyText.match(regexAccion);
+                if (coincidenciaAccion && coincidenciaAccion[1]) {
+                    try {
+                        accionCarrito = JSON.parse(coincidenciaAccion[1]);
+                        // Removemos el comando de acción del texto definitivo
+                        replyText = replyText.replace(regexAccion, "").trim();
+                    } catch (e) { 
+                        console.error("❌ Error parseando acción de carrito:", e); 
+                    }
+                }
+ 
+                // 3. Pintar el mensaje de texto limpio en el chat
+                addMessage(replyText, "bot");
+ 
+                // 4. Si se detectó acción de carrito, ejecutarla de inmediato en la interfaz
+                if (accionCarrito && accionCarrito.tipo === "AGREGAR_CARRITO") {
+                    if (typeof agregarAlCarritoGlobal === "function") {
+                        agregarAlCarritoGlobal(accionCarrito.nombre, accionCarrito.precio, accionCarrito.talla);
+                    }
+                }
+ 
+                // 5. Si se detectó tarjeta interactiva, pintarla justo debajo con un delay sutil
+                if (productoTarjeta) {
+                    setTimeout(() => {
+                        if (typeof renderizarTarjetaInteractiva === "function") {
+                            renderizarTarjetaInteractiva(productoTarjeta.nombre, productoTarjeta.precio);
+                        }
+                    }, 600);
+                }
+ 
+                // 6. Mantener tu lógica nativa del chat
                 if (data.options) {
                     showOptions(data.options);
                 }
@@ -607,9 +776,9 @@
                     if (btn) btn.style.display = "flex";
                     whatsappNumber = data.whatsappNumber;
                 }
-
+ 
                 setInputState(data.showInput, data.inputType);
-
+ 
             } catch (err) {
                 hideTyping();
                 console.error("❌ CHAT ERROR:", err);
