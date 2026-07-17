@@ -7,13 +7,6 @@ const path = require("path");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-const { OpenAI } = require('openai');
-
-// Inicializamos la constante 'openai' usando la API Key de tus variables de entorno
-const openai = new OpenAI({ 
-  apiKey: process.env.OPENAI_API_KEY 
-});
-
 // =========================
 // 🧱 APP INIT
 // =========================
@@ -1022,46 +1015,137 @@ app.get('/public/business/:slug', async (req, res) => {
 
 app.post('/chat', async (req, res) => {
   try {
-    const { businessId, message } = req.body;
+    const { businessId, message, leadId, conversationId, context } = req.body;
     
-    // Buscar el negocio en la base de datos
+    // 1. Validaciones Iniciales
+    if (!businessId || !message) {
+      return res.status(400).json({ error: "Faltan datos obligatorios (businessId o message)" });
+    }
+
     const business = await Business.findById(businessId);
     if (!business) {
       return res.status(404).json({ error: "Negocio no existente" });
     }
 
-    // 🧠 Construimos el prompt del sistema usando las instrucciones directas y el inventario real
+    // 2. Gestión de Leads y Conversaciones en Base de Datos (Mantiene vivo el historial)
+    let lead = leadId 
+      ? await Lead.findById(leadId) 
+      : await Lead.create({ businessId, stage: "attention" });
+
+    if (!lead.stage) lead.stage = "attention";
+    if (!lead.notes) lead.notes = {};
+
+    let conversation = conversationId 
+      ? await Conversation.findById(conversationId) 
+      : await Conversation.create({ leadId: lead._id, businessId });
+
+    // Guardar el mensaje del usuario en la base de datos
+    await Message.create({
+      conversationId: conversation._id,
+      role: "user",
+      content: message
+    });
+
+    // Extracción de datos del usuario si estamos en etapa de captura
+    if (lead.stage === "action") {
+      if (!lead.name && message.length < 30 && !message.includes("@")) lead.name = message;
+      if (!lead.email && message.includes("@")) lead.email = message;
+      if (!lead.phone && /\d{7,}/.test(message)) lead.phone = message;
+    }
+
+    // 3. Procesar datos del contexto para el Prompt de la IA
+    const viendoActualmente = context?.viendoActualmente 
+      ? `El usuario está viendo actualmente el producto: "${context.viendoActualmente.nombre}" de precio "${context.viendoActualmente.precio}".`
+      : "El usuario está navegando por la tienda en general (no tiene ningún producto abierto en pantalla).";
+
+    const carritoActual = context?.itemsEnCarrito && context.itemsEnCarrito.length > 0
+      ? `Productos actuales en su carrito de compras: ${JSON.stringify(context.itemsEnCarrito)}`
+      : "El carrito de compras del usuario está vacío actualmente.";
+
+    // 4. 🧠 El Prompt de Entrenamiento (¡Aquí está!)
     const systemPrompt = `
-      Eres el cerrador de ventas y asistente virtual de la tienda "${business.name}".
+      Eres el cerrador de ventas y asistente virtual estrella de la tienda "${business.name}".
       
-      Instrucciones de comportamiento y políticas:
-      ${business.aiInstructions}
+      Instrucciones de comportamiento y políticas personalizadas de la tienda:
+      ${business.aiInstructions || "Eres un vendedor amable y persuasivo."}
       
       Este es el catálogo de productos disponible en la tienda para asesorar al cliente. Úsalo para responder precios, descripciones y disponibilidad:
-      ${JSON.stringify(business.products)}
+      ${JSON.stringify(business.products || [])}
       
-      REGLAS DE RESPUESTA:
-      1. Sé persuasivo, amable y enfócate en concretar la venta.
-      2. No inventes productos que no estén en el catálogo anterior.
-      3. Mantén tus respuestas relativamente cortas y conversacionales.
+      --------------------------------------------------
+      🚨 CONTEXTO DE NAVEGACIÓN EN TIEMPO REAL:
+      - ${viendoActualmente}
+      - ${carritoActual}
+      --------------------------------------------------
+      
+      REGLAS DE COMPORTAMIENTO:
+      1. Sé persuasivo, empático, tutea al usuario y enfócate en concretar la venta de forma amigable.
+      2. No inventes productos. Si no lo tienes, sugiere la alternativa más parecida de tu catálogo.
+      3. Si el usuario hace preguntas ambiguas, asume que se refiere al producto que está viendo actualmente en pantalla.
+      4. Respuestas cortas, fluidas y muy conversacionales.
+
+      🔥 REGLAS DE ACCIÓN TÉCNICA (FORMATOS ESPECIALES):
+      - REGLA A (TARJETA INTERACTIVA DE COMPRA):
+        Si el usuario quiere comprar o cotizar un producto específico, añade de forma exacta al final de tu mensaje:
+        [TARJETA_PRODUCTO: {"nombre": "Nombre exacto del producto", "precio": "Precio"}]
+      
+      - REGLA B (AGREGAR AL CARRITO):
+        Si el usuario dice "agrégamelo al carrito", "añádelo" o pide una talla, añade al final en la última línea:
+        [ACCION: {"tipo": "AGREGAR_CARRITO", "nombre": "Nombre exacto del producto", "precio": "Precio", "talla": "Talla especificada o M"}]
     `;
 
-    // 🔥 LLAMADA REAL A OPENAI (Usando la versión actualizada del SDK)
+    // 5. Llamada Real a OpenAI gpt-4o-mini
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini", // Puedes usar "gpt-4o-mini" (rápido y muy económico) o "gpt-4"
+      model: "gpt-4o-mini",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: message }
       ],
-      temperature: 0.7
+      temperature: 0.6
     });
 
-    // Devolvemos la respuesta real generada por la Inteligencia Artificial
-    res.json({ reply: response.choices[0].message.content });
+    const reply = response.choices[0].message.content;
+
+    // Guardar respuesta del asistente en la Base de Datos
+    await Message.create({
+      conversationId: conversation._id,
+      role: "assistant",
+      content: reply
+    });
+
+    // Actualizar datos del Lead
+    await Lead.findByIdAndUpdate(lead._id, {
+      name: lead.name,
+      email: lead.email,
+      phone: lead.phone,
+      stage: lead.stage
+    });
+
+    // 6. Control de UI dinámico para el Frontend (Evita que desaparezca el input erróneamente)
+    const showWhatsApp = lead.stage === "action" && lead.name && (lead.phone || lead.email);
+    
+    // Forzamos a que el input SIEMPRE se muestre (true) para que no se quite en tu pantalla
+    const showInput = true; 
+    const inputType = "text"; 
+
+    // Opciones rápidas por defecto si la IA no las generó dinámicamente
+    const defaultOptions = ["Ver catálogo", "Hablar con un asesor"];
+
+    // 7. Respuesta unificada
+    res.json({ 
+      reply,
+      options: defaultOptions,
+      leadId: lead._id,
+      conversationId: conversation._id,
+      showWhatsApp,
+      whatsappNumber: business.whatsappNumber,
+      showInput,
+      inputType
+    });
 
   } catch (err) {
-    console.error("❌ ERROR EN EL CHAT DE IA:", err);
-    res.status(500).json({ error: "Hubo un error al procesar tu mensaje con la IA." });
+    console.error("❌ ERROR EN EL CHAT UNIFICADO:", err);
+    res.status(500).json({ error: "Hubo un error al procesar tu mensaje." });
   }
 });
 
@@ -1169,109 +1253,7 @@ app.get("/my-businesses", auth, async (req, res) => {
   }
 });
 
-// =========================================
-// 💬 CHAT (TOTALMENTE LIMPIO - SIN TESTIMONIOS)
-// =========================================
-app.post("/chat", async (req, res) => {
-  const { message, leadId, conversationId, businessId } = req.body; //[cite: 1]
 
-  try {
-    if (!businessId) { //[cite: 1]
-      return res.status(400).json({ error: "businessId requerido" }); //[cite: 1]
-    }
-
-    const business = await Business.findById(businessId); //[cite: 1]
-
-    console.log("🔥 BUSINESS:", business); //[cite: 1]
-
-    if (!business) { //[cite: 1]
-      return res.status(404).json({ error: "Negocio no existe" }); //[cite: 1]
-    }
-
-    let lead = leadId //[cite: 1]
-      ? await Lead.findById(leadId) //[cite: 1]
-      : await Lead.create({ businessId, stage: "attention" }); //[cite: 1]
-
-    if (!lead.stage) { //[cite: 1]
-      lead.stage = "attention"; //[cite: 1]
-    }
-
-    if (!lead.notes) { //[cite: 1]
-      lead.notes = {}; //[cite: 1]
-    }
-
-    let conversation = conversationId //[cite: 1]
-      ? await Conversation.findById(conversationId) //[cite: 1]
-      : await Conversation.create({ //[cite: 1]
-          leadId: lead._id, //[cite: 1]
-          businessId //[cite: 1]
-        }); //[cite: 1]
-
-    await Message.create({ //[cite: 1]
-      conversationId: conversation._id, //[cite: 1]
-      role: "user", //[cite: 1]
-      content: message //[cite: 1]
-    }); //[cite: 1]
-
-    if (lead.stage === "action") { //[cite: 1]
-      if (!lead.name && message.length < 30 && !message.includes("@")) { //[cite: 1]
-        lead.name = message; //[cite: 1]
-      }
-
-      if (!lead.email && message.includes("@")) { //[cite: 1]
-        lead.email = message; //[cite: 1]
-      }
-
-      if (!lead.phone && /\d{7,}/.test(message)) { //[cite: 1]
-        lead.phone = message; //[cite: 1]
-      }
-    }
-
-    // 🔥 LLAMADA AL BOT (Sin arrastrar lógica de testimonios)
-    const result = closerBot(message, business, lead); //[cite: 1]
-
-    console.log("🔥 RESULT BOT:", result); //[cite: 1]
-
-    const reply = result.reply; //[cite: 1]
-    const options = result.options || []; //[cite: 1]
-    const showInput = result.showInput ?? false; //[cite: 1]
-    const inputType = result.inputType ?? "text"; //[cite: 1]
-
-    await Message.create({ //[cite: 1]
-      conversationId: conversation._id, //[cite: 1]
-      role: "assistant", //[cite: 1]
-      content: reply //[cite: 1]
-    }); //[cite: 1]
-
-    await Lead.findByIdAndUpdate(lead._id, { //[cite: 1]
-      name: lead.name, //[cite: 1]
-      email: lead.email, //[cite: 1]
-      phone: lead.phone, //[cite: 1]
-      stage: lead.stage //[cite: 1]
-    }); //[cite: 1]
-
-    const showWhatsApp = //[cite: 1]
-      lead.stage === "action" && //[cite: 1]
-      lead.name && //[cite: 1]
-      (lead.phone || lead.email); //[cite: 1]
-
-    res.json({ //[cite: 1]
-      reply, //[cite: 1]
-      options, //[cite: 1]
-      leadId: lead._id, //[cite: 1]
-      conversationId: conversation._id, //[cite: 1]
-      showWhatsApp, //[cite: 1]
-      whatsappNumber: business.whatsappNumber, //[cite: 1]
-
-      showInput, //[cite: 1]
-      inputType //[cite: 1]
-    }); //[cite: 1]
-
-  } catch (error) { //[cite: 1]
-    console.error("CHAT ERROR:", error); //[cite: 1]
-    res.status(500).json({ error: "Error en chat" }); //[cite: 1]
-  }
-});
 // =========================
 // 📊 ANALYTICS
 // =========================
