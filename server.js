@@ -7,6 +7,13 @@ const path = require("path");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
+const { OpenAI } = require('openai');
+
+// Inicializamos la constante 'openai' usando la API Key de tus variables de entorno
+const openai = new OpenAI({ 
+  apiKey: process.env.OPENAI_API_KEY 
+});
+
 // =========================
 // 🧱 APP INIT
 // =========================
