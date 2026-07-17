@@ -1,4 +1,4 @@
-require("dotenv").config(); 
+require("dotenv").config();
 
 const express = require("express");
 const mongoose = require("mongoose");
@@ -6,6 +6,13 @@ const cors = require("cors");
 const path = require("path");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+
+const { OpenAI } = require('openai');
+
+// Inicializamos la constante 'openai' usando la API Key de tus variables de entorno
+const openai = new OpenAI({ 
+  apiKey: process.env.OPENAI_API_KEY 
+});
 
 // =========================
 // 🧱 APP INIT
@@ -1013,6 +1020,115 @@ app.get('/public/business/:slug', async (req, res) => {
 // const { OpenAI } = require('openai');
 // const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+
+
+// =========================
+// 📦 CLONAR TEMPLATE
+// =========================
+app.post("/clone-template/:id", auth, async (req, res) => {
+  try {
+    const template = await Business.findById(req.params.id);
+
+    if (!template) {
+      return res.status(404).json({ error: "Template no encontrado" });
+    }
+
+    const newBusiness = await Business.create({
+      name: template.name + " (copia)",
+      slug: template.slug + "-" + Date.now(),
+      logo: template.logo,
+      primaryColor: template.primaryColor,
+      welcomeMessage: template.welcomeMessage,
+      productInfo: template.productInfo,
+      productLink: template.productLink,
+      whatsappNumber: template.whatsappNumber,
+      userId: req.user.id,
+      isTemplate: false
+    });
+
+    res.json({
+      message: "Template clonado",
+      business: newBusiness,
+      url: `https://ai-sales-chat.onrender.com/${newBusiness.slug}`
+    });
+
+  } catch (error) {
+    console.error("CLONE TEMPLATE ERROR:", error);
+    res.status(500).json({ error: "Error clonando template" });
+  }
+});
+
+// =========================
+// 🏢 OBTENER NEGOCIO
+// =========================
+app.get("/business/:slug", async (req, res) => {
+  try {
+    const business = await Business.findOne({ slug: req.params.slug });
+
+    if (!business) {
+      return res.status(404).json({ error: "Negocio no encontrado" });
+    }
+
+    // 🔥 FIX: normalizar testimonios SI vienen mal guardados
+    let testimonialsFixed = [];
+
+    if (business.testimonials && business.testimonials.length) {
+
+      testimonialsFixed = business.testimonials.map(t => {
+
+        // si ya viene bien (objeto)
+        if (typeof t === "object" && t !== null) return t;
+
+        // si viene como string (caso viejo o bug)
+        if (typeof t === "string") {
+
+          if (t.includes("youtube") || t.includes("video")) {
+            return { type: "video", content: t };
+          }
+
+          if (t.match(/\.(jpg|jpeg|png|webp|gif)/i)) {
+            return { type: "image", content: t };
+          }
+
+          return { type: "text", content: t };
+        }
+
+        return t;
+      });
+
+    }
+
+    // 🔥 sobrescribe SOLO en respuesta (NO en DB)
+    const businessSafe = {
+      ...business.toObject(),
+      testimonials: testimonialsFixed
+    };
+
+    res.json(businessSafe);
+
+  } catch (error) {
+    res.status(500).json({ error: "Error" });
+  }
+});
+
+// =========================
+// 🏢 MIS NEGOCIOS
+// =========================
+app.get("/my-businesses", auth, async (req, res) => {
+  try {
+    const businesses = await Business.find({ userId: req.user.id })
+      .sort({ createdAt: -1 });
+
+    res.json(businesses);
+  } catch (error) {
+    console.error("MY BUSINESSES ERROR:", error);
+    res.status(500).json({ error: "Error obteniendo negocios" });
+  }
+});
+
+// =========================================
+// 💬 CHAT (TOTALMENTE LIMPIO - SIN TESTIMONIOS)
+// =========================================
 app.post('/chat', async (req, res) => {
   try {
     const { businessId, message, leadId, conversationId, context } = req.body;
@@ -1148,112 +1264,6 @@ app.post('/chat', async (req, res) => {
     res.status(500).json({ error: "Hubo un error al procesar tu mensaje." });
   }
 });
-
-// =========================
-// 📦 CLONAR TEMPLATE
-// =========================
-app.post("/clone-template/:id", auth, async (req, res) => {
-  try {
-    const template = await Business.findById(req.params.id);
-
-    if (!template) {
-      return res.status(404).json({ error: "Template no encontrado" });
-    }
-
-    const newBusiness = await Business.create({
-      name: template.name + " (copia)",
-      slug: template.slug + "-" + Date.now(),
-      logo: template.logo,
-      primaryColor: template.primaryColor,
-      welcomeMessage: template.welcomeMessage,
-      productInfo: template.productInfo,
-      productLink: template.productLink,
-      whatsappNumber: template.whatsappNumber,
-      userId: req.user.id,
-      isTemplate: false
-    });
-
-    res.json({
-      message: "Template clonado",
-      business: newBusiness,
-      url: `https://ai-sales-chat.onrender.com/${newBusiness.slug}`
-    });
-
-  } catch (error) {
-    console.error("CLONE TEMPLATE ERROR:", error);
-    res.status(500).json({ error: "Error clonando template" });
-  }
-});
-
-// =========================
-// 🏢 OBTENER NEGOCIO
-// =========================
-app.get("/business/:slug", async (req, res) => {
-  try {
-    const business = await Business.findOne({ slug: req.params.slug });
-
-    if (!business) {
-      return res.status(404).json({ error: "Negocio no encontrado" });
-    }
-
-    // 🔥 FIX: normalizar testimonios SI vienen mal guardados
-    let testimonialsFixed = [];
-
-    if (business.testimonials && business.testimonials.length) {
-
-      testimonialsFixed = business.testimonials.map(t => {
-
-        // si ya viene bien (objeto)
-        if (typeof t === "object" && t !== null) return t;
-
-        // si viene como string (caso viejo o bug)
-        if (typeof t === "string") {
-
-          if (t.includes("youtube") || t.includes("video")) {
-            return { type: "video", content: t };
-          }
-
-          if (t.match(/\.(jpg|jpeg|png|webp|gif)/i)) {
-            return { type: "image", content: t };
-          }
-
-          return { type: "text", content: t };
-        }
-
-        return t;
-      });
-
-    }
-
-    // 🔥 sobrescribe SOLO en respuesta (NO en DB)
-    const businessSafe = {
-      ...business.toObject(),
-      testimonials: testimonialsFixed
-    };
-
-    res.json(businessSafe);
-
-  } catch (error) {
-    res.status(500).json({ error: "Error" });
-  }
-});
-
-// =========================
-// 🏢 MIS NEGOCIOS
-// =========================
-app.get("/my-businesses", auth, async (req, res) => {
-  try {
-    const businesses = await Business.find({ userId: req.user.id })
-      .sort({ createdAt: -1 });
-
-    res.json(businesses);
-  } catch (error) {
-    console.error("MY BUSINESSES ERROR:", error);
-    res.status(500).json({ error: "Error obteniendo negocios" });
-  }
-});
-
-
 // =========================
 // 📊 ANALYTICS
 // =========================
