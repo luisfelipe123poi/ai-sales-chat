@@ -1324,62 +1324,73 @@ app.get("/analytics/:businessId", auth, async (req, res) => {
 // =========================
 app.put("/business/:id", auth, async (req, res) => {
   try {
-    const business = await Business.findById(req.params.id);
+    const { id } = req.params;
+    const business = await Business.findById(id);
 
     if (!business) {
-      return res.status(404).json({ error: "No existe" });
+      return res.status(404).json({ error: "No existe el negocio" });
     }
 
     if (business.userId !== req.user.id) {
       return res.status(403).json({ error: "No autorizado" });
     }
 
+    // 1. Validación de Slug único
     if (req.body.slug) {
+      const cleanSlug = req.body.slug.toLowerCase().replace(/[^a-z0-9-_]/g, '');
       const slugExists = await Business.findOne({
-        slug: req.body.slug,
-        _id: { $ne: req.params.id }
+        slug: cleanSlug,
+        _id: { $ne: id }
       });
 
       if (slugExists) {
-        return res.json({ error: "Slug ya existe" });
+        return res.json({ error: "El slug ya está siendo utilizado por otro negocio" });
       }
+      req.body.slug = cleanSlug;
     }
 
-    // 🔥 FIX TESTIMONIOS (IGUAL QUE CREATE)
-    if (req.body.testimonials) {
-      req.body.testimonials = (req.body.testimonials || []).map(t => {
-
+    // 2. 🔥 PROCESAMIENTO DE TESTIMONIOS (Lógica coherente con POST)
+    if (req.body.testimonials && Array.isArray(req.body.testimonials)) {
+      req.body.testimonials = req.body.testimonials.map(t => {
         if (typeof t === "string") {
-
-          // detectar video
-          if (t.includes("youtube") || t.includes("video") || t.includes("drive")) {
-            return { type: "video", content: t };
-          }
-
-          // detectar imagen
-          if (t.match(/\.(jpg|jpeg|png|webp|gif)/i)) {
-            return { type: "image", content: t };
-          }
-
-          // texto
-          return { type: "text", content: t };
+          let type = "text";
+          if (t.match(/\.(mp4|mov|webm|mkv|youtube|youtu)/i)) type = "video";
+          else if (t.match(/\.(jpg|jpeg|png|gif|webp|imgur|cloudinary)/i)) type = "image";
+          return { type, content: t };
         }
-
-        return t;
+        return t; // Ya viene como objeto
       });
     }
 
+    // 3. 🛍️ NORMALIZACIÓN DE PRODUCTOS
+    // Aseguramos que los productos enviados desde el front tengan el formato correcto
+    if (req.body.products && Array.isArray(req.body.products)) {
+      req.body.products = req.body.products.map(prod => ({
+        name: prod.name || prod.nombre || "Sin nombre",
+        price: prod.price || prod.precio || "$0",
+        imageUrl: prod.imageUrl || prod.image || prod.imagen || "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=400",
+        description: prod.description || prod.descripcion || "",
+        category: prod.category || prod.categoria || "General",
+        tallas: prod.tallas || prod.availableSizes || "",
+        colores: prod.colores || prod.colors || "",
+        envio: prod.envio || prod.shipping || ""
+      }));
+    }
+
+    // 4. ACTUALIZACIÓN SEGURA
+    // Usamos el objeto req.body completo. 
+    // Nota: Mongoose actualizará los campos definidos en tu Schema.
     const updated = await Business.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
+      id,
+      { $set: req.body }, // $set asegura que solo sobrescribamos los campos enviados
+      { new: true, runValidators: true }
     );
 
-    res.json({ business: updated });
+    res.json({ message: "Negocio actualizado correctamente", business: updated });
 
   } catch (error) {
     console.error("UPDATE BUSINESS ERROR:", error);
-    res.status(500).json({ error: "Error actualizando" });
+    res.status(500).json({ error: "Error actualizando los datos en el servidor" });
   }
 });
 
