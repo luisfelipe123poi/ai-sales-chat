@@ -1009,11 +1009,19 @@ app.get('/public/business/:slug', async (req, res) => {
 });
 
 
+// 1. IMPORTANTE: Asegúrate de tener importado OpenAI al inicio de tu archivo del servidor (ej. server.js o app.js)
+// const { OpenAI } = require('openai');
+// const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
 app.post('/chat', async (req, res) => {
   try {
     const { businessId, message } = req.body;
+    
+    // Buscar el negocio en la base de datos
     const business = await Business.findById(businessId);
-    if (!business) return res.status(404).json({ error: "Negocio no existente" });
+    if (!business) {
+      return res.status(404).json({ error: "Negocio no existente" });
+    }
 
     // 🧠 Construimos el prompt del sistema usando las instrucciones directas y el inventario real
     const systemPrompt = `
@@ -1031,15 +1039,22 @@ app.post('/chat', async (req, res) => {
       3. Mantén tus respuestas relativamente cortas y conversacionales.
     `;
 
-    // Aquí haces tu llamada normal a OpenAI usando "systemPrompt" como developer/system message
-    // y el "message" enviado por el usuario en la vitrina.
-    
-    // const response = await openai.chat.completions.create({ ... });
-    // res.json({ reply: response.choices[0].message.content });
-    
-    res.json({ reply: "Respuesta simulada del bot basada en las nuevas instrucciones" }); // Reemplazar con tu llamada real
+    // 🔥 LLAMADA REAL A OPENAI (Usando la versión actualizada del SDK)
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini", // Puedes usar "gpt-4o-mini" (rápido y muy económico) o "gpt-4"
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: message }
+      ],
+      temperature: 0.7
+    });
+
+    // Devolvemos la respuesta real generada por la Inteligencia Artificial
+    res.json({ reply: response.choices[0].message.content });
+
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("❌ ERROR EN EL CHAT DE IA:", err);
+    res.status(500).json({ error: "Hubo un error al procesar tu mensaje con la IA." });
   }
 });
 
