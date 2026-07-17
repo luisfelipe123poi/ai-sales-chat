@@ -322,18 +322,18 @@
             try {
                 const res = await fetch(`${API}/business/slug/${slug}`);
         
-                // 1. Si el servidor responde con un código de error (404, 500, etc.), lanzamos un error
+                // 1. Validar que la petición fue correcta
                 if (!res.ok) {
                     throw new Error(`Error en el servidor: ${res.status}`);
                 }
 
                 business = await res.json();
 
-                // 2. Si el backend responde "exitoso" pero con un mensaje de error en el JSON
+                // 2. Si el backend responde exitoso pero trae un objeto con error
                 if (business && business.error) {
                     throw new Error(business.error);
                 }
- 
+
                 if (business) {
                     document.getElementById("business-name").innerText = `@${business.name || 'PrestigeStyle'}`;
                     document.getElementById("business-description").innerText = business.description || '';
@@ -341,10 +341,20 @@
                         document.getElementById("business-logo").src = business.logo;
                     }
 
-                    // --- PARSEO DE PRODUCTOS DESDE LOS NODOS CONFIGURADOS EN EL FORMULARIO ---
-                    if (business.nodes && Array.isArray(business.nodes)) {
+                    // --- 🛠️ FIX CLAVE: PARSEO DE PRODUCTOS DESDE EL ARRAY PLANO "products" ---
+                    if (business.products && Array.isArray(business.products)) {
+                        listaProductos = business.products.map(prod => {
+                            return {
+                                nombre: prod.name || "Producto sin nombre",
+                                precio: prod.price || "$0.00",
+                                categoria: prod.category || "General",
+                                imagen: prod.imageUrl || "",
+                                descripcion: prod.description || ""
+                            };
+                        });
+                    } else if (business.nodes && Array.isArray(business.nodes)) {
+                        // Sistema de respaldo (fallback) por si algún negocio viejo usa "nodes"
                         const productNodes = business.nodes.filter(n => n.type === "product_showcase");
-                
                         listaProductos = productNodes.map(node => {
                             const [nombre, precio, categoria, imagen] = node.options || [];
                             return {
@@ -355,27 +365,29 @@
                                 descripcion: node.content || ""
                             };
                         });
-
-                        // Generar botones de categoría únicos
-                        const categoriasUnicas = ["Todos", ...new Set(listaProductos.map(p => p.categoria))];
-                        const navCategorias = document.getElementById("categorias-container");
-                
-                        if (navCategorias && categoriasUnicas.length > 1) {
-                            navCategorias.innerHTML = "";
-                            categoriasUnicas.forEach(cat => {
-                                const btn = document.createElement("button");
-                                btn.innerText = cat === "Todos" ? "🔥 Todos" : cat;
-                                btn.onclick = () => filtrarCategoria(cat);
-                                if (cat === "Todos") {
-                                    btn.className = "cat-btn px-4 py-2 bg-slate-900 text-white rounded-full text-xs font-bold shadow-sm shrink-0 cursor-pointer transition-colors";
-                                } else {
-                                    btn.className = "cat-btn px-4 py-2 bg-white text-slate-600 hover:bg-slate-100 rounded-full text-xs font-semibold border border-slate-100 shrink-0 cursor-pointer transition-colors";
-                                }
-                                navCategorias.appendChild(btn);
-                            });
-                        }
+                    } else {
+                        listaProductos = [];
                     }
 
+                    // Generar botones de categoría únicos
+                    const categoriasUnicas = ["Todos", ...new Set(listaProductos.map(p => p.categoria))];
+                    const navCategorias = document.getElementById("categorias-container");
+            
+                    if (navCategorias && categoriasUnicas.length > 1) {
+                        navCategorias.innerHTML = "";
+                        categoriasUnicas.forEach(cat => {
+                            const btn = document.createElement("button");
+                            btn.innerText = cat === "Todos" ? "🔥 Todos" : cat;
+                            btn.onclick = () => filtrarCategoria(cat);
+                            if (cat === "Todos") {
+                                btn.className = "cat-btn px-4 py-2 bg-slate-900 text-white rounded-full text-xs font-bold shadow-sm shrink-0 cursor-pointer transition-colors";
+                            } else {
+                                btn.className = "cat-btn px-4 py-2 bg-white text-slate-600 hover:bg-slate-100 rounded-full text-xs font-semibold border border-slate-100 shrink-0 cursor-pointer transition-colors";
+                            }
+                            navCategorias.appendChild(btn);
+                        });
+                    }
+ 
                     // Renderizar catálogo dinámicamente
                     renderizarCatalogo();
 
@@ -390,7 +402,7 @@
                         showOptions(business.options);
                     }
                 }
-             } catch (err) {
+            } catch (err) {
                 console.error("❌ ERROR LOADING BUSINESS:", err);
                 addMessage("¡Hola! 👋 Bienvenido. ¿En qué puedo ayudarte hoy?", "bot");
                 document.getElementById("vitrina-productos").innerHTML = `
