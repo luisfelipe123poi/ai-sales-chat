@@ -1334,64 +1334,45 @@ app.put("/business/:id", auth, async (req, res) => {
       return res.status(403).json({ error: "No autorizado" });
     }
 
-    // 1. Validar Slug único
     if (req.body.slug) {
       const slugExists = await Business.findOne({
         slug: req.body.slug,
         _id: { $ne: req.params.id }
       });
-      if (slugExists) return res.json({ error: "Slug ya existe" });
+
+      if (slugExists) {
+        return res.json({ error: "Slug ya existe" });
+      }
     }
 
-    // 2. Procesar Testimonios (Lógica mantenida)
+    // 🔥 FIX TESTIMONIOS (IGUAL QUE CREATE)
     if (req.body.testimonials) {
       req.body.testimonials = (req.body.testimonials || []).map(t => {
+
         if (typeof t === "string") {
-          if (t.includes("youtube") || t.includes("video") || t.includes("drive")) return { type: "video", content: t };
-          if (t.match(/\.(jpg|jpeg|png|webp|gif)/i)) return { type: "image", content: t };
+
+          // detectar video
+          if (t.includes("youtube") || t.includes("video") || t.includes("drive")) {
+            return { type: "video", content: t };
+          }
+
+          // detectar imagen
+          if (t.match(/\.(jpg|jpeg|png|webp|gif)/i)) {
+            return { type: "image", content: t };
+          }
+
+          // texto
           return { type: "text", content: t };
         }
+
         return t;
       });
     }
 
-    // 3. Normalizar Productos (Vital para que coincida con tu Schema)
-    if (req.body.products) {
-      req.body.products = req.body.products.map(p => ({
-        id: p.id,
-        name: p.name || p.nombre || "",
-        price: p.price || p.precio || "",
-        category: p.category || p.categoria || "",
-        image: p.image || p.imageUrl || p.imagen || "",
-        description: p.description || p.descripcion || "",
-        tallas: p.tallas || p.availableSizes || "",
-        tallasAgotadas: p.tallasAgotadas || p.outOfStockSizes || "",
-        colores: p.colores || p.colors || "",
-        envio: p.envio || p.shipping || ""
-      }));
-    }
-
-    // 4. Actualización Segura
-    // En lugar de pasar todo req.body, extraemos solo lo permitido
-    const updateData = {
-      name: req.body.name,
-      slug: req.body.slug,
-      logo: req.body.logo,
-      primaryColor: req.body.primaryColor,
-      welcomeMessage: req.body.welcomeMessage,
-      whatsappNumber: req.body.whatsappNumber,
-      waMessage: req.body.waMessage,
-      products: req.body.products,
-      testimonials: req.body.testimonials,
-      nodes: req.body.nodes,
-      connections: req.body.connections,
-      flow: req.body.flow
-    };
-
     const updated = await Business.findByIdAndUpdate(
       req.params.id,
-      { $set: updateData },
-      { new: true, runValidators: true }
+      req.body,
+      { new: true }
     );
 
     res.json({ business: updated });
