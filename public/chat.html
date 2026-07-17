@@ -321,8 +321,19 @@
         async function loadBusiness() {
             try {
                 const res = await fetch(`${API}/business/slug/${slug}`);
+        
+                // 1. Si el servidor responde con un código de error (404, 500, etc.), lanzamos un error
+                if (!res.ok) {
+                    throw new Error(`Error en el servidor: ${res.status}`);
+                }
+
                 business = await res.json();
 
+                // 2. Si el backend responde "exitoso" pero con un mensaje de error en el JSON
+                if (business && business.error) {
+                    throw new Error(business.error);
+                }
+ 
                 if (business) {
                     document.getElementById("business-name").innerText = `@${business.name || 'PrestigeStyle'}`;
                     document.getElementById("business-description").innerText = business.description || '';
@@ -333,7 +344,7 @@
                     // --- PARSEO DE PRODUCTOS DESDE LOS NODOS CONFIGURADOS EN EL FORMULARIO ---
                     if (business.nodes && Array.isArray(business.nodes)) {
                         const productNodes = business.nodes.filter(n => n.type === "product_showcase");
-                        
+                
                         listaProductos = productNodes.map(node => {
                             const [nombre, precio, categoria, imagen] = node.options || [];
                             return {
@@ -348,7 +359,7 @@
                         // Generar botones de categoría únicos
                         const categoriasUnicas = ["Todos", ...new Set(listaProductos.map(p => p.categoria))];
                         const navCategorias = document.getElementById("categorias-container");
-                        
+                
                         if (navCategorias && categoriasUnicas.length > 1) {
                             navCategorias.innerHTML = "";
                             categoriasUnicas.forEach(cat => {
@@ -379,12 +390,12 @@
                         showOptions(business.options);
                     }
                 }
-            } catch (err) {
+             } catch (err) {
                 console.error("❌ ERROR LOADING BUSINESS:", err);
                 addMessage("¡Hola! 👋 Bienvenido. ¿En qué puedo ayudarte hoy?", "bot");
                 document.getElementById("vitrina-productos").innerHTML = `
                     <div class="col-span-2 text-center py-12 text-slate-400 text-xs">
-                        Error al cargar el catálogo de productos.
+                        Error al cargar el catálogo de productos. Por favor, verifica que el slug "${slug}" exista y tenga productos asignados.
                     </div>
                 `;
             }
