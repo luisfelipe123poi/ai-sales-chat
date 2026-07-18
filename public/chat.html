@@ -2,18 +2,22 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vitrina Premium & AI Sales Bot</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Vitrina Interactiva & IA Chat</title>
+    
     <!-- Tailwind CSS v4 -->
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <!-- Iconos Lucide -->
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    
+    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+
     <style>
-        /* Transición suave para modales y chats */
-        .transition-all-300 {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        /* Optimizaciones cruciales para navegadores móviles (iOS / Android) */
+        body {
+            -webkit-tap-highlight-color: transparent;
+            font-feature-settings: "cv02", "cv03", "cv04", "cv11";
         }
-        /* Ocultar barra de scroll de forma elegante */
+        /* Ocultar barra de scroll en el menú de categorías manteniendo el deslizamiento táctil */
         .no-scrollbar::-webkit-scrollbar {
             display: none;
         }
@@ -21,492 +25,513 @@
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
+        /* Prevenir que iOS haga zoom automático al enfocar el input de texto */
+        @media screen and (max-width: 768px) {
+            input, select, textarea {
+                font-size: 16px !important;
+            }
+        }
+        /* Ajustar altura dinámica real en móviles tomando en cuenta la barra del navegador */
+        .h-screen-mobile {
+            height: calc(100vh - 20px);
+            height: 100dvh;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 font-sans antialiased pb-28">
+<body class="bg-slate-50 text-slate-900 font-sans antialiased pb-24 selection:bg-emerald-500/20">
 
-    <!-- 1. ENCABEZADO (Estilo Bio Link Premium) -->
-    <header class="max-w-md mx-auto pt-8 px-4 text-center">
-        <div class="relative w-24 h-24 mx-auto mb-4">
-            <div class="w-full h-full bg-slate-200 rounded-full border-4 border-white shadow-lg overflow-hidden">
-                <img id="business-logo" src="https://images.unsplash.com/photo-1527853787696-f7be74f2e39a?w=150" alt="Logo Tienda" class="w-full h-full object-cover">
-            </div>
-            <span class="absolute bottom-1 right-1 w-5 h-5 bg-emerald-500 border-2 border-white rounded-full flex items-center justify-center shadow-xs" title="Tienda Activa">
-                <span class="w-2.5 h-2.5 bg-white rounded-full animate-pulse"></span>
-            </span>
-        </div>
-        <h1 id="business-name" class="text-xl font-extrabold tracking-tight">Cargando...</h1>
-        <p id="business-description" class="text-sm text-slate-500 mt-1.5 max-w-xs mx-auto">Conectando con tu vitrina virtual...</p>
+    <!-- ========================================================
+         ✨ INTERFAZ DEL CATÁLOGO / BIO LINK (FRONTEND VISUAL)
+         ======================================================== -->
+    <main class="max-w-md mx-auto px-4 pt-8">
         
-        <!-- Badges de confianza -->
-        <div class="flex justify-center gap-3 mt-4">
-            <span class="flex items-center gap-1.5 text-[11px] font-semibold text-slate-600 bg-white px-3 py-1.5 rounded-full border border-slate-100 shadow-xs">
-                <i data-lucide="truck" class="w-3.5 h-3.5 text-emerald-600"></i> Envío rápido
-            </span>
-            <span class="flex items-center gap-1.5 text-[11px] font-semibold text-slate-600 bg-white px-3 py-1.5 rounded-full border border-slate-100 shadow-xs">
-                <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-600"></i> Garantía 100%
-            </span>
-        </div>
-    </header>
-
-    <!-- 2. CATEGORÍAS (Horizontal Scroll Dinámico) -->
-    <nav class="max-w-md mx-auto mt-6 px-4">
-        <div id="categorias-container" class="flex gap-2 overflow-x-auto no-scrollbar pb-2">
-            <button onclick="filtrarCategoria('Todos')" class="cat-btn px-4 py-2 bg-slate-900 text-white rounded-full text-xs font-bold shadow-sm shrink-0 cursor-pointer transition-colors">🔥 Todos</button>
-            <!-- Aquí se inyectarán las categorías dinámicas de tus productos -->
-        </div>
-    </nav>
-
-    <!-- 3. VITRINA DE PRODUCTOS DINÁMICA -->
-    <main class="max-w-md mx-auto px-4 mt-4">
-        <div id="vitrina-productos" class="grid grid-cols-2 gap-4">
-            <!-- Los productos creados en el formulario se inyectarán dinámicamente aquí -->
-            <div class="col-span-2 text-center py-12 text-slate-400 text-xs">
-                <span class="animate-pulse">Cargando catálogo premium...</span>
+        <!-- Perfil / Encabezado Premium -->
+        <header class="flex flex-col items-center text-center mb-8 animate-fade">
+            <div class="relative group">
+                <div class="absolute -inset-0.5 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full blur opacity-30 group-hover:opacity-50 transition duration-300"></div>
+                <img id="biz-logo" src="https://images.unsplash.com/photo-1534452203293-499d3a55a79e?q=80&w=250&auto=format&fit=crop" alt="Logo" class="relative w-24 h-24 rounded-full object-cover border-4 border-white shadow-md">
             </div>
-        </div>
+            <h1 id="biz-name" class="text-xl font-bold text-slate-850 mt-4 tracking-tight">Cargando comercio...</h1>
+            <p id="biz-description" class="text-xs text-slate-500 mt-1 max-w-[85%] leading-relaxed">Explora nuestras colecciones exclusivas y chatea con nuestra IA de ventas para pedidos inmediatos.</p>
+        </header>
+
+        <!-- Menú Horizontal de Categorías con Scroll Táctil Oculto -->
+        <nav id="categories-nav" class="flex gap-2 overflow-x-auto no-scrollbar pb-3 mb-6 sticky top-0 bg-slate-50/90 backdrop-blur-md z-10 py-2 -mx-4 px-4 mask-image-[linear-gradient(to_right,white_85%,transparent)]">
+            <!-- Inyección dinámica de botones de categorías -->
+        </nav>
+
+        <!-- Vitrina de Productos (Goma/Grid Reactiva) -->
+        <section id="catalog-grid" class="grid grid-cols-2 gap-3.5 animate-fade" style="animation-delay: 100ms">
+            <!-- Inyección dinámica de productos -->
+        </section>
     </main>
 
-    <!-- 4. MODAL DETALLE DE PRODUCTO (Quick View) -->
-    <div id="product-modal" class="opacity-0 pointer-events-none fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-end justify-center p-0 md:p-4 transition-all-300">
-        <div class="bg-white w-full max-w-md rounded-t-3xl md:rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh] translate-y-10 transition-all-300 transform" id="modal-container">
-            <div class="relative">
-                <img id="modal-img" src="" alt="Producto" class="w-full h-72 object-cover">
-                <button onclick="closeModal()" class="absolute top-4 right-4 bg-white/90 hover:bg-white text-slate-800 p-2 rounded-full shadow-md backdrop-blur-xs transition-transform active:scale-90 cursor-pointer">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
+    <!-- ========================================================
+         📦 MODAL DE VISTA RÁPIDA (QUICK VIEW)
+         ======================================================== -->
+    <div id="quickview-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 opacity-0 pointer-events-none transition-all duration-300">
+        <div class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl overflow-hidden shadow-2xl transform translate-y-full sm:translate-y-0 sm:scale-95 transition-all duration-300 max-h-[90vh] flex flex-col">
+            <!-- Cabecera del Modal Móvil (Barra de arrastre visual) -->
+            <div class="w-12 h-1 bg-slate-200 rounded-full mx-auto my-3 sm:hidden shrink-0"></div>
             
-            <div class="p-6 overflow-y-auto space-y-4">
-                <div>
-                    <h2 id="modal-title" class="text-lg font-extrabold text-slate-900">Nombre del Producto</h2>
-                    <p id="modal-price" class="text-emerald-600 font-black text-xl mt-1">$0.000</p>
-                </div>
-
-                <p id="modal-desc" class="text-xs text-slate-500 leading-relaxed">
-                    Descripción del producto...
-                </p>
-
-                <!-- Tallas simuladas -->
-                <div>
-                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Selecciona tu talla</span>
-                    <div class="flex gap-2">
-                        <button class="w-9 h-9 bg-slate-900 text-white rounded-xl text-xs font-bold flex items-center justify-center cursor-pointer active:scale-95 transition-transform">S</button>
-                        <button class="w-9 h-9 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold flex items-center justify-center cursor-pointer active:scale-95 transition-transform">M</button>
-                        <button class="w-9 h-9 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold flex items-center justify-center cursor-pointer active:scale-95 transition-transform">L</button>
-                    </div>
-                </div>
-
-                <button id="modal-btn-ask" class="w-full py-3.5 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl text-sm font-bold flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-[0.98]">
-                    <i data-lucide="message-square" class="w-4 h-4"></i> Preguntar detalles al Bot
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 5. INTERFAZ DEL BOT FLOTANTE -->
-    <div class="fixed bottom-6 right-6 z-50 max-w-[calc(100vw-32px)] w-96">
-        
-        <!-- Ventana del Chat -->
-        <div id="chat-window" class="opacity-0 pointer-events-none translate-y-10 scale-95 transition-all-300 bg-white rounded-3xl shadow-2xl border border-slate-100 flex flex-col h-[520px] mb-4 overflow-hidden transform">
-            <!-- Encabezado del Chat -->
-            <div class="bg-slate-950 p-4 text-white flex items-center justify-between shadow-sm">
-                <div class="flex items-center gap-3">
-                    <div class="relative w-9 h-9 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center font-black text-xs text-white shadow-md">
-                        AI
-                    </div>
+            <div class="overflow-y-auto p-5 pb-8 space-y-4">
+                <div class="flex justify-between items-start">
                     <div>
-                        <p class="text-sm font-extrabold tracking-wide">Asistente Virtual Premium ✨</p>
-                        <p class="text-[10px] text-emerald-400 flex items-center gap-1 font-medium">
-                            <span class="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping"></span> En línea para ayudarte
-                        </p>
+                        <span id="modal-category" class="text-[10px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">Categoría</span>
+                        <h3 id="modal-title" class="text-lg font-bold text-slate-800 mt-1">Nombre del Producto</h3>
+                    </div>
+                    <button onclick="cerrarQuickView()" class="p-1.5 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition-colors cursor-pointer">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <!-- Imagen / Media en el Modal -->
+                <div id="modal-media-container" class="w-full h-64 bg-slate-100 rounded-xl overflow-hidden shadow-inner relative">
+                    <img id="modal-image" src="" alt="Producto" class="w-full h-full object-cover">
+                </div>
+
+                <div class="flex items-baseline justify-between">
+                    <span id="modal-price" class="text-xl font-black text-slate-900">$0.00</span>
+                    <span class="text-[11px] text-slate-400">⚡ Disponibilidad Inmediata</span>
+                </div>
+
+                <p id="modal-description" class="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100">Descripción detallada...</p>
+
+                <!-- Selector de Tallas Rápido -->
+                <div>
+                    <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Selecciona tu Talla</label>
+                    <div id="modal-sizes" class="flex gap-2 mt-1.5">
+                        <!-- Inyección de tallas dinámicas -->
                     </div>
                 </div>
-                <button onclick="toggleChat()" class="text-slate-400 hover:text-white transition-colors cursor-pointer p-1">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
 
-            <!-- Contenedor de Mensajes -->
-            <div id="messages" class="flex-1 p-4 overflow-y-auto space-y-4 bg-slate-50/50 text-xs scroll-smooth">
-                <!-- Inyección dinámica de mensajes -->
-            </div>
-
-            <!-- Botones de Respuestas Rápidas -->
-            <div id="options-container" class="px-4 py-2 bg-slate-50/50 flex flex-wrap gap-1.5 max-h-24 overflow-y-auto no-scrollbar"></div>
-
-            <!-- Botón WhatsApp Dinámico -->
-            <div class="px-4 pb-2 bg-white">
-                <button id="waBtn" style="display: none;" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer active:scale-95">
-                    <i data-lucide="phone" class="w-4 h-4"></i> Contactar por WhatsApp
-                </button>
-            </div>
-
-            <!-- Input de Texto -->
-            <div id="input-area" class="p-3 bg-white border-t border-slate-100 flex gap-2">
-                <input type="text" id="input" placeholder="Pregúntale al bot..." class="flex-1 bg-slate-100 rounded-2xl px-4 py-3 text-xs focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all text-slate-800">
-                <button onclick="sendMessage()" id="send-btn" class="bg-slate-950 hover:bg-slate-900 text-white p-3 rounded-2xl transition-all cursor-pointer active:scale-90 flex items-center justify-center">
-                    <i data-lucide="send" class="w-4 h-4"></i>
+                <!-- Botón de Acción Principal -->
+                <button id="modal-action-btn" class="w-full py-3.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md shadow-slate-900/10 active:scale-[0.98]">
+                    <i data-lucide="message-square-plus" class="w-4 h-4"></i> Preguntar a la IA sobre esta prenda
                 </button>
             </div>
         </div>
-
-        <!-- Botón Disparador Flotante con Badge -->
-        <button onclick="toggleChat()" class="ml-auto flex items-center justify-center w-14 h-14 bg-slate-950 hover:bg-slate-900 text-white rounded-full shadow-2xl transition-transform active:scale-95 cursor-pointer group relative">
-            <i data-lucide="message-circle" class="w-6 h-6 group-hover:rotate-12 transition-transform"></i>
-            <span id="chat-badge" class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white animate-bounce">1</span>
-        </button>
     </div>
 
-    <!-- 6. LÓGICA DE INTERACCIÓN INTEGRADA -->
+    <!-- ========================================================
+         💬 INTERFAZ DE CONVERSACIÓN / CHAT FLOTANTE PREMIUM
+         ======================================================== -->
+    
+    <!-- Botón Disparador Flotante (Launcher) -->
+    <button id="chat-launcher" onclick="abrirChat()" class="fixed bottom-6 right-4 w-14 h-14 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full shadow-xl flex items-center justify-center cursor-pointer transition-all duration-300 z-40 active:scale-90 animate-bounce group">
+        <div class="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 rounded-full border-2 border-white flex items-center justify-center text-[8px] font-bold text-white">1</div>
+        <i data-lucide="message-circle" class="w-6 h-6 transition-transform group-hover:rotate-12"></i>
+    </button>
+
+    <!-- Ventana de Chat Expandida -->
+    <div id="chat-window" class="fixed inset-y-0 right-0 z-50 w-full sm:max-w-md bg-white shadow-2xl transform translate-x-full transition-transform duration-300 ease-out flex flex-col h-screen-mobile hidden">
+        
+        <!-- Encabezado del Chat -->
+        <header class="p-4 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800 shrink-0">
+            <div class="flex items-center gap-3">
+                <div class="relative">
+                    <div class="w-9 h-9 bg-emerald-600 rounded-full flex items-center justify-center font-bold text-sm tracking-wider shadow-inner">AI</div>
+                    <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-slate-900"></span>
+                </div>
+                <div>
+                    <h4 class="text-xs font-bold tracking-tight">Asistente de Ventas Inteligente</h4>
+                    <p class="text-[10px] text-emerald-400 font-medium">En línea para ayudarte</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-1">
+                <!-- Botón de Enlace Directo a WhatsApp (Oculto inicialmente) -->
+                <button id="waBtn" class="p-2 bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 rounded-lg transition-colors hidden cursor-pointer items-center justify-center" title="Pasar a WhatsApp">
+                    <i data-lucide="phone-call" class="w-4 h-4"></i>
+                </button>
+                <button onclick="cerrarChat()" class="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors cursor-pointer">
+                    <i data-lucide="chevrons-right" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Zona de Mensajes Fluida -->
+        <div id="messages" class="flex-1 overflow-y-auto p-4 space-y-3.5 bg-slate-50/50 mask-image-[linear-gradient(to_bottom,transparent_0%,white_5%)]">
+            <!-- Aquí se inyectan las burbujas conversacionales -->
+        </div>
+
+        <!-- Contenedor Dinámico de Respuestas Rápidas (Píldoras) -->
+        <div id="options-container" class="px-4 py-2 bg-slate-50/50 flex gap-2 overflow-x-auto no-scrollbar shrink-0">
+            <!-- Inyección de opciones rápidas -->
+        </div>
+
+        <!-- Formulario / Barra de Entrada de Texto -->
+        <div id="input-area" class="p-3 bg-white border-t border-slate-100 flex items-center gap-2 shrink-0 pb-safe">
+            <input id="input" type="text" placeholder="Escribe tu mensaje..." class="flex-1 bg-slate-100 text-xs px-4 py-3 rounded-xl border border-transparent focus:border-slate-200 focus:bg-white outline-none transition-all placeholder:text-slate-400">
+            <button onclick="sendMessage()" class="p-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl transition-all cursor-pointer active:scale-95 shrink-0 shadow-xs">
+                <i data-lucide="send" class="w-4 h-4"></i>
+            </button>
+        </div>
+    </div>
+
+
+    <!-- ========================================================
+         ⚙️ LÓGICA DE CONTROL JAVASCRIPT (SISTEMA INTEGRADO)
+         ======================================================== -->
     <script>
-        // Inicializar iconos
-        lucide.createIcons();
-
-        // Configuración de Prestige Closer[cite: 1]
-        const API = "https://ai-sales-chat.onrender.com"; //[cite: 1]
-        // SOLUCIÓN PARA RUTAS LIMPIAS (Ej: /22222)
-        // Dividimos la ruta por "/" y eliminamos los elementos vacíos
-        const pathSegments = window.location.pathname.split('/').filter(segment => segment.trim() !== "");
-
-        // Tomamos el primer segmento de la ruta como el slug, o "default" si está vacío
-        const slug = pathSegments[0] || "default";
+        // CONFIGURACIÓN DE ENTORNOS Y VARIABLES GLOBALES
+        const API = "https://ia-sales-chat.api.tuplataforma.com/api"; // Reemplaza por la URL de tu backend real
+        const SLUG = "amare"; // Slug comercial por defecto para inicialización
 
         let business = null;
-        let listaProductos = []; // Guardará el catálogo parseado localmente
-        let categoriaActiva = "Todos";
-
         let leadId = null;
         let conversationId = null;
-        let inputLocked = false;
         let clientName = "";
         let whatsappNumber = "";
+        let inputLocked = false;
 
-        const chatWindow = document.getElementById('chat-window');
-        const productModal = document.getElementById('product-modal');
-        const modalContainer = document.getElementById('modal-container');
-        const chatBadge = document.getElementById('chat-badge');
+        // ESTADOS DE CONTEXTO SECRETO PARA LA IA
+        let productoViendoActualmente = null;
+        let carritoGlobal = [];
 
-        // Control de apertura y cierre del chat
-        function toggleChat() {
-            if (chatWindow.classList.contains('opacity-0')) {
-                chatWindow.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-10', 'scale-95');
-                chatWindow.classList.add('opacity-100', 'pointer-events-auto', 'translate-y-0', 'scale-100');
-                if (chatBadge) chatBadge.classList.add('hidden');
-            } else {
-                chatWindow.classList.add('opacity-0', 'pointer-events-none', 'translate-y-10', 'scale-95');
-                chatWindow.classList.remove('opacity-100', 'pointer-events-auto', 'translate-y-0', 'scale-100');
-            }
-        }
-
-        // Control de Modal Quick View con transiciones puras
-        function openModal(title, price, imgUrl, description) {
-            document.getElementById('modal-title').innerText = title;
-            document.getElementById('modal-price').innerText = price;
-            document.getElementById('modal-img').src = imgUrl || "https://images.unsplash.com/photo-1527853787696-f7be74f2e39a?w=500";
-            document.getElementById('modal-desc').innerText = description || "Sin descripción disponible.";
+        // 🛠️ PARSER MULTIMEDIA: Renderizado seguro dentro del chat (Imágenes, Videos, Google Drive)
+        function formatMessageContent(text) {
+            if (!text) return "";
             
-            document.getElementById('modal-btn-ask').onclick = function() {
-                closeModal();
-                preguntarAlBot(title, price);
-            };
-
-            productModal.classList.remove('opacity-0', 'pointer-events-none');
-            modalContainer.classList.remove('translate-y-10');
-        }
-
-        function closeModal() {
-            productModal.classList.add('opacity-0', 'pointer-events-none');
-            modalContainer.classList.add('translate-y-10');
-        }
-
-        productModal.addEventListener('click', function(e) {
-            if (e.target === productModal) {
-                closeModal();
-            }
-        });
-
-        // Integración con el chat real
-        function preguntarAlBot(nombre, precio) {
-            if (chatWindow.classList.contains('opacity-0')) {
-                toggleChat();
-            }
-            const mensajeContexto = `Me interesa saber más sobre la *${nombre}* que cuesta ${precio}.`;
+            // Expresión regular para capturar URLs limpias
+            const urlRegex = /(https?:\/\/[^\s]+)/g;
             
-            const input = document.getElementById("input");
-            if (input) {
-                input.value = mensajeContexto;
-                sendMessage();
-            }
-        }
+            return text.replace(urlRegex, (url) => {
+                let cleanUrl = url.trim().replace(/[.,;)]$/, "");
+                
+                // Tratamiento específico para Google Drive
+                if (cleanUrl.includes("drive.google.com")) {
+                    if (cleanUrl.includes("/view") || cleanUrl.includes("?id=")) {
+                        let id = "";
+                        if (cleanUrl.includes("?id=")) {
+                            id = cleanUrl.split("?id=")[1].split("&")[0];
+                        } else {
+                            const parts = cleanUrl.split("/d/");
+                            if (parts[1]) id = parts[1].split("/")[0];
+                        }
+                        if (id) {
+                            return `<div class="mt-2 rounded-xl overflow-hidden border border-slate-100 shadow-2xs max-w-full">
+                                <img src="https://docs.google.com/uc?export=view&id=${id}" alt="Media Drive" class="w-full object-cover max-h-48" onerror="this.parentElement.style.display='none'">
+                            </div>`;
+                        }
+                    }
+                }
 
-        // ==========================================
-        // 🛍️ RENDERIZADO DINÁMICO DEL CATÁLOGO
-        // ==========================================
+                // Extensiones Multimedia directas
+                const isImage = /\.(jpeg|jpg|gif|png|webp|svg)$/i.test(cleanUrl);
+                const isVideo = /\.(mp4|webm|ogg|mov)$/i.test(cleanUrl);
 
-        function renderizarCatalogo() {
-            // 👁️ AGREGA ESTA LÍNEA DE PRUEBA AQUÍ:
-            console.log("Contenido actual de listaProductos:", listaProductos);
-            const vitrina = document.getElementById("vitrina-productos");
-            const navCategorias = document.getElementById("categorias-container");
-            if (!vitrina) return;
+                if (isImage) {
+                    return `<div class="mt-2 rounded-xl overflow-hidden border border-slate-100 shadow-2xs max-w-full">
+                        <img src="${cleanUrl}" alt="Imagen adjunta" class="w-full object-cover max-h-48">
+                    </div>`;
+                }
+                if (isVideo) {
+                    return `<div class="mt-2 rounded-xl overflow-hidden border border-slate-100 shadow-2xs max-w-full">
+                        <video src="${cleanUrl}" controls class="w-full max-h-48 object-cover"></video>
+                    </div>`;
+                }
 
-            vitrina.innerHTML = "";
-
-            // 1. Filtrar productos por categoría seleccionada
-            const productosFiltrados = listaProductos.filter(prod => {
-                if (categoriaActiva === "Todos") return true;
-                return prod.categoria.toLowerCase() === categoriaActiva.toLowerCase();
+                // Link estándar seguro en caso de no ser multimedia ejecutable
+                return `<a href="${cleanUrl}" target="_blank" class="text-emerald-600 underline font-semibold break-all">Ver recurso adjunto 🔗</a>`;
             });
+        }
 
-            if (productosFiltrados.length === 0) {
-                vitrina.innerHTML = `
-                    <div class="col-span-2 text-center py-12 text-slate-400 text-xs">
-                        No hay productos disponibles en esta categoría.
-                    </div>
-                `;
+        // CONTROL DE FLUJO INTERFAZ DE CHAT FLOTANTE
+        function abrirChat() {
+            const chatWin = document.getElementById("chat-window");
+            const launcher = document.getElementById("chat-launcher");
+            
+            chatWin.classList.remove("hidden");
+            setTimeout(() => {
+                chatWin.classList.remove("translate-x-full");
+                launcher.classList.add("scale-0");
+            }, 10);
+
+            // Primer mensaje de bienvenida automático si el contenedor está vacío
+            const messagesContainer = document.getElementById("messages");
+            if (messagesContainer && messagesContainer.children.length === 0) {
+                const bienvenida = business?.welcomeMessage || "¡Hola! 👋 Bienvenido. ¿En qué puedo ayudarte hoy?";
+                addMessage(bienvenida, "bot");
+                if (business?.initialOptions) {
+                    showOptions(business.initialOptions);
+                }
+            }
+        }
+
+        function cerrarChat() {
+            const chatWin = document.getElementById("chat-window");
+            const launcher = document.getElementById("chat-launcher");
+            
+            chatWin.classList.add("translate-x-full");
+            launcher.classList.remove("scale-0");
+            setTimeout(() => chatWin.classList.add("hidden"), 300);
+        }
+
+        // INYECTOR DE CONTEXTO CUANDO EL USUARIO NAVEGA EN LA VITRINA
+        function inyectarContextoProducto(producto) {
+            productoViendoActualmente = {
+                nombre: producto.name,
+                precio: producto.price,
+                categoria: producto.category || "General",
+                idReferencia: producto._id || null
+            };
+            console.log("🎯 Contexto actualizado en secreto para la IA:", productoViendoActualmente);
+        }
+
+        // GENERACIÓN DE BURBUJAS DE TEXTO NATIVAS EN EL DOM
+        function addMessage(text, sender) {
+            const container = document.getElementById("messages");
+            if (!container) return;
+
+            const wrap = document.createElement("div");
+            wrap.className = `flex w-full animate-fade ${sender === "user" ? "justify-end" : "justify-start"}`;
+
+            const bubble = document.createElement("div");
+            
+            if (sender === "user") {
+                bubble.className = "bg-slate-900 text-white text-xs p-3.5 rounded-2xl rounded-tr-none max-w-[85%] shadow-xs font-medium leading-relaxed";
+                bubble.innerText = text; 
+            } else {
+                bubble.className = "bg-white text-slate-800 text-xs p-3.5 rounded-2xl rounded-tl-none max-w-[85%] border border-slate-100 shadow-2xs leading-relaxed";
+                bubble.innerHTML = formatMessageContent(text);
+            }
+
+            wrap.appendChild(bubble);
+            container.appendChild(wrap);
+
+            if (window.lucide) lucide.createIcons();
+            
+            // Scroll automatizado ultrasuave
+            setTimeout(() => {
+                container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
+            }, 50);
+        }
+
+        // CARGA INICIAL DE DATOS DESDE EL BACKEND
+        async function loadBusiness() {
+            try {
+                const res = await fetch(`${API}/business/slug/${SLUG}`);
+                const data = await res.json();
+                business = data;
+
+                // Pintar MetaDatos del Negocio
+                document.getElementById("biz-name").innerText = business.name || "Mi Comercio";
+                if (business.description) document.getElementById("biz-description").innerText = business.description;
+                if (business.logo) document.getElementById("biz-logo").src = business.logo;
+
+                // Renderizar Navegación y Vitrina Integral
+                renderCategories(business.categories || []);
+                renderProducts(business.products || []);
+
+                if (window.lucide) lucide.createIcons();
+            } catch (err) {
+                console.error("❌ Error crítico inicializando negocio:", err);
+                document.getElementById("biz-name").innerText = "Error al conectar";
+            }
+        }
+
+        // CONTROLADORES DE RENDERIZADO VISUAL (VITRINA)
+        function renderCategories(categories) {
+            const nav = document.getElementById("categories-nav");
+            if (!nav) return;
+            nav.innerHTML = "";
+
+            // Botón comodín "Todos"
+            const btnAll = document.createElement("button");
+            btnAll.className = "px-4 py-2 bg-slate-900 text-white text-xs font-bold rounded-full shrink-0 shadow-sm cursor-pointer transition-all active:scale-95";
+            btnAll.innerText = "Todos";
+            btnAll.onclick = () => filterCategory("", btnAll);
+            nav.appendChild(btnAll);
+
+            categories.forEach(cat => {
+                const btn = document.createElement("button");
+                btn.className = "px-4 py-2 bg-white text-slate-700 hover:text-slate-900 text-xs font-semibold rounded-full border border-slate-200 shrink-0 cursor-pointer transition-all active:scale-95";
+                btn.innerText = cat;
+                btn.onclick = () => filterCategory(cat, btn);
+                nav.appendChild(btn);
+            });
+        }
+
+        function filterCategory(category, clickedBtn) {
+            // Actualizar estados visuales de los botones del menú
+            const buttons = document.querySelectorAll("#categories-nav button");
+            buttons.forEach(b => {
+                b.className = "px-4 py-2 bg-white text-slate-700 hover:text-slate-900 text-xs font-semibold rounded-full border border-slate-200 shrink-0 cursor-pointer transition-all active:scale-95";
+            });
+            clickedBtn.className = "px-4 py-2 bg-slate-900 text-white text-xs font-bold rounded-full shrink-0 shadow-sm cursor-pointer transition-all active:scale-95";
+
+            // Filtrado lógico de productos
+            if (!business || !business.products) return;
+            const filtered = category === "" ? business.products : business.products.filter(p => p.category === category);
+            renderProducts(filtered);
+        }
+
+        function renderProducts(products) {
+            const grid = document.getElementById("catalog-grid");
+            if (!grid) return;
+            grid.innerHTML = "";
+
+            if (products.length === 0) {
+                grid.innerHTML = `<p class="col-span-2 text-center text-xs text-slate-400 py-8">No hay productos en esta categoría.</p>`;
                 return;
             }
 
-            // 2. Inyectar productos en el HTML
-            productosFiltrados.forEach(prod => {
-                const imgUrl = prod.imagen || "https://images.unsplash.com/photo-1527853787696-f7be74f2e39a?w=400";
+            products.forEach(p => {
+                const card = document.createElement("div");
+                card.className = "bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-2xs hover:shadow-xs transition-all flex flex-col group active:scale-[0.99]";
                 
-                const productCard = document.createElement("div");
-                productCard.className = "bg-white rounded-2xl overflow-hidden shadow-xs border border-slate-100 flex flex-col justify-between group transition-transform duration-200 hover:scale-[1.01]";
-                
-                // Sanitizar strings para pasar como parámetros JS de manera segura
-                const escapedName = prod.nombre.replace(/'/g, "\\'");
-                const escapedPrice = prod.precio.replace(/'/g, "\\'");
-                const escapedImg = imgUrl.replace(/'/g, "\\'");
-                const escapedDesc = prod.descripcion.replace(/'/g, "\\'").replace(/\n/g, " ");
-
-                productCard.innerHTML = `
-                    <div class="relative aspect-[4/5] bg-slate-100 cursor-pointer overflow-hidden" 
-                         onclick="openModal('${escapedName}', '${escapedPrice}', '${escapedImg}', '${escapedDesc}')">
-                        <img src="${imgUrl}" alt="${escapedName}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                card.innerHTML = `
+                    <div class="relative w-full aspect-square bg-slate-50 overflow-hidden cursor-pointer" onclick="abrirQuickView(${JSON.stringify(p).replace(/"/g, '&quot;')})">
+                        <img src="${p.image || 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=400'}" alt="${p.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        <span class="absolute top-2.5 right-2.5 bg-white/90 backdrop-blur-md px-2 py-1 rounded-lg text-[10px] font-black text-slate-900 shadow-2xs">${p.price}</span>
                     </div>
-                    <div class="p-3">
-                        <h3 class="font-bold text-xs text-slate-800 line-clamp-1">${prod.nombre}</h3>
-                        <p class="text-emerald-600 font-extrabold text-sm mt-0.5">${prod.precio}</p>
-                        <button onclick="preguntarAlBot('${escapedName}', '${escapedPrice}')" class="w-full mt-2.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95">
-                            <i data-lucide="message-square" class="w-3.5 h-3.5"></i> Preguntar al Bot
+                    <div class="p-3 flex flex-col flex-1 justify-between gap-2">
+                        <div>
+                            <h2 class="text-xs font-bold text-slate-800 line-clamp-1 group-hover:text-emerald-600 transition-colors">${p.name}</h2>
+                            <p class="text-[10px] text-slate-400 line-clamp-2 mt-0.5 leading-relaxed">${p.description || 'Sin descripción disponible.'}</p>
+                        </div>
+                        <button onclick="preguntarIAInmediato(${JSON.stringify(p).replace(/"/g, '&quot;')})" class="w-full py-2 bg-slate-50 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 border border-slate-100 hover:border-emerald-200 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 transition-all cursor-pointer">
+                            <i data-lucide="message-square" class="w-3.5 h-3.5"></i> Consultar IA
                         </button>
                     </div>
                 `;
-                vitrina.appendChild(productCard);
+                grid.appendChild(card);
             });
 
-            // Re-renderizar iconos inyectados dinámicamente
-            lucide.createIcons();
+            if (window.lucide) lucide.createIcons();
         }
 
-        // Función para cambiar de categoría de manera interactiva
-        window.filtrarCategoria = function(categoria) {
-            categoriaActiva = categoria;
+        // ACCIONES DE DISPARO DIRECTO DESDE LA VITRINA AL CHAT
+        function preguntarIAInmediato(producto) {
+            inyectarContextoProducto(producto);
+            abrirChat();
+            addMessage(`Hola, me interesa conocer más detalles sobre la prenda: "${producto.name}"`, "user");
             
-            // Actualizar diseño de botones activos
-            document.querySelectorAll(".cat-btn").forEach(btn => {
-                if (btn.innerText.includes(categoria)) {
-                    btn.className = "cat-btn px-4 py-2 bg-slate-900 text-white rounded-full text-xs font-bold shadow-sm shrink-0 cursor-pointer transition-colors";
-                } else {
-                    btn.className = "cat-btn px-4 py-2 bg-white text-slate-600 hover:bg-slate-100 rounded-full text-xs font-semibold border border-slate-100 shrink-0 cursor-pointer transition-colors";
-                }
-            });
-
-            renderizarCatalogo();
-        }
-
-        // Carga Inicial del negocio y formateo de nodos a productos reales
-        async function loadBusiness() {
-            try {
-                const res = await fetch(`${API}/business/slug/${slug}`);
-        
-                // 1. Validar que la petición fue correcta
-                if (!res.ok) {
-                    throw new Error(`Error en el servidor: ${res.status}`);
-                }
-
-                business = await res.json();
-
-                // 2. Si el backend responde exitoso pero trae un objeto con error
-                if (business && business.error) {
-                    throw new Error(business.error);
-                }
-
-                if (business) {
-                    document.getElementById("business-name").innerText = `@${business.name || 'PrestigeStyle'}`;
-                    document.getElementById("business-description").innerText = business.description || '';
-                    if (business.logo) {
-                        document.getElementById("business-logo").src = business.logo;
-                    }
-
-                    // --- 🛠️ FIX CLAVE: PARSEO DE PRODUCTOS DESDE EL ARRAY PLANO "products" ---
-                    if (business.products && Array.isArray(business.products)) {
-                        listaProductos = business.products.map(prod => {
-                            return {
-                                nombre: prod.name || "Producto sin nombre",
-                                precio: prod.price || "$0.00",
-                                categoria: prod.category || "General",
-                                imagen: prod.imageUrl || "",
-                                descripcion: prod.description || ""
-                            };
-                        });
-                    } else if (business.nodes && Array.isArray(business.nodes)) {
-                        // Sistema de respaldo (fallback) por si algún negocio viejo usa "nodes"
-                        const productNodes = business.nodes.filter(n => n.type === "product_showcase");
-                        listaProductos = productNodes.map(node => {
-                            const [nombre, precio, categoria, imagen] = node.options || [];
-                            return {
-                                nombre: nombre || "Producto sin nombre",
-                                precio: precio || "$0.00",
-                                categoria: categoria || "General",
-                                imagen: imagen || "",
-                                descripcion: node.content || ""
-                            };
-                        });
-                    } else {
-                        listaProductos = [];
-                    }
-
-                    // Generar botones de categoría únicos
-                    const categoriasUnicas = ["Todos", ...new Set(listaProductos.map(p => p.categoria))];
-                    const navCategorias = document.getElementById("categorias-container");
-            
-                    if (navCategorias && categoriasUnicas.length > 1) {
-                        navCategorias.innerHTML = "";
-                        categoriasUnicas.forEach(cat => {
-                            const btn = document.createElement("button");
-                            btn.innerText = cat === "Todos" ? "🔥 Todos" : cat;
-                            btn.onclick = () => filtrarCategoria(cat);
-                            if (cat === "Todos") {
-                                btn.className = "cat-btn px-4 py-2 bg-slate-900 text-white rounded-full text-xs font-bold shadow-sm shrink-0 cursor-pointer transition-colors";
-                            } else {
-                                btn.className = "cat-btn px-4 py-2 bg-white text-slate-600 hover:bg-slate-100 rounded-full text-xs font-semibold border border-slate-100 shrink-0 cursor-pointer transition-colors";
-                            }
-                            navCategorias.appendChild(btn);
-                        });
-                    }
- 
-                    // Renderizar catálogo dinámicamente
-                    renderizarCatalogo();
-
-                    // Mensaje inicial del Chatbot
-                    if (business.welcomeMessage) {
-                        addMessage(business.welcomeMessage, "bot");
-                    } else {
-                        addMessage("¡Hola! 👋 Bienvenido. ¿En qué puedo ayudarte hoy?", "bot");
-                    }
-
-                    if (business.options && business.options.length > 0) {
-                        showOptions(business.options);
-                    }
-                }
-            } catch (err) {
-                console.error("❌ ERROR LOADING BUSINESS:", err);
-                addMessage("¡Hola! 👋 Bienvenido. ¿En qué puedo ayudarte hoy?", "bot");
-                document.getElementById("vitrina-productos").innerHTML = `
-                    <div class="col-span-2 text-center py-12 text-slate-400 text-xs">
-                        Error al cargar el catálogo de productos. Por favor, verifica que el slug "${slug}" exista y tenga productos asignados.
-                    </div>
-                `;
-            }
-        }
-
-        // Parseador de enlaces de Google Drive e Imágenes
-        function parseDriveUrl(url) {
-            if (!url) return null;
-            const videoRegex = /\.(mp4|webm|ogg)$/i;
-            const imgRegex = /\.(jpeg|jpg|gif|png|webp|svg)$/i;
-
-            if (url.includes("drive.google.com")) {
-                let id = "";
-                if (url.includes("id=")) {
-                    id = url.split("id=")[1].split("&")[0];
-                } else if (url.includes("/file/d/")) {
-                    id = url.split("/file/d/")[1].split("/")[0];
-                }
-                if (id) {
-                    return {
-                        src: `${API}/drive/stream/${id}`,
-                        isDrive: true
-                    };
-                }
-            }
-            return {
-                src: url,
-                isImage: imgRegex.test(url),
-                isVideo: videoRegex.test(url)
-            };
-        }
-
-        // Renderizado Dinámico de Mensajes
-        function addMessage(text, sender) {
-            const messagesContainer = document.getElementById("messages");
-            if (!messagesContainer) return;
-
-            const msgDiv = document.createElement("div");
-
-            if (sender === "user") {
-                msgDiv.className = "bg-slate-950 text-white p-3.5 rounded-2xl rounded-tr-none max-w-[85%] ml-auto shadow-sm leading-relaxed break-words";
-            } else {
-                msgDiv.className = "bg-white p-3.5 rounded-2xl rounded-tl-none border border-slate-100 max-w-[85%] mr-auto shadow-2xs leading-relaxed text-slate-700 break-words";
-            }
-
-            let formattedText = text.replace(/\*(.*?)\*/g, "<strong>$1</strong>");
-            const urlRegex = /(https?:\/\/[^\s]+)/g;
-            const matches = text.match(urlRegex);
-
-            if (matches) {
-                matches.forEach(url => {
-                    const media = parseDriveUrl(url);
-                    if (media && media.isDrive) {
-                        formattedText = formattedText.replace(url, "");
-                        const mediaWrapper = document.createElement("div");
-                        mediaWrapper.className = "mt-2 rounded-xl overflow-hidden shadow-xs max-w-full";
-
-                        fetch(media.src, { method: "HEAD" })
-                            .then(res => {
-                                const contentType = res.headers.get("Content-Type") || "";
-                                if (contentType.startsWith("video/")) {
-                                    mediaWrapper.innerHTML = `<video src="${media.src}" controls class="w-full h-auto rounded-xl"></video>`;
-                                } else {
-                                    mediaWrapper.innerHTML = `<img src="${media.src}" class="w-full h-auto object-cover rounded-xl" alt="Media"/>`;
-                                }
-                                msgDiv.appendChild(mediaWrapper);
-                            })
-                            .catch(() => {
-                                mediaWrapper.innerHTML = `<video src="${media.src}" controls class="w-full h-auto rounded-xl"></video>`;
-                                msgDiv.appendChild(mediaWrapper);
-                            });
-                    } else if (media && (media.isImage || media.isVideo)) {
-                        formattedText = formattedText.replace(url, "");
-                        const mediaWrapper = document.createElement("div");
-                        mediaWrapper.className = "mt-2 rounded-xl overflow-hidden shadow-xs max-w-full";
-                        if (media.isImage) {
-                            mediaWrapper.innerHTML = `<img src="${media.src}" class="w-full h-auto object-cover rounded-xl" alt="Product Image"/>`;
-                        } else {
-                            mediaWrapper.innerHTML = `<video src="${media.src}" controls class="w-full h-auto rounded-xl"></video>`;
-                        }
-                        msgDiv.appendChild(mediaWrapper);
-                    } else {
-                        formattedText = formattedText.replace(url, `<a href="${url}" target="_blank" class="text-emerald-600 underline font-semibold break-all">${url}</a>`);
-                    }
-                });
-            }
-
-            const textSpan = document.createElement("span");
-            textSpan.innerHTML = formattedText;
-            msgDiv.insertBefore(textSpan, msgDiv.firstChild);
-
-            messagesContainer.appendChild(msgDiv);
-
+            // Simulación de escritura para enganche inmediato
+            showTyping();
             setTimeout(() => {
-                messagesContainer.scrollTo({
-                    top: messagesContainer.scrollHeight,
-                    behavior: "smooth"
-                });
-            }, 50);
+                hideTyping();
+                addMessage(`¡Excelente elección! El artículo **${producto.name}** (${producto.price}) es espectacular. Cuenta con envío nacional incluido. ¿Te gustaría conocer las tallas disponibles o prefieres que lo agregue a tu carrito de una vez?`, "bot");
+                showOptions(["Ver tallas disponibles", "Agregar al carrito", "Hablar con un asesor"]);
+            }, 1200);
+        }
+
+        // CONTROL OPERATIVO DEL MODAL (QUICK VIEW)
+        window.abrirQuickView = function(producto) {
+            inyectarContextoProducto(producto);
+
+            document.getElementById("modal-category").innerText = producto.category || "Prenda Exclusiva";
+            document.getElementById("modal-title").innerText = producto.name;
+            document.getElementById("modal-price").innerText = producto.price;
+            document.getElementById("modal-description").innerText = producto.description || "Prenda de alta calidad con acabados premium. Solicita asesoría de tallas y despachos mediante nuestro chat interactivo de inteligencia artificial.";
+            document.getElementById("modal-image").src = producto.image || 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=400';
+
+            // Renderizado dinámico de tallas físicas
+            const sizesContainer = document.getElementById("modal-sizes");
+            sizesContainer.innerHTML = "";
+            const tallasDefecto = producto.sizes || ["S", "M", "L", "XL"];
+            
+            tallasDefecto.forEach((talla, idx) => {
+                const label = document.createElement("label");
+                label.className = "flex-1 text-center py-2 text-xs font-bold rounded-xl border border-slate-200 text-slate-700 cursor-pointer transition-all hover:bg-slate-50 peer-checked:bg-slate-900 peer-checked:text-white has-[:checked]:bg-slate-900 has-[:checked]:text-white active:scale-95 shadow-2xs";
+                label.innerHTML = `<input type="radio" name="talla-select" value="${talla}" class="peer hidden" ${idx === 1 ? 'checked' : ''}> ${talla}`;
+                sizesContainer.appendChild(label);
+            });
+
+            // Asignación del disparador de acción principal del modal
+            const actionBtn = document.getElementById("modal-action-btn");
+            actionBtn.onclick = () => {
+                const selectedSize = document.querySelector('input[name="talla-select"]:checked')?.value || "M";
+                cerrarQuickView();
+                abrirChat();
+                addMessage(`Hola, estoy viendo "${producto.name}" en talla [${selectedSize}]. ¿Tienen disponibilidad?`, "user");
+                ejecutarEnvioMensajeBackend(`Quiero consultar disponibilidad del producto ${producto.name} en talla ${selectedSize}`);
+            };
+
+            // Animación de despliegue suave
+            const modal = document.getElementById("quickview-modal");
+            modal.classList.remove("pointer-events-none", "opacity-0");
+            modal.firstElementChild.classList.remove("translate-y-full", "sm:scale-95");
+            modal.firstElementChild.classList.add("translate-y-0", "sm:scale-100");
+        }
+
+        window.cerrarQuickView = function() {
+            const modal = document.getElementById("quickview-modal");
+            modal.classList.add("pointer-events-none", "opacity-0");
+            modal.firstElementChild.classList.add("translate-y-full", "sm:scale-95");
+            modal.firstElementChild.classList.remove("translate-y-0", "sm:scale-100");
+        }
+
+        // ========================================================
+        // 🛠️ FUNCIONES DE APOYO INTERACTIVAS (TARJETAS Y CARRITO)
+        // ========================================================
+
+        // Función para pintar la tarjeta interactiva con tu diseño hermoso
+        function renderizarTarjetaInteractiva(nombre, precio) {
+            const cardDiv = document.createElement('div');
+            cardDiv.className = "bg-white border border-slate-150 rounded-2xl overflow-hidden max-w-[85%] shadow-sm mt-2 self-start animate-fade";
+     
+            cardDiv.innerHTML = `
+                <div class="p-3">
+                    <p class="font-bold text-xs text-slate-800">${nombre}</p>
+                    <p class="text-emerald-600 font-bold text-xs mt-1">Total: ${precio}</p>
+                    <p class="text-[9px] text-slate-400 mt-1">🚚 Envío incluido a nivel nacional</p>
+                    <button onclick="comprarProducto('${nombre.replace(/'/g, "\\'")}', '${precio.replace(/'/g, "\\'")}')" class="w-full mt-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-all cursor-pointer">
+                        <i data-lucide="credit-card" class="w-3.5 h-3.5"></i> Comprar Ahora
+                    </button>
+                </div>
+            `;
+     
+            const messagesContainer = document.getElementById("messages"); 
+       
+            if (messagesContainer) {
+                messagesContainer.appendChild(cardDiv);
+         
+                if (window.lucide) {
+                    lucide.createIcons();
+                }
+         
+                setTimeout(() => {
+                    messagesContainer.scrollTo({
+                        top: messagesContainer.scrollHeight,
+                        behavior: "smooth"
+                    });
+                }, 50);
+            }
+        }
+
+        // Función que agrega físicamente el producto al carrito global del cliente
+        function agregarAlCarritoGlobal(nombre, precio, talla) {
+            if (typeof carritoGlobal !== 'undefined') {
+                carritoGlobal.push({ nombre, precio, talla });
+            }
+     
+            console.log("🛒 ¡Carrito Actualizado!", carritoGlobal);
+     
+            mostrarAvisoNotificacion(`🛒 Agregado al carrito: ${nombre} (Talla ${talla})`);
+        }
+
+        // Notificación flotante rápida para que el usuario sienta el feedback inmediato
+        function mostrarAvisoNotificacion(mensaje) {
+            const toast = document.createElement("div");
+            toast.className = "fixed bottom-24 right-4 bg-slate-900 text-white text-xs px-4 py-2.5 rounded-full shadow-lg z-50 animate-bounce";
+            toast.innerText = mensaje;
+            document.body.appendChild(toast);
+       
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // Acción global al presionar "Comprar Ahora"
+        window.comprarProducto = function(nombre, precio) {
+            alert(`¡Perfecto! Redirigiendo a la pasarela de pago para la prenda: ${nombre} por valor de ${precio}`);
+            // Aquí puedes enlazar tu WhatsApp con un mensaje prellenado o redirección de cobro
         }
 
         // Renderizado de Opciones de Respuestas Rápidas
@@ -550,7 +575,7 @@
             if (indicator) indicator.remove();
         }
 
-        // Enviar Mensaje
+        // Enviar Mensaje desde el Input de Texto
         async function sendMessage() {
             if (inputLocked) return;
 
@@ -567,8 +592,19 @@
             addMessage(val, "user");
             input.value = "";
 
+            await ejecutarEnvioMensajeBackend(val);
+        }
+
+        // Enviar Opción Rápida (Píldora de respuesta)
+        async function sendOption(value) {
+            await ejecutarEnvioMensajeBackend(value);
+        }
+
+        // NÚCLEO LOGÍSTICO COMPARTIDO DE COMUNICACIÓN CON EL BACKEND (Mantiene el contexto e interpreta respuestas de la IA)
+        async function ejecutarEnvioMensajeBackend(mensajeTexto) {
             inputLocked = true;
-            input.disabled = true;
+            const input = document.getElementById("input");
+            if (input) input.disabled = true;
 
             const container = document.getElementById("options-container");
             if (container) container.innerHTML = "";
@@ -580,11 +616,16 @@
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                        message: val,
+                        message: mensajeTexto,
                         leadId,
                         conversationId,
                         businessId: business?._id,
-                        clientName: clientName || undefined
+                        clientName: clientName || undefined,
+                        // Contexto síncrono inyectado para evitar amnesia en la IA
+                        context: {
+                            viendoActualmente: productoViendoActualmente,
+                            itemsEnCarrito: carritoGlobal
+                        }
                     })
                 });
 
@@ -596,77 +637,71 @@
                 leadId = data.leadId;
                 conversationId = data.conversationId;
 
-                addMessage(data.reply, "bot");
+                let replyText = data.reply || "";
+                let productoTarjeta = null;
+                let accionCarrito = null;
 
+                // --- ESCÁNER A: ¿La IA envió una Tarjeta Interactiva de Compra? ---
+                const regexTarjeta = /\[TARJETA_PRODUCTO:\s*({.*?})\]/;
+                const coincidenciaTarjeta = replyText.match(regexTarjeta);
+                if (coincidenciaTarjeta && coincidenciaTarjeta[1]) {
+                    try {
+                        productoTarjeta = JSON.parse(coincidenciaTarjeta[1]);
+                        replyText = replyText.replace(regexTarjeta, "").trim();
+                    } catch (e) { 
+                        console.error("❌ Error parseando tarjeta interactiva:", e); 
+                    }
+                }
+         
+                // --- ESCÁNER B: ¿La IA dio la orden de agregar algo al carrito? ---
+                const regexAccion = /\[ACCION:\s*({.*?})\]/;
+                const coincidenciaAccion = replyText.match(regexAccion);
+                if (coincidenciaAccion && coincidenciaAccion[1]) {
+                    try {
+                        accionCarrito = JSON.parse(coincidenciaAccion[1]);
+                        replyText = replyText.replace(regexAccion, "").trim();
+                    } catch (e) { 
+                        console.error("❌ Error parseando acción de carrito:", e); 
+                    }
+                }
+         
+                // Imprimir respuesta de texto sanitizada
+                addMessage(replyText, "bot");
+         
+                // Ejecución inmediata de la acción de carrito detectada
+                if (accionCarrito && accionCarrito.tipo === "AGREGAR_CARRITO") {
+                    if (typeof agregarAlCarritoGlobal === "function") {
+                        agregarAlCarritoGlobal(accionCarrito.nombre, accionCarrito.precio, accionCarrito.talla);
+                    }
+                }
+         
+                // Pintar tarjeta visual en caso de emparejamiento con delay sutil
+                if (productoTarjeta) {
+                    setTimeout(() => {
+                        if (typeof renderizarTarjetaInteractiva === "function") {
+                            renderizarTarjetaInteractiva(productoTarjeta.nombre, productoTarjeta.precio);
+                        }
+                    }, 600);
+                }
+         
+                // Inyectar opciones de respuesta si la IA las provee
                 if (data.options) {
                     showOptions(data.options);
                 }
 
+                // Mostrar el botón directo a WhatsApp si se requiere transferir el chat
                 if (data.showWhatsApp) {
                     const btn = document.getElementById("waBtn");
                     if (btn) btn.style.display = "flex";
                     whatsappNumber = data.whatsappNumber;
                 }
-
+         
                 setInputState(data.showInput, data.inputType);
-
+         
             } catch (err) {
                 hideTyping();
-                console.error("❌ CHAT ERROR:", err);
+                console.error("❌ CHAT BACKEND ERROR:", err);
                 addMessage("❌ Ocurrió un error al enviar tu consulta. Inténtalo de nuevo.", "bot");
-            } finally {
-                inputLocked = false;
-                input.disabled = false;
-                input.focus();
-            }
-        }
-
-        // Enviar Opción Rápida
-        async function sendOption(value) {
-            inputLocked = true;
-            const input = document.getElementById("input");
-            if (input) input.disabled = true;
-
-            try {
-                showTyping();
-
-                const res = await fetch(`${API}/chat`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        message: value,
-                        leadId,
-                        conversationId,
-                        businessId: business._id
-                    })
-                });
-
-                const data = await res.json();
-
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                hideTyping();
-
-                leadId = data.leadId;
-                conversationId = data.conversationId;
-
-                addMessage(data.reply, "bot");
-
-                if (data.options) {
-                    showOptions(data.options);
-                }
-
-                if (data.showWhatsApp) {
-                    const btn = document.getElementById("waBtn");
-                    if (btn) btn.style.display = "flex";
-                    whatsappNumber = data.whatsappNumber;
-                }
-
-                setInputState(data.showInput, data.inputType);
-
-            } catch (err) {
-                hideTyping();
-                console.error("❌ OPTION ERROR:", err);
-                addMessage("❌ Error de comunicación con la plataforma.", "bot");
             } finally {
                 inputLocked = false;
                 if (input) {
@@ -676,7 +711,7 @@
             }
         }
 
-        // Manejo de Estados del Input
+        // MANEJO DE ESTADOS DINÁMICOS DEL INPUT
         function setInputState(show, type = "text") {
             const inputArea = document.getElementById("input-area");
             const input = document.getElementById("input");
@@ -707,7 +742,7 @@
             }, 50);
         }
 
-        // Redirección Real a WhatsApp
+        // REDIRECCIÓN REAL AUTOMATIZADA A WHATSAPP
         document.getElementById("waBtn").onclick = () => {
             let message = business?.waMessage || "Hola 👋 quiero más información";
             const product = business?.productInfo || "";
@@ -719,14 +754,14 @@
             window.open(`https://wa.me/${phone}?text=${text}`, "_blank");
         };
 
-        // Enviar con tecla Enter
+        // Enviar con la tecla Enter física o virtual del teclado móvil
         document.getElementById("input").addEventListener("keypress", function(e) {
             if (e.key === "Enter") {
                 sendMessage();
             }
         });
 
-        // Inicialización
+        // DISPARADOR DE ARRANQUE CENTRAL
         loadBusiness();
     </script>
 </body>
